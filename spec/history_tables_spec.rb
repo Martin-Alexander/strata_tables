@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe HistoryTables do
-  it "has a version number" do
-    expect(HistoryTables::VERSION).not_to be nil
-  end
+  let(:connection) { ActiveRecord::Base.connection }
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "creates a column" do
+    connection.add_column(:books, :name, :string)
+
+    expect(connection.column_exists?(:books, :name)).to be true
   end
 end

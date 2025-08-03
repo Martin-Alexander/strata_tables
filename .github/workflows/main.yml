@@ -16,14 +16,23 @@ jobs:
         ruby:
           - '3.4.5'
 
+    env:
+      DATABASE_CONFIG: spec/database.github.yml
+
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: ankane/setup-postgres@v1
+        with:
+          postgres-version: 16
+          database: history_tables_test
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+      - name: Run migrations
+        run: bundle exec rake db:migrate
       - name: Run the default task
         run: bundle exec rake

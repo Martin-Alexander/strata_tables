@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "lib/history_tables/version"
 
 Gem::Specification.new do |spec|
@@ -34,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activerecord", ">= 7.0"
   spec.add_dependency "pg"
   spec.add_development_dependency "database_cleaner-active_record"
+  spec.add_development_dependency "rails"
 end

@@ -1,8 +1,4 @@
-# frozen_string_literal: true
-
-require_relative "history_tables/version"
+require_relative "history_tables/active_record/migration_extensions/schema_statements"
 
 module HistoryTables
-  class Error < StandardError; end
-  # Your code goes here...
 end

@@ -34,8 +34,15 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
     # context "when the original table already has a history trigger" do
     # end
 
-    # describe "inverse" do
-    # end
+    describe "inverse" do
+      it "can be inverted by CommandRecorder" do
+        recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
+
+        inverse = recorder.inverse_of(:create_history_triggers, [:books, :history_books, [:id, :title, :pages]])
+
+        expect(inverse).to eq([:drop_history_triggers, [:history_books, :books, [:id, :title, :pages]]])
+      end
+    end
   end
 
   describe "#drop_history_triggers" do
@@ -49,7 +56,14 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
       expect(connection).not_to have_function(:history_books_delete)
     end
 
-    # describe "inverse" do
-    # end
+    describe "inverse" do
+      it "can be inverted by CommandRecorder" do
+        recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
+
+        inverse = recorder.inverse_of(:drop_history_triggers, [:history_books, :books, [:id, :title, :pages]])
+
+        expect(inverse).to eq([:create_history_triggers, [:books, :history_books, [:id, :title, :pages]]])
+      end
+    end
   end
 end

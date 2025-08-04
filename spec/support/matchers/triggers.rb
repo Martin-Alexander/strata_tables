@@ -13,11 +13,15 @@ RSpec::Matchers.define :have_trigger do |table, function_name|
     result.first["count"].to_i > 0
   end
 
+  description do
+    "have trigger #{function_name.inspect} on #{table.inspect}"
+  end
+
   failure_message do |connection|
-    "expected to have trigger #{function_name} on #{table}"
+    "expected to have trigger #{function_name.inspect} on #{table.inspect}"
   end
 
   failure_message_when_negated do |connection|
-    "expected to not have trigger #{function_name} on #{table}"
+    "expected to not have trigger #{function_name.inspect} on #{table.inspect}"
   end
 end

@@ -5,9 +5,11 @@ require "byebug"
 
 require "history_tables"
 
-require "matchers/columns"
-require "matchers/functions"
-require "matchers/triggers"
+require "support/matchers/columns"
+require "support/matchers/functions"
+require "support/matchers/triggers"
+require "support/matchers/ts_range"
+require "support/transaction_helper"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
@@ -17,6 +19,8 @@ DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true
 
 RSpec.configure do |config|
+  config.include TransactionHelper
+
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
 

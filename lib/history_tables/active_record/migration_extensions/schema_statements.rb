@@ -13,6 +13,14 @@ module HistoryTables
         delete_trigger = HistoryDeleteTriggerDefinition.new(table, history_table)
         execute schema_creation.accept(delete_trigger)
       end
+
+      def drop_history_triggers(history_table)
+        schema_creation = SchemaCreation.new(self)
+
+        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_insert", force: true))
+        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_update", force: true))
+        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_delete", force: true))
+      end
     end
   end
 end

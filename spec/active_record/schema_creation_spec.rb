@@ -29,8 +29,9 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             BEGIN
               INSERT INTO "history_books" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
-            END;
 
+              RETURN NULL;
+            END;
           $$ LANGUAGE plpgsql;
 
           CREATE TRIGGER history_insert AFTER INSERT ON "books"
@@ -78,6 +79,8 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
               INSERT INTO "history_books" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
+
+              RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
@@ -118,6 +121,8 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
+
+              RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
@@ -137,6 +142,34 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
       # context "with option :if_not_exists and :force" do
       # end
+    end
+
+    context "given DropHistoryTriggerDefinition" do
+      let(:object) do
+        DropHistoryTriggerDefinition.new(:history_books_insert)
+      end
+
+      it "returns the correct SQL" do
+        sql = subject.accept(object)
+
+        expect(sql).to eq(<<~SQL.squish)
+          DROP FUNCTION history_books_insert();
+        SQL
+      end
+
+      context "with option :force" do
+        let(:object) do
+          DropHistoryTriggerDefinition.new(:history_books_insert, force: true)
+        end
+
+        it "returns the correct SQL" do
+          sql = subject.accept(object)
+
+          expect(sql).to eq(<<~SQL.squish)
+            DROP FUNCTION history_books_insert() CASCADE;
+          SQL
+        end
+      end
     end
   end
 end

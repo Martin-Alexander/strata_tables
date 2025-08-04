@@ -23,8 +23,9 @@ module HistoryTables
             BEGIN
               INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, #{o.validity_column})
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
-            END;
 
+              RETURN NULL;
+            END;
           $$ LANGUAGE plpgsql;
 
           CREATE TRIGGER history_insert AFTER INSERT ON #{quote_table_name(o.table)}
@@ -51,6 +52,8 @@ module HistoryTables
 
               INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, #{o.validity_column})
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
+
+              RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
@@ -68,11 +71,19 @@ module HistoryTables
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
+
+              RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
           CREATE TRIGGER history_delete AFTER DELETE ON #{quote_table_name(o.table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_delete();
+        SQL
+      end
+
+      def visit_DropHistoryTriggerDefinition(o)
+        <<-SQL.squish
+          DROP FUNCTION #{o.name}()#{o.force ? " CASCADE" : ""};
         SQL
       end
     end

@@ -1,8 +1,13 @@
 require "active_record"
 require "database_cleaner/active_record"
 require "yaml"
+require "byebug"
 
 require "history_tables"
+
+require "matchers/columns"
+require "matchers/functions"
+require "matchers/triggers"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
@@ -20,11 +25,5 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
-  end
-
-  config.around(:each) do |example|
-    DatabaseCleaner.cleaning do
-      example.run
-    end
   end
 end

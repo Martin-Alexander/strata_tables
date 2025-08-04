@@ -1,0 +1,142 @@
+require "spec_helper"
+
+include HistoryTables::ActiveRecord
+
+RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
+  around do |example|
+    DatabaseCleaner.cleaning { example.run }
+  end
+
+  subject { described_class.new(connection) }
+
+  let(:connection) { ActiveRecord::Base.connection }
+
+  describe "#accept" do
+    context "given HistoryInsertTriggerDefinition" do
+      let(:object) do
+        HistoryInsertTriggerDefinition.new(
+          :books,
+          :history_books,
+          [:id, :title, :pages, :published_at]
+        )
+      end
+
+      it "returns the correct SQL" do
+        sql = subject.accept(object)
+
+        expect(sql).to eq(<<~SQL.squish)
+          CREATE FUNCTION history_books_insert() RETURNS TRIGGER AS $$
+            BEGIN
+              INSERT INTO "history_books" (id, title, pages, published_at, validity)
+              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
+            END;
+
+          $$ LANGUAGE plpgsql;
+
+          CREATE TRIGGER history_insert AFTER INSERT ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE history_books_insert();
+        SQL
+      end
+
+      # context "when column names are not specified" do
+      # end
+
+      # context "with option :if_not_exists" do
+      # end
+
+      # context "with option :force" do
+      # end
+
+      # context "with option :if_not_exists and :force" do
+      # end
+    end
+
+    context "given HistoryUpdateTriggerDefinition" do
+      let(:object) do
+        HistoryUpdateTriggerDefinition.new(
+          :books,
+          :history_books,
+          [:id, :title, :pages, :published_at]
+        )
+      end
+
+      it "returns the correct SQL" do
+        sql = subject.accept(object)
+
+        expect(sql).to eq(<<~SQL.squish)
+          CREATE FUNCTION history_books_update() RETURNS trigger AS $$
+            BEGIN
+              IF OLD IS NOT DISTINCT FROM NEW THEN
+                RETURN NULL;
+              END IF;
+
+              UPDATE "history_books"
+              SET validity = tsrange(lower(validity), timezone('UTC', now()))
+              WHERE
+                id = OLD.id AND
+                upper_inf(validity);
+
+              INSERT INTO "history_books" (id, title, pages, published_at, validity)
+              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
+            END;
+          $$ LANGUAGE plpgsql;
+
+          CREATE TRIGGER history_update AFTER UPDATE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE history_books_update();
+        SQL
+      end
+
+      # context "when column names are not specified" do
+      # end
+
+      # context "with option :if_not_exists" do
+      # end
+
+      # context "with option :force" do
+      # end
+
+      # context "with option :if_not_exists and :force" do
+      # end
+    end
+
+    context "given HistoryDeleteTriggerDefinition" do
+      let(:object) do
+        HistoryDeleteTriggerDefinition.new(
+          :books,
+          :history_books
+        )
+      end
+
+      it "returns the correct SQL" do
+        sql = subject.accept(object)
+
+        expect(sql).to eq(<<~SQL.squish)
+          CREATE FUNCTION history_books_delete() RETURNS TRIGGER AS $$
+            BEGIN
+              UPDATE "history_books"
+              SET validity = tsrange(lower(validity), timezone('UTC', now()))
+              WHERE
+                id = OLD.id AND
+                upper_inf(validity);
+            END;
+          $$ LANGUAGE plpgsql;
+
+          CREATE TRIGGER history_delete AFTER DELETE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE history_books_delete();
+        SQL
+      end
+
+      # context "when column names are not specified" do
+      # end
+
+      # context "with option :if_not_exists" do
+      # end
+
+      # context "with option :force" do
+      # end
+
+      # context "with option :if_not_exists and :force" do
+      # end
+    end
+  end
+end

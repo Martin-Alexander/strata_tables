@@ -1,4 +1,8 @@
+require_relative "history_tables/active_record/schema_creation"
+require_relative "history_tables/active_record/schema_definitions"
 require_relative "history_tables/active_record/migration_extensions/schema_statements"
 
 module HistoryTables
 end
+
+ActiveRecord::ConnectionAdapters::AbstractAdapter.include HistoryTables::ActiveRecord::SchemaStatements

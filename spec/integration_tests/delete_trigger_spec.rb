@@ -30,4 +30,22 @@ RSpec.describe "delete trigger" do
       "validity" => be_tsrange.from(insert_time, :inclusive).to(delete_time, :exclusive)
     )
   end
+
+  context "when inserting and deleting in a single transaction" do
+    it "creates a history record with an empty validity range" do
+      connection.transaction do
+        connection.execute("INSERT INTO books (title, pages) VALUES ('The Great Gatsby', 180)")
+        connection.execute("DELETE FROM books WHERE id = 1")
+      end
+
+      results = connection.execute("SELECT * FROM history_books")
+
+      expect(results.count).to eq(1)
+      expect(results[0]).to include(
+        "title" => "The Great Gatsby",
+        "pages" => 180,
+        "validity" => be_tsrange.empty
+      )
+    end
+  end
 end

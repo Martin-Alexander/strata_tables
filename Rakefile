@@ -44,4 +44,18 @@ namespace :db do
 
     migration_context.migrate
   end
+
+  desc "Rollback migrations"
+  task :rollback do
+    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+    config = YAML.load_file(config_path)["test"]
+    ActiveRecord::Base.establish_connection(config)
+
+    ActiveRecord::Migration.verbose = true
+
+    migrations_path = File.expand_path("spec/support/migrations", __dir__)
+    migration_context = ActiveRecord::MigrationContext.new(migrations_path)
+
+    migration_context.rollback
+  end
 end

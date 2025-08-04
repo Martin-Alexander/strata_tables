@@ -1,7 +1,5 @@
 require "spec_helper"
 
-include HistoryTables::ActiveRecord
-
 RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
   around do |example|
     DatabaseCleaner.cleaning { example.run }
@@ -14,7 +12,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
   describe "#accept" do
     context "given HistoryInsertTriggerDefinition" do
       let(:object) do
-        HistoryInsertTriggerDefinition.new(
+        HistoryTables::ActiveRecord::HistoryInsertTriggerDefinition.new(
           :books,
           :history_books,
           [:id, :title, :pages, :published_at]
@@ -54,7 +52,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
     context "given HistoryUpdateTriggerDefinition" do
       let(:object) do
-        HistoryUpdateTriggerDefinition.new(
+        HistoryTables::ActiveRecord::HistoryUpdateTriggerDefinition.new(
           :books,
           :history_books,
           [:id, :title, :pages, :published_at]
@@ -104,7 +102,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
     context "given HistoryDeleteTriggerDefinition" do
       let(:object) do
-        HistoryDeleteTriggerDefinition.new(
+        HistoryTables::ActiveRecord::HistoryDeleteTriggerDefinition.new(
           :books,
           :history_books
         )
@@ -146,7 +144,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
     context "given DropHistoryTriggerDefinition" do
       let(:object) do
-        DropHistoryTriggerDefinition.new(:history_books_insert)
+        HistoryTables::ActiveRecord::DropHistoryTriggerDefinition.new(:history_books_insert)
       end
 
       it "returns the correct SQL" do
@@ -159,7 +157,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
       context "with option :force" do
         let(:object) do
-          DropHistoryTriggerDefinition.new(:history_books_insert, force: true)
+          HistoryTables::ActiveRecord::DropHistoryTriggerDefinition.new(:history_books_insert, force: true)
         end
 
         it "returns the correct SQL" do

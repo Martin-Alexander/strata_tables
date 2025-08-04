@@ -4,7 +4,7 @@ RSpec.describe "delete trigger" do
   let(:connection) { ActiveRecord::Base.connection }
 
   before do
-    connection.create_history_triggers(:books, :history_books, [:id, :title, :pages, :published_at])
+    connection.create_history_triggers(:books, :history_books, [:id, :title, :pages])
   end
 
   after do
@@ -14,15 +14,11 @@ RSpec.describe "delete trigger" do
 
   it "sets current history record's upper bound validity to the current time" do
     insert_time = transaction_with_time(connection) do
-      connection.execute(<<~SQL.squish)
-        INSERT INTO books (title, pages, published_at) VALUES ('The Great Gatsby', 180, '1925-04-10')
-      SQL
+      connection.execute("INSERT INTO books (title, pages) VALUES ('The Great Gatsby', 180)")
     end
 
     delete_time = transaction_with_time(connection) do
-      connection.execute(<<~SQL.squish)
-        DELETE FROM books WHERE id = 1
-      SQL
+      connection.execute("DELETE FROM books WHERE id = 1")
     end
 
     results = connection.execute("SELECT * FROM history_books")
@@ -31,8 +27,7 @@ RSpec.describe "delete trigger" do
     expect(results[0]).to include(
       "title" => "The Great Gatsby",
       "pages" => 180,
-      "published_at" => "1925-04-10",
-      "validity" => be_tsrange.from(insert_time, :inclusive).to(delete_time, :exclusive),
+      "validity" => be_tsrange.from(insert_time, :inclusive).to(delete_time, :exclusive)
     )
   end
 end

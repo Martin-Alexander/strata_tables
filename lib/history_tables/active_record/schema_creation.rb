@@ -6,7 +6,7 @@ module HistoryTables
       end
 
       def accept(o)
-        m = "visit_#{o.class.name.split('::').last}"
+        m = "visit_#{o.class.name.split("::").last}"
         send m, o
       end
 
@@ -15,8 +15,8 @@ module HistoryTables
       private
 
       def visit_HistoryInsertTriggerDefinition(o)
-        fields = o.column_names.join(', ')
-        values = o.column_names.map { |c| "NEW.#{c}" }.join(', ')
+        fields = o.column_names.join(", ")
+        values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
         <<-SQL.squish
           CREATE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
@@ -34,8 +34,8 @@ module HistoryTables
       end
 
       def visit_HistoryUpdateTriggerDefinition(o)
-        fields = o.column_names.join(', ')
-        values = o.column_names.map { |c| "NEW.#{c}" }.join(', ')
+        fields = o.column_names.join(", ")
+        values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
         <<-SQL.squish
           CREATE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$

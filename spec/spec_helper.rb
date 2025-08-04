@@ -10,6 +10,7 @@ require "support/matchers/functions"
 require "support/matchers/triggers"
 require "support/matchers/ts_range"
 require "support/transaction_helper"
+require "support/ts_range"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]

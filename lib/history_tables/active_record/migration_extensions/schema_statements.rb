@@ -24,4 +24,3 @@ module HistoryTables
     end
   end
 end
-

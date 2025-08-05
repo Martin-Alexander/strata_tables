@@ -147,33 +147,5 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
       # context "with option :if_not_exists and :force" do
       # end
     end
-
-    context "given DropHistoryTriggerDefinition" do
-      let(:object) do
-        HistoryTables::ActiveRecord::DropHistoryTriggerDefinition.new(:history_books_insert)
-      end
-
-      it "returns the correct SQL" do
-        sql = subject.accept(object)
-
-        expect(sql).to eq(<<~SQL.squish)
-          DROP FUNCTION history_books_insert();
-        SQL
-      end
-
-      context "with option :force" do
-        let(:object) do
-          HistoryTables::ActiveRecord::DropHistoryTriggerDefinition.new(:history_books_insert, force: true)
-        end
-
-        it "returns the correct SQL" do
-          sql = subject.accept(object)
-
-          expect(sql).to eq(<<~SQL.squish)
-            DROP FUNCTION history_books_insert() CASCADE;
-          SQL
-        end
-      end
-    end
   end
 end

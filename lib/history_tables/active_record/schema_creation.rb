@@ -101,12 +101,6 @@ module HistoryTables
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_delete();
         SQL
       end
-
-      def visit_DropHistoryTriggerDefinition(o)
-        <<-SQL.squish
-          DROP FUNCTION #{o.name}()#{o.force ? " CASCADE" : ""};
-        SQL
-      end
     end
   end
 end

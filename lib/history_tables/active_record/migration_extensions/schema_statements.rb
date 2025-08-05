@@ -15,11 +15,9 @@ module HistoryTables
       end
 
       def drop_history_triggers(history_table, table = nil, column_names = nil)
-        schema_creation = SchemaCreation.new(self)
-
-        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_insert", force: true))
-        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_update", force: true))
-        execute schema_creation.accept(DropHistoryTriggerDefinition.new("#{history_table}_delete", force: true))
+        execute "DROP FUNCTION #{history_table}_insert() CASCADE"
+        execute "DROP FUNCTION #{history_table}_update() CASCADE"
+        execute "DROP FUNCTION #{history_table}_delete() CASCADE"
       end
 
       def add_column_to_history_triggers(history_table, table, column_name)

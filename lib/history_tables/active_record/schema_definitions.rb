@@ -31,14 +31,5 @@ module HistoryTables
         @validity_column = validity_column
       end
     end
-
-    class DropHistoryTriggerDefinition
-      attr_reader :name, :force
-
-      def initialize(name, force: false)
-        @name = name
-        @force = force
-      end
-    end
   end
 end

@@ -13,14 +13,14 @@ RSpec::Matchers.define :have_function do |function_name|
   end
 
   description do
-    "have function #{function_name.inspect}"
+    "have function '#{function_name}'"
   end
 
   failure_message do |connection|
-    "expected database to have function #{function_name.inspect}"
+    "expected db to have function '#{function_name}'"
   end
 
   failure_message_when_negated do |connection|
-    "expected database to not have function #{function_name.inspect}"
+    "expected db to not have function '#{function_name}'"
   end
 end

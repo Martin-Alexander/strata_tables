@@ -12,11 +12,11 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
       connection.create_history_triggers(:history_books, :books, [:id, :title, :pages, :published_at])
 
       expect(connection).to have_function(:history_books_insert)
-      expect(connection).to have_trigger(:books, :history_books_insert)
       expect(connection).to have_function(:history_books_update)
-      expect(connection).to have_trigger(:books, :history_books_update)
       expect(connection).to have_function(:history_books_delete)
-      expect(connection).to have_trigger(:books, :history_books_delete)
+      expect(connection).to have_table(:books).with_trigger(:history_insert)
+      expect(connection).to have_table(:books).with_trigger(:history_update)
+      expect(connection).to have_table(:books).with_trigger(:history_delete)
     end
 
     # context "when the history table does not exist" do
@@ -54,6 +54,9 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
       expect(connection).not_to have_function(:history_books_insert)
       expect(connection).not_to have_function(:history_books_update)
       expect(connection).not_to have_function(:history_books_delete)
+      expect(connection).not_to have_table(:books).with_trigger(:history_insert)
+      expect(connection).not_to have_table(:books).with_trigger(:history_update)
+      expect(connection).not_to have_table(:books).with_trigger(:history_delete)
     end
 
     describe "inverse" do

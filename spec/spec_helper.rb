@@ -5,10 +5,11 @@ require "byebug"
 
 require "history_tables"
 
-require "support/matchers/columns"
-require "support/matchers/functions"
-require "support/matchers/triggers"
-require "support/matchers/ts_range"
+require "support/matchers/be_tsrange"
+require "support/matchers/have_columns"
+require "support/matchers/have_function"
+require "support/matchers/have_table"
+require "support/matchers/have_trigger"
 require "support/transaction_helper"
 require "support/ts_range"
 

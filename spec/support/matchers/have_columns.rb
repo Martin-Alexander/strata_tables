@@ -8,14 +8,14 @@ RSpec::Matchers.define :have_columns do |table, columns|
   end
 
   description do
-    "have columns #{columns.inspect}"
+    "have table '#{table}' with columns #{columns.inspect}"
   end
 
   failure_message do |connection|
-    "expected #{table.inspect} to have columns #{columns.inspect}"
+    "expected db to have table '#{table}' with columns #{columns.inspect}"
   end
 
   failure_message_when_negated do |connection|
-    "expected #{table.inspect} to not have columns #{columns.inspect}"
+    "expected db to not have table '#{table}' with columns #{columns.inspect}"
   end
 end

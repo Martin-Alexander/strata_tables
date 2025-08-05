@@ -23,7 +23,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE FUNCTION history_books_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION history_books_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO "history_books" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
@@ -32,7 +32,9 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_insert AFTER INSERT ON "books"
+          COMMENT ON FUNCTION history_books_insert() IS '{"table":"books","history_table":"history_books","column_names":["id","title","pages","published_at"]}';
+
+          CREATE OR REPLACE TRIGGER history_insert AFTER INSERT ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_insert();
         SQL
       end
@@ -63,7 +65,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE FUNCTION history_books_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION history_books_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
@@ -82,7 +84,9 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_update AFTER UPDATE ON "books"
+          COMMENT ON FUNCTION history_books_update() IS '{"table":"books","history_table":"history_books","column_names":["id","title","pages","published_at"]}';
+
+          CREATE OR REPLACE TRIGGER history_update AFTER UPDATE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_update();
         SQL
       end
@@ -112,7 +116,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE FUNCTION history_books_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION history_books_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE "history_books"
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
@@ -124,7 +128,9 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_delete AFTER DELETE ON "books"
+          COMMENT ON FUNCTION history_books_delete() IS '{"table":"books","history_table":"history_books"}';
+
+          CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_delete();
         SQL
       end

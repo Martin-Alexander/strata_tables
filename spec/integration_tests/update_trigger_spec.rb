@@ -4,7 +4,7 @@ RSpec.describe "update trigger" do
   let(:conn) { ActiveRecord::Base.connection }
 
   before do
-    conn.create_history_triggers(:books, :history_books, [:id, :title, :pages])
+    conn.create_history_triggers(:history_books, :books, [:id, :title, :pages])
   end
 
   after do

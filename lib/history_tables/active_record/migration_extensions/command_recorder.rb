@@ -2,13 +2,13 @@ module HistoryTables
   module ActiveRecord
     module CommandRecorder
       def invert_create_history_triggers(args)
-        table, history_table, column_names = args
+        history_table, table, column_names = args
         [:drop_history_triggers, [history_table, table, column_names]]
       end
 
       def invert_drop_history_triggers(args)
         history_table, table, column_names = args
-        [:create_history_triggers, [table, history_table, column_names]]
+        [:create_history_triggers, [history_table, table, column_names]]
       end
 
       def create_history_triggers(*args, &block)

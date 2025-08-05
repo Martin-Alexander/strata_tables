@@ -17,9 +17,14 @@ module HistoryTables
       def visit_HistoryInsertTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
+        comment = {
+          table: o.table,
+          history_table: o.history_table,
+          column_names: o.column_names
+        }.to_json
 
         <<-SQL.squish
-          CREATE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, #{o.validity_column})
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
@@ -28,7 +33,9 @@ module HistoryTables
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_insert AFTER INSERT ON #{quote_table_name(o.table)}
+          COMMENT ON FUNCTION #{o.history_table}_insert() IS '#{comment}';
+
+          CREATE OR REPLACE TRIGGER history_insert AFTER INSERT ON #{quote_table_name(o.table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_insert();
         SQL
       end
@@ -36,9 +43,14 @@ module HistoryTables
       def visit_HistoryUpdateTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
+        comment = {
+          table: o.table,
+          history_table: o.history_table,
+          column_names: o.column_names
+        }.to_json
 
         <<-SQL.squish
-          CREATE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
@@ -57,14 +69,21 @@ module HistoryTables
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_update AFTER UPDATE ON #{quote_table_name(o.table)}
+          COMMENT ON FUNCTION #{o.history_table}_update() IS '#{comment}';
+
+          CREATE OR REPLACE TRIGGER history_update AFTER UPDATE ON #{quote_table_name(o.table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_update();
         SQL
       end
 
       def visit_HistoryDeleteTriggerDefinition(o)
+        comment = {
+          table: o.table,
+          history_table: o.history_table
+        }.to_json
+
         <<-SQL.squish
-          CREATE FUNCTION #{o.history_table}_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.history_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE #{quote_table_name(o.history_table)}
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
@@ -76,7 +95,9 @@ module HistoryTables
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE TRIGGER history_delete AFTER DELETE ON #{quote_table_name(o.table)}
+          COMMENT ON FUNCTION #{o.history_table}_delete() IS '#{comment}';
+
+          CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON #{quote_table_name(o.table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_delete();
         SQL
       end

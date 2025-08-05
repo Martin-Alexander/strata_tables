@@ -9,7 +9,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
 
   describe "#create_history_triggers" do
     it "creates an insert, update, and delete trigger" do
-      connection.create_history_triggers(:books, :history_books, [:id, :title, :pages, :published_at])
+      connection.create_history_triggers(:history_books, :books, [:id, :title, :pages, :published_at])
 
       expect(connection).to have_function(:history_books_insert)
       expect(connection).to have_trigger(:books, :history_books_insert)
@@ -38,7 +38,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
       it "can be inverted by CommandRecorder" do
         recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
 
-        inverse = recorder.inverse_of(:create_history_triggers, [:books, :history_books, [:id, :title, :pages]])
+        inverse = recorder.inverse_of(:create_history_triggers, [:history_books, :books, [:id, :title, :pages]])
 
         expect(inverse).to eq([:drop_history_triggers, [:history_books, :books, [:id, :title, :pages]]])
       end
@@ -47,7 +47,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
 
   describe "#drop_history_triggers" do
     it "drops the insert, update, and delete triggers" do
-      connection.create_history_triggers(:books, :history_books, [:id, :title, :pages, :published_at])
+      connection.create_history_triggers(:history_books, :books, [:id, :title, :pages, :published_at])
 
       connection.drop_history_triggers(:history_books)
 
@@ -62,8 +62,45 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
 
         inverse = recorder.inverse_of(:drop_history_triggers, [:history_books, :books, [:id, :title, :pages]])
 
-        expect(inverse).to eq([:create_history_triggers, [:books, :history_books, [:id, :title, :pages]]])
+        expect(inverse).to eq([:create_history_triggers, [:history_books, :books, [:id, :title, :pages]]])
       end
     end
   end
+
+  describe "#add_column_to_history_triggers" do
+    it "adds a column to the history table" do
+      connection.create_history_triggers(:history_books, :books, [:id, :title, :pages, :published_at])
+
+      connection.add_column_to_history_triggers(:history_books, :books, :author_id)
+
+      connection.history_triggers(:history_books, :books).each do |trigger|
+        if trigger.respond_to?(:column_names)
+          expect(trigger.column_names).to include(:author_id)
+        end
+      end
+    end
+
+    # describe "inverse" do
+    # end
+  end
+
+  describe "#remove_column_from_history_triggers" do
+    it "removes a column from the history table" do
+      connection.create_history_triggers(:history_books, :books, [:id, :title, :pages, :published_at])
+
+      connection.remove_column_from_history_triggers(:history_books, :books, :author_id)
+
+      connection.history_triggers(:history_books, :books).each do |trigger|
+        if trigger.respond_to?(:column_names)
+          expect(trigger.column_names).not_to include(:author_id)
+        end
+      end
+    end
+
+    # describe "inverse" do
+    # end
+  end
+
+  # describe "#history_triggers" do
+  # end
 end

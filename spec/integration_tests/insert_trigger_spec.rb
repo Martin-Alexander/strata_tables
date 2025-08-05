@@ -4,7 +4,7 @@ RSpec.describe "insert trigger" do
   let(:connection) { ActiveRecord::Base.connection }
 
   before do
-    connection.create_history_triggers(:books, :history_books, [:id, :title, :pages])
+    connection.create_history_triggers(:history_books, :books, [:id, :title, :pages])
   end
 
   after do

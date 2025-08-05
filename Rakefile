@@ -5,7 +5,7 @@ RSpec::Core::RakeTask.new(:spec)
 
 require "standard/rake"
 
-task default: %i[spec:all standard]
+task default: %i[spec standard]
 
 require "active_record"
 require "yaml"

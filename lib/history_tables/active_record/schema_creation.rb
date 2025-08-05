@@ -21,11 +21,7 @@ module HistoryTables
       def visit_HistoryInsertTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
-        comment = {
-          table: o.table,
-          history_table: o.history_table,
-          column_names: o.column_names
-        }.to_json
+        comment = {column_names: o.column_names}.to_json
 
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
@@ -47,11 +43,7 @@ module HistoryTables
       def visit_HistoryUpdateTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
-        comment = {
-          table: o.table,
-          history_table: o.history_table,
-          column_names: o.column_names
-        }.to_json
+        comment = {column_names: o.column_names}.to_json
 
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$
@@ -81,11 +73,6 @@ module HistoryTables
       end
 
       def visit_HistoryDeleteTriggerDefinition(o)
-        comment = {
-          table: o.table,
-          history_table: o.history_table
-        }.to_json
-
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.history_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
@@ -98,8 +85,6 @@ module HistoryTables
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
-
-          COMMENT ON FUNCTION #{o.history_table}_delete() IS '#{comment}';
 
           CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON #{quote_table_name(o.table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_delete();

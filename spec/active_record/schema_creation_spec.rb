@@ -49,7 +49,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION history_books_insert() IS '{"table":"books","history_table":"history_books","column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION history_books_insert() IS '{"column_names":["id","title","pages","published_at"]}';
 
           CREATE OR REPLACE TRIGGER history_insert AFTER INSERT ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_insert();
@@ -95,7 +95,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION history_books_update() IS '{"table":"books","history_table":"history_books","column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION history_books_update() IS '{"column_names":["id","title","pages","published_at"]}';
 
           CREATE OR REPLACE TRIGGER history_update AFTER UPDATE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_update();
@@ -133,8 +133,6 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
-
-          COMMENT ON FUNCTION history_books_delete() IS '{"table":"books","history_table":"history_books"}';
 
           CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE history_books_delete();

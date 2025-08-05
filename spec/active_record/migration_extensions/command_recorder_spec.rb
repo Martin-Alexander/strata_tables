@@ -20,10 +20,20 @@ RSpec.describe HistoryTables::ActiveRecord::CommandRecorder do
       end
     end
 
-    # context "given a add_column_to_history_triggers command" do
-    # end
+    context "given a add_column_to_history_triggers command" do
+      it "returns a remove_column_from_history_triggers command" do
+        inverse = recorder.inverse_of(:add_column_to_history_triggers, [:history_books, :books, :author_id])
 
-    # context "given a remove_column_from_history_triggers command" do
-    # end
+        expect(inverse).to eq([:remove_column_from_history_triggers, [:history_books, :books, :author_id]])
+      end
+    end
+
+    context "given a remove_column_from_history_triggers command" do
+      it "returns a add_column_to_history_triggers command" do
+        inverse = recorder.inverse_of(:remove_column_from_history_triggers, [:history_books, :books, :author_id])
+
+        expect(inverse).to eq([:add_column_to_history_triggers, [:history_books, :books, :author_id]])
+      end
+    end
   end
 end

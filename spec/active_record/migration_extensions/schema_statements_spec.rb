@@ -76,7 +76,10 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
 
       connection.add_column_to_history_triggers(:history_books, :books, :author_id)
 
-      expect(connection.history_trigger_set(:history_books, :books).column_names).to include(:author_id)
+      trigger_set = connection.history_trigger_set(:history_books, :books)
+
+      expect(trigger_set.column_names).to include(:author_id)
+      expect(trigger_set.column_names).to include(:published_at)
     end
 
     # describe "inverse" do
@@ -89,7 +92,10 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaStatements do
 
       connection.remove_column_from_history_triggers(:history_books, :books, :author_id)
 
-      expect(connection.history_trigger_set(:history_books, :books).column_names).not_to include(:author_id)
+      trigger_set = connection.history_trigger_set(:history_books, :books)
+
+      expect(trigger_set.column_names).not_to include(:author_id)
+      expect(trigger_set.column_names).to include(:published_at)
     end
 
     # describe "inverse" do

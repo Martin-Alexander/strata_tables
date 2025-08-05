@@ -14,6 +14,10 @@ module HistoryTables
 
       private
 
+      def visit_HistoryTriggerSetDefinition(o)
+        [o.insert_trigger, o.update_trigger, o.delete_trigger].map { |t| accept(t) }.join(" ")
+      end
+
       def visit_HistoryInsertTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
@@ -26,7 +30,7 @@ module HistoryTables
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, #{o.validity_column})
+              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, validity)
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
@@ -62,7 +66,7 @@ module HistoryTables
                 id = OLD.id AND
                 upper_inf(validity);
 
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, #{o.validity_column})
+              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, validity)
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;

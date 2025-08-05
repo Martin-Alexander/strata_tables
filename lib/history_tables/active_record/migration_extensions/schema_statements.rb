@@ -4,14 +4,9 @@ module HistoryTables
       def create_history_triggers(history_table, table, column_names)
         schema_creation = SchemaCreation.new(self)
 
-        insert_trigger = HistoryInsertTriggerDefinition.new(table, history_table, column_names)
-        execute schema_creation.accept(insert_trigger)
+        trigger_set = HistoryTriggerSetDefinition.new(history_table, table, column_names)
 
-        update_trigger = HistoryUpdateTriggerDefinition.new(table, history_table, column_names)
-        execute schema_creation.accept(update_trigger)
-
-        delete_trigger = HistoryDeleteTriggerDefinition.new(table, history_table)
-        execute schema_creation.accept(delete_trigger)
+        execute schema_creation.accept(trigger_set)
       end
 
       def drop_history_triggers(history_table, table = nil, column_names = nil)
@@ -23,59 +18,41 @@ module HistoryTables
       def add_column_to_history_triggers(history_table, table, column_name)
         schema_creation = SchemaCreation.new(self)
 
-        history_triggers(history_table, table).each do |trigger|
-          if trigger.respond_to?(:column_names)
-            trigger.column_names << column_name
-          end
+        trigger_set = history_trigger_set(history_table, table)
 
-          execute schema_creation.accept(trigger)
-        end
+        trigger_set.add_column(column_name)
+
+        execute schema_creation.accept(trigger_set)
       end
 
       def remove_column_from_history_triggers(history_table, table, column_name)
         schema_creation = SchemaCreation.new(self)
 
-        history_triggers(history_table, table).each do |trigger|
-          if trigger.respond_to?(:column_names)
-            trigger.column_names.delete(column_name)
-          end
+        trigger_set = history_trigger_set(history_table, table)
 
-          execute schema_creation.accept(trigger)
-        end
+        trigger_set.remove_column(column_name)
+
+        execute schema_creation.accept(trigger_set)
       end
 
-      def history_triggers(history_table, table)
-        results = execute(<<~SQL)
+      # TODO: Error handling
+      #
+      def history_trigger_set(history_table, table)
+        sql = <<~SQL.squish
           SELECT 
-            CASE
-              WHEN p.proname = '#{history_table}_insert' THEN 'insert'
-              WHEN p.proname = '#{history_table}_update' THEN 'update'
-              WHEN p.proname = '#{history_table}_delete' THEN 'delete'
-            END as crud_action,
-            (obj_description(p.oid)::json)->>'column_names' as column_names,
-            (obj_description(p.oid)::json)->>'history_table' as history_table_name,
-            (obj_description(p.oid)::json)->>'table' as table_name
+            (obj_description(p.oid)::json)->>'column_names' as column_names
           FROM pg_proc p 
           WHERE
-            p.proname IN ('#{history_table}_insert', '#{history_table}_update', '#{history_table}_delete') AND
-            (obj_description(p.oid)::json)->>'table' = '#{table}' AND
-            (obj_description(p.oid)::json)->>'history_table' = '#{history_table}'
+            p.proname = '#{history_table}_insert'
         SQL
 
-        results.map do |result|
-          column_names = JSON.parse(result["column_names"]).map(&:to_sym) if result["column_names"]
-          table_name = result["table_name"]
-          history_table_name = result["history_table_name"]
+        results = execute(sql)
 
-          case result["crud_action"]
-          when "insert"
-            HistoryInsertTriggerDefinition.new(table_name, history_table_name, column_names)
-          when "update"
-            HistoryUpdateTriggerDefinition.new(table_name, history_table_name, column_names)
-          when "delete"
-            HistoryDeleteTriggerDefinition.new(table_name, history_table_name)
-          end
-        end
+        return nil if results.count == 0
+
+        column_names = JSON.parse(results[0]["column_names"]).map(&:to_sym) if results[0]["column_names"]
+
+        HistoryTriggerSetDefinition.new(history_table, table, column_names)
       end
     end
   end

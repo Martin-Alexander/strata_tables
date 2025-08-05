@@ -10,14 +10,31 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
   let(:connection) { ActiveRecord::Base.connection }
 
   describe "#accept" do
+    let(:insert_trigger_definition) do
+      HistoryTables::ActiveRecord::HistoryInsertTriggerDefinition.new(
+        :history_books,
+        :books,
+        [:id, :title, :pages, :published_at]
+      )
+    end
+
+    let(:update_trigger_definition) do
+      HistoryTables::ActiveRecord::HistoryUpdateTriggerDefinition.new(
+        :history_books,
+        :books,
+        [:id, :title, :pages, :published_at]
+      )
+    end
+
+    let(:delete_trigger_definition) do
+      HistoryTables::ActiveRecord::HistoryDeleteTriggerDefinition.new(
+        :history_books,
+        :books
+      )
+    end
+
     context "given HistoryInsertTriggerDefinition" do
-      let(:object) do
-        HistoryTables::ActiveRecord::HistoryInsertTriggerDefinition.new(
-          :books,
-          :history_books,
-          [:id, :title, :pages, :published_at]
-        )
-      end
+      let(:object) { insert_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
@@ -53,13 +70,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
     end
 
     context "given HistoryUpdateTriggerDefinition" do
-      let(:object) do
-        HistoryTables::ActiveRecord::HistoryUpdateTriggerDefinition.new(
-          :books,
-          :history_books,
-          [:id, :title, :pages, :published_at]
-        )
-      end
+      let(:object) { update_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
@@ -105,12 +116,7 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
     end
 
     context "given HistoryDeleteTriggerDefinition" do
-      let(:object) do
-        HistoryTables::ActiveRecord::HistoryDeleteTriggerDefinition.new(
-          :books,
-          :history_books
-        )
-      end
+      let(:object) { delete_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
@@ -146,6 +152,28 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
       # context "with option :if_not_exists and :force" do
       # end
+    end
+
+    context "given HistoryTriggerSetDefinition" do
+      let(:object) do
+        HistoryTables::ActiveRecord::HistoryTriggerSetDefinition.new(
+          :history_books,
+          :books,
+          [:id, :title, :pages, :published_at]
+        )
+      end
+
+      it "returns the correct SQL" do
+        sql = subject.accept(object)
+
+        expect(sql).to eq(
+          [
+            subject.accept(insert_trigger_definition),
+            subject.accept(update_trigger_definition),
+            subject.accept(delete_trigger_definition)
+          ].join(" ")
+        )
+      end
     end
   end
 end

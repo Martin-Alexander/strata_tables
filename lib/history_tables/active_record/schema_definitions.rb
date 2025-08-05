@@ -1,35 +1,31 @@
 module HistoryTables
   module ActiveRecord
-    class HistoryInsertTriggerDefinition
-      attr_reader :table, :history_table, :column_names, :validity_column
+    class HistoryTriggerSetDefinition
+      attr_reader :history_table, :table, :column_names, :insert_trigger, :update_trigger, :delete_trigger
 
-      def initialize(table, history_table, column_names, validity_column = :validity)
-        @table = table
+      def initialize(history_table, table, column_names)
         @history_table = history_table
+        @table = table
         @column_names = column_names
-        @validity_column = validity_column
+
+        @insert_trigger = HistoryInsertTriggerDefinition.new(history_table, table, column_names)
+        @update_trigger = HistoryUpdateTriggerDefinition.new(history_table, table, column_names)
+        @delete_trigger = HistoryDeleteTriggerDefinition.new(history_table, table)
+      end
+
+      def add_column(column_name)
+        @column_names << column_name
+      end
+
+      def remove_column(column_name)
+        @column_names.delete(column_name)
       end
     end
 
-    class HistoryUpdateTriggerDefinition
-      attr_reader :table, :history_table, :column_names, :validity_column
+    HistoryInsertTriggerDefinition = Struct.new(:history_table, :table, :column_names)
 
-      def initialize(table, history_table, column_names, validity_column = :validity)
-        @table = table
-        @history_table = history_table
-        @column_names = column_names
-        @validity_column = validity_column
-      end
-    end
+    HistoryUpdateTriggerDefinition = Struct.new(:history_table, :table, :column_names)
 
-    class HistoryDeleteTriggerDefinition
-      attr_reader :table, :history_table, :validity_column
-
-      def initialize(table, history_table, validity_column = :validity)
-        @table = table
-        @history_table = history_table
-        @validity_column = validity_column
-      end
-    end
+    HistoryDeleteTriggerDefinition = Struct.new(:history_table, :table)
   end
 end

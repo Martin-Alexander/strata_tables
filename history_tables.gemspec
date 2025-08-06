@@ -1,21 +1,21 @@
-require_relative "lib/history_tables/version"
+require_relative "lib/strata_tables/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "history_tables"
-  spec.version = HistoryTables::VERSION
+  spec.name = "strata_tables"
+  spec.version = StrataTables::VERSION
   spec.authors = ["Martin-Alexander"]
   spec.email = ["martingianna@gmail.com"]
 
   spec.summary = "TODO"
   spec.description = "TODO"
-  spec.homepage = "https://github.com/Martin-Alexander/history_tables"
+  spec.homepage = "https://github.com/Martin-Alexander/strata_tables"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 
   # spec.metadata["allowed_push_host"] = "TODO'"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/Martin-Alexander/history_tables"
-  spec.metadata["changelog_uri"] = "https://github.com/Martin-Alexander/history_tables/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/Martin-Alexander/strata_tables"
+  spec.metadata["changelog_uri"] = "https://github.com/Martin-Alexander/strata_tables/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.

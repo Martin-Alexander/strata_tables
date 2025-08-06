@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
+RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
   around do |example|
     DatabaseCleaner.cleaning { example.run }
   end
@@ -11,48 +11,48 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
 
   describe "#accept" do
     let(:insert_trigger_definition) do
-      HistoryTables::ActiveRecord::HistoryInsertTriggerDefinition.new(
-        :history_books,
+      StrataTables::ActiveRecord::StrataInsertTriggerDefinition.new(
+        :strata_books,
         :books,
         [:id, :title, :pages, :published_at]
       )
     end
 
     let(:update_trigger_definition) do
-      HistoryTables::ActiveRecord::HistoryUpdateTriggerDefinition.new(
-        :history_books,
+      StrataTables::ActiveRecord::StrataUpdateTriggerDefinition.new(
+        :strata_books,
         :books,
         [:id, :title, :pages, :published_at]
       )
     end
 
     let(:delete_trigger_definition) do
-      HistoryTables::ActiveRecord::HistoryDeleteTriggerDefinition.new(
-        :history_books,
+      StrataTables::ActiveRecord::StrataDeleteTriggerDefinition.new(
+        :strata_books,
         :books
       )
     end
 
-    context "given HistoryInsertTriggerDefinition" do
+    context "given StrataInsertTriggerDefinition" do
       let(:object) { insert_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION history_books_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION strata_books_insert() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO "history_books" (id, title, pages, published_at, validity)
+              INSERT INTO "strata_books" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION history_books_insert() IS '{"column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION strata_books_insert() IS '{"column_names":["id","title","pages","published_at"]}';
 
-          CREATE OR REPLACE TRIGGER history_insert AFTER INSERT ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE history_books_insert();
+          CREATE OR REPLACE TRIGGER strata_insert AFTER INSERT ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE strata_books_insert();
         SQL
       end
 
@@ -69,36 +69,36 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
       # end
     end
 
-    context "given HistoryUpdateTriggerDefinition" do
+    context "given StrataUpdateTriggerDefinition" do
       let(:object) { update_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION history_books_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION strata_books_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
               END IF;
 
-              UPDATE "history_books"
+              UPDATE "strata_books"
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
-              INSERT INTO "history_books" (id, title, pages, published_at, validity)
+              INSERT INTO "strata_books" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION history_books_update() IS '{"column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION strata_books_update() IS '{"column_names":["id","title","pages","published_at"]}';
 
-          CREATE OR REPLACE TRIGGER history_update AFTER UPDATE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE history_books_update();
+          CREATE OR REPLACE TRIGGER strata_update AFTER UPDATE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE strata_books_update();
         SQL
       end
 
@@ -115,16 +115,16 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
       # end
     end
 
-    context "given HistoryDeleteTriggerDefinition" do
+    context "given StrataDeleteTriggerDefinition" do
       let(:object) { delete_trigger_definition }
 
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
         expect(sql).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION history_books_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION strata_books_delete() RETURNS TRIGGER AS $$
             BEGIN
-              UPDATE "history_books"
+              UPDATE "strata_books"
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
@@ -134,8 +134,8 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE history_books_delete();
+          CREATE OR REPLACE TRIGGER strata_delete AFTER DELETE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE strata_books_delete();
         SQL
       end
 
@@ -152,10 +152,10 @@ RSpec.describe HistoryTables::ActiveRecord::SchemaCreation do
       # end
     end
 
-    context "given HistoryTriggerSetDefinition" do
+    context "given StrataTriggerSetDefinition" do
       let(:object) do
-        HistoryTables::ActiveRecord::HistoryTriggerSetDefinition.new(
-          :history_books,
+        StrataTables::ActiveRecord::StrataTriggerSetDefinition.new(
+          :strata_books,
           :books,
           [:id, :title, :pages, :published_at]
         )

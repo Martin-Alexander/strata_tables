@@ -4,15 +4,15 @@ RSpec.describe "delete trigger" do
   let(:connection) { ActiveRecord::Base.connection }
 
   before do
-    connection.create_history_triggers(:history_books, :books, [:id, :title, :pages])
+    connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages])
   end
 
   after do
-    connection.drop_history_triggers(:history_books)
+    connection.drop_strata_triggers(:strata_books)
     DatabaseCleaner.clean_with :truncation
   end
 
-  it "sets current history record's upper bound validity to the current time" do
+  it "sets current strata record's upper bound validity to the current time" do
     insert_time = transaction_with_time(connection) do
       connection.execute("INSERT INTO books (title, pages) VALUES ('The Great Gatsby', 180)")
     end
@@ -21,7 +21,7 @@ RSpec.describe "delete trigger" do
       connection.execute("DELETE FROM books WHERE id = 1")
     end
 
-    results = connection.execute("SELECT * FROM history_books")
+    results = connection.execute("SELECT * FROM strata_books")
 
     expect(results.count).to eq(1)
     expect(results[0]).to include(
@@ -32,13 +32,13 @@ RSpec.describe "delete trigger" do
   end
 
   context "when inserting and deleting in a single transaction" do
-    it "creates a history record with an empty validity range" do
+    it "creates a strata record with an empty validity range" do
       connection.transaction do
         connection.execute("INSERT INTO books (title, pages) VALUES ('The Great Gatsby', 180)")
         connection.execute("DELETE FROM books WHERE id = 1")
       end
 
-      results = connection.execute("SELECT * FROM history_books")
+      results = connection.execute("SELECT * FROM strata_books")
 
       expect(results.count).to eq(1)
       expect(results[0]).to include(

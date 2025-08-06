@@ -3,7 +3,7 @@ require "database_cleaner/active_record"
 require "yaml"
 require "byebug"
 
-require "history_tables"
+require "strata_tables"
 
 require "support/matchers/be_tsrange"
 require "support/matchers/have_columns"

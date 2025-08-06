@@ -26,7 +26,7 @@ jobs:
       - uses: ankane/setup-postgres@v1
         with:
           postgres-version: 16
-          database: history_tables_test
+          database: strata_tables_test
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

@@ -1,6 +1,6 @@
-class CreateHistoryBooks < ActiveRecord::Migration[7.0]
+class CreateStrataBooks < ActiveRecord::Migration[7.0]
   def change
-    create_table :history_books, primary_key: :hid do |t|
+    create_table :strata_books, primary_key: :hid do |t|
       t.integer :id, null: false
       t.string :title
       t.integer :pages

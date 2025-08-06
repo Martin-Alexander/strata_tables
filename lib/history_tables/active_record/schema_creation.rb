@@ -1,4 +1,4 @@
-module HistoryTables
+module StrataTables
   module ActiveRecord
     class SchemaCreation
       def initialize(conn)
@@ -14,69 +14,69 @@ module HistoryTables
 
       private
 
-      def visit_HistoryTriggerSetDefinition(o)
+      def visit_StrataTriggerSetDefinition(o)
         [o.insert_trigger, o.update_trigger, o.delete_trigger].map { |t| accept(t) }.join(" ")
       end
 
-      def visit_HistoryInsertTriggerDefinition(o)
+      def visit_StrataInsertTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
         comment = {column_names: o.column_names}.to_json
 
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.strata_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, validity)
+              INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION #{o.history_table}_insert() IS '#{comment}';
+          COMMENT ON FUNCTION #{o.strata_table}_insert() IS '#{comment}';
 
-          CREATE OR REPLACE TRIGGER history_insert AFTER INSERT ON #{quote_table_name(o.table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_insert();
+          CREATE OR REPLACE TRIGGER strata_insert AFTER INSERT ON #{quote_table_name(o.table)}
+            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_insert();
         SQL
       end
 
-      def visit_HistoryUpdateTriggerDefinition(o)
+      def visit_StrataUpdateTriggerDefinition(o)
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
         comment = {column_names: o.column_names}.to_json
 
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION #{o.strata_table}_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
               END IF;
 
-              UPDATE #{quote_table_name(o.history_table)}
+              UPDATE #{quote_table_name(o.strata_table)}
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, validity)
+              INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
               VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION #{o.history_table}_update() IS '#{comment}';
+          COMMENT ON FUNCTION #{o.strata_table}_update() IS '#{comment}';
 
-          CREATE OR REPLACE TRIGGER history_update AFTER UPDATE ON #{quote_table_name(o.table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_update();
+          CREATE OR REPLACE TRIGGER strata_update AFTER UPDATE ON #{quote_table_name(o.table)}
+            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_update();
         SQL
       end
 
-      def visit_HistoryDeleteTriggerDefinition(o)
+      def visit_StrataDeleteTriggerDefinition(o)
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.history_table}_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.strata_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
-              UPDATE #{quote_table_name(o.history_table)}
+              UPDATE #{quote_table_name(o.strata_table)}
               SET validity = tsrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
@@ -86,8 +86,8 @@ module HistoryTables
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER history_delete AFTER DELETE ON #{quote_table_name(o.table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.history_table}_delete();
+          CREATE OR REPLACE TRIGGER strata_delete AFTER DELETE ON #{quote_table_name(o.table)}
+            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_delete();
         SQL
       end
     end

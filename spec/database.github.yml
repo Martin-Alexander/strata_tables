@@ -1,6 +1,6 @@
 test:
   adapter: postgresql
-  database: history_tables_test
+  database: strata_tables_test
   username: runner
   password: ""
   host: localhost

@@ -2,23 +2,23 @@ module StrataTables
   module ActiveRecord
     module CommandRecorder
       def invert_create_strata_triggers(args)
-        strata_table, table, column_names = args
-        [:drop_strata_triggers, [strata_table, table, column_names]]
+        strata_table, table, columns = args
+        [:drop_strata_triggers, [strata_table, table, columns]]
       end
 
       def invert_drop_strata_triggers(args)
-        strata_table, table, column_names = args
-        [:create_strata_triggers, [strata_table, table, column_names]]
+        strata_table, table, columns = args
+        [:create_strata_triggers, [strata_table, table, columns]]
       end
 
       def invert_add_column_to_strata_triggers(args)
-        strata_table, table, column_name = args
-        [:remove_column_from_strata_triggers, [strata_table, table, column_name]]
+        strata_table, table, column = args
+        [:remove_column_from_strata_triggers, [strata_table, table, column]]
       end
 
       def invert_remove_column_from_strata_triggers(args)
-        strata_table, table, column_name = args
-        [:add_column_to_strata_triggers, [strata_table, table, column_name]]
+        strata_table, table, column = args
+        [:add_column_to_strata_triggers, [strata_table, table, column]]
       end
 
       def create_strata_triggers(*args, &block)

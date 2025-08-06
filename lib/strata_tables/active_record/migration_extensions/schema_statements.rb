@@ -1,36 +1,36 @@
 module StrataTables
   module ActiveRecord
     module SchemaStatements
-      def create_strata_triggers(strata_table, table, column_names)
+      def create_strata_triggers(strata_table, table, columns)
         schema_creation = SchemaCreation.new(self)
 
-        trigger_set = StrataTriggerSetDefinition.new(strata_table, table, column_names)
+        trigger_set = StrataTriggerSetDefinition.new(strata_table, table, columns)
 
         execute schema_creation.accept(trigger_set)
       end
 
-      def drop_strata_triggers(strata_table, table = nil, column_names = nil)
+      def drop_strata_triggers(strata_table, table = nil, columns = nil)
         execute "DROP FUNCTION #{strata_table}_insert() CASCADE"
         execute "DROP FUNCTION #{strata_table}_update() CASCADE"
         execute "DROP FUNCTION #{strata_table}_delete() CASCADE"
       end
 
-      def add_column_to_strata_triggers(strata_table, table, column_name)
+      def add_column_to_strata_triggers(strata_table, table, column)
         schema_creation = SchemaCreation.new(self)
 
         trigger_set = strata_trigger_set(strata_table, table)
 
-        trigger_set.add_column(column_name)
+        trigger_set.add_column(column)
 
         execute schema_creation.accept(trigger_set)
       end
 
-      def remove_column_from_strata_triggers(strata_table, table, column_name)
+      def remove_column_from_strata_triggers(strata_table, table, column)
         schema_creation = SchemaCreation.new(self)
 
         trigger_set = strata_trigger_set(strata_table, table)
 
-        trigger_set.remove_column(column_name)
+        trigger_set.remove_column(column)
 
         execute schema_creation.accept(trigger_set)
       end
@@ -40,7 +40,7 @@ module StrataTables
       def strata_trigger_set(strata_table, table)
         sql = <<~SQL.squish
           SELECT 
-            (obj_description(p.oid)::json)->>'column_names' as column_names
+            (obj_description(p.oid)::json)->>'columns' as columns
           FROM pg_proc p 
           WHERE
             p.proname = '#{strata_table}_insert'
@@ -50,9 +50,9 @@ module StrataTables
 
         return nil if results.count == 0
 
-        column_names = JSON.parse(results[0]["column_names"]).map(&:to_sym) if results[0]["column_names"]
+        columns = JSON.parse(results[0]["columns"]).map(&:to_sym) if results[0]["columns"]
 
-        StrataTriggerSetDefinition.new(strata_table, table, column_names)
+        StrataTriggerSetDefinition.new(strata_table, table, columns)
       end
     end
   end

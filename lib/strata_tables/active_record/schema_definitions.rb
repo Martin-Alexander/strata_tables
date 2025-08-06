@@ -8,9 +8,9 @@ module StrataTables
         @table = table
         @column_names = column_names
 
-        @insert_trigger = StrataInsertTriggerDefinition.new(strata_table, table, column_names)
-        @update_trigger = StrataUpdateTriggerDefinition.new(strata_table, table, column_names)
-        @delete_trigger = StrataDeleteTriggerDefinition.new(strata_table, table)
+        @insert_trigger = InsertStrataTriggerDefinition.new(strata_table, table, column_names)
+        @update_trigger = UpdateStrataTriggerDefinition.new(strata_table, table, column_names)
+        @delete_trigger = DeleteStrataTriggerDefinition.new(strata_table, table)
       end
 
       def add_column(column_name)
@@ -22,10 +22,10 @@ module StrataTables
       end
     end
 
-    StrataInsertTriggerDefinition = Struct.new(:strata_table, :table, :column_names)
+    InsertStrataTriggerDefinition = Struct.new(:strata_table, :table, :column_names)
 
-    StrataUpdateTriggerDefinition = Struct.new(:strata_table, :table, :column_names)
+    UpdateStrataTriggerDefinition = Struct.new(:strata_table, :table, :column_names)
 
-    StrataDeleteTriggerDefinition = Struct.new(:strata_table, :table)
+    DeleteStrataTriggerDefinition = Struct.new(:strata_table, :table)
   end
 end

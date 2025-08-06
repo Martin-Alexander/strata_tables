@@ -22,9 +22,9 @@ RSpec.describe "migrations for strata triggers" do
       it "creates strata triggers" do
         migration.migrate(:up)
 
-        expect(connection).to have_table(:books).with_trigger(:strata_insert)
-        expect(connection).to have_table(:books).with_trigger(:strata_update)
-        expect(connection).to have_table(:books).with_trigger(:strata_delete)
+        expect(connection).to have_table(:books).with_trigger(:on_insert_strata_trigger)
+        expect(connection).to have_table(:books).with_trigger(:on_update_strata_trigger)
+        expect(connection).to have_table(:books).with_trigger(:on_delete_strata_trigger)
         expect(connection).to have_function(:strata_books_insert)
         expect(connection).to have_function(:strata_books_update)
         expect(connection).to have_function(:strata_books_delete)
@@ -36,9 +36,9 @@ RSpec.describe "migrations for strata triggers" do
         migration.migrate(:up)
         migration.migrate(:down)
 
-        expect(connection).not_to have_table(:books).with_trigger(:strata_insert)
-        expect(connection).not_to have_table(:books).with_trigger(:strata_update)
-        expect(connection).not_to have_table(:books).with_trigger(:strata_delete)
+        expect(connection).not_to have_table(:books).with_trigger(:on_insert_strata_trigger)
+        expect(connection).not_to have_table(:books).with_trigger(:on_update_strata_trigger)
+        expect(connection).not_to have_table(:books).with_trigger(:on_delete_strata_trigger)
         expect(connection).not_to have_function(:strata_books_insert)
         expect(connection).not_to have_function(:strata_books_update)
         expect(connection).not_to have_function(:strata_books_delete)

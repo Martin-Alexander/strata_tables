@@ -11,7 +11,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
 
   describe "#accept" do
     let(:insert_trigger_definition) do
-      StrataTables::ActiveRecord::StrataInsertTriggerDefinition.new(
+      StrataTables::ActiveRecord::InsertStrataTriggerDefinition.new(
         :strata_books,
         :books,
         [:id, :title, :pages, :published_at]
@@ -19,7 +19,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
     end
 
     let(:update_trigger_definition) do
-      StrataTables::ActiveRecord::StrataUpdateTriggerDefinition.new(
+      StrataTables::ActiveRecord::UpdateStrataTriggerDefinition.new(
         :strata_books,
         :books,
         [:id, :title, :pages, :published_at]
@@ -27,13 +27,13 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
     end
 
     let(:delete_trigger_definition) do
-      StrataTables::ActiveRecord::StrataDeleteTriggerDefinition.new(
+      StrataTables::ActiveRecord::DeleteStrataTriggerDefinition.new(
         :strata_books,
         :books
       )
     end
 
-    context "given StrataInsertTriggerDefinition" do
+    context "given InsertStrataTriggerDefinition" do
       let(:object) { insert_trigger_definition }
 
       it "returns the correct SQL" do
@@ -49,9 +49,9 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION strata_books_insert() IS '{"column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION strata_books_insert() IS '{"columns":["id","title","pages","published_at"]}';
 
-          CREATE OR REPLACE TRIGGER strata_insert AFTER INSERT ON "books"
+          CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON "books"
             FOR EACH ROW EXECUTE PROCEDURE strata_books_insert();
         SQL
       end
@@ -69,7 +69,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
       # end
     end
 
-    context "given StrataUpdateTriggerDefinition" do
+    context "given UpdateStrataTriggerDefinition" do
       let(:object) { update_trigger_definition }
 
       it "returns the correct SQL" do
@@ -95,9 +95,9 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          COMMENT ON FUNCTION strata_books_update() IS '{"column_names":["id","title","pages","published_at"]}';
+          COMMENT ON FUNCTION strata_books_update() IS '{"columns":["id","title","pages","published_at"]}';
 
-          CREATE OR REPLACE TRIGGER strata_update AFTER UPDATE ON "books"
+          CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE strata_books_update();
         SQL
       end
@@ -115,7 +115,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
       # end
     end
 
-    context "given StrataDeleteTriggerDefinition" do
+    context "given DeleteStrataTriggerDefinition" do
       let(:object) { delete_trigger_definition }
 
       it "returns the correct SQL" do
@@ -134,7 +134,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER strata_delete AFTER DELETE ON "books"
+          CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON "books"
             FOR EACH ROW EXECUTE PROCEDURE strata_books_delete();
         SQL
       end

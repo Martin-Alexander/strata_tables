@@ -14,9 +14,9 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
       expect(connection).to have_function(:strata_books_insert)
       expect(connection).to have_function(:strata_books_update)
       expect(connection).to have_function(:strata_books_delete)
-      expect(connection).to have_table(:books).with_trigger(:strata_insert)
-      expect(connection).to have_table(:books).with_trigger(:strata_update)
-      expect(connection).to have_table(:books).with_trigger(:strata_delete)
+      expect(connection).to have_table(:books).with_trigger(:on_insert_strata_trigger)
+      expect(connection).to have_table(:books).with_trigger(:on_update_strata_trigger)
+      expect(connection).to have_table(:books).with_trigger(:on_delete_strata_trigger)
     end
 
     # context "when the strata table does not exist" do
@@ -54,9 +54,9 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
       expect(connection).not_to have_function(:strata_books_insert)
       expect(connection).not_to have_function(:strata_books_update)
       expect(connection).not_to have_function(:strata_books_delete)
-      expect(connection).not_to have_table(:books).with_trigger(:strata_insert)
-      expect(connection).not_to have_table(:books).with_trigger(:strata_update)
-      expect(connection).not_to have_table(:books).with_trigger(:strata_delete)
+      expect(connection).not_to have_table(:books).with_trigger(:on_insert_strata_trigger)
+      expect(connection).not_to have_table(:books).with_trigger(:on_update_strata_trigger)
+      expect(connection).not_to have_table(:books).with_trigger(:on_delete_strata_trigger)
     end
 
     describe "inverse" do

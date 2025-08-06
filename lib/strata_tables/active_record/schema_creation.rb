@@ -19,9 +19,9 @@ module StrataTables
       end
 
       def visit_InsertStrataTriggerDefinition(o)
-        fields = o.column_names.join(", ")
-        values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
-        comment = {columns: o.column_names}.to_json
+        fields = o.columns.join(", ")
+        values = o.columns.map { |c| "NEW.#{c}" }.join(", ")
+        comment = {columns: o.columns}.to_json
 
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.strata_table}_insert() RETURNS TRIGGER AS $$
@@ -35,15 +35,15 @@ module StrataTables
 
           COMMENT ON FUNCTION #{o.strata_table}_insert() IS '#{comment}';
 
-          CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON #{quote_table_name(o.table)}
+          CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON #{quote_table_name(o.source_table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_insert();
         SQL
       end
 
       def visit_UpdateStrataTriggerDefinition(o)
-        fields = o.column_names.join(", ")
-        values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
-        comment = {columns: o.column_names}.to_json
+        fields = o.columns.join(", ")
+        values = o.columns.map { |c| "NEW.#{c}" }.join(", ")
+        comment = {columns: o.columns}.to_json
 
         <<-SQL.squish
           CREATE OR REPLACE FUNCTION #{o.strata_table}_update() RETURNS trigger AS $$
@@ -67,7 +67,7 @@ module StrataTables
 
           COMMENT ON FUNCTION #{o.strata_table}_update() IS '#{comment}';
 
-          CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON #{quote_table_name(o.table)}
+          CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON #{quote_table_name(o.source_table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_update();
         SQL
       end
@@ -86,7 +86,7 @@ module StrataTables
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON #{quote_table_name(o.table)}
+          CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON #{quote_table_name(o.source_table)}
             FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_delete();
         SQL
       end

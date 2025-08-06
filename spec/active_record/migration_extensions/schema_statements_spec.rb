@@ -22,16 +22,16 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
     # context "when the strata table does not exist" do
     # end
 
-    # context "when the original table does not exist" do
+    # context "when the source table does not exist" do
     # end
 
     # context "when the strata table is not actually a strata table" do
     # end
 
-    # context "when the strata table and original table have different columns" do
+    # context "when the strata table and source table have different columns" do
     # end
 
-    # context "when the original table already has a strata trigger" do
+    # context "when the source table already has a strata trigger" do
     # end
 
     describe "inverse" do
@@ -78,8 +78,8 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
 
       trigger_set = connection.strata_trigger_set(:strata_books, :books)
 
-      expect(trigger_set.column_names).to include(:author_id)
-      expect(trigger_set.column_names).to include(:published_at)
+      expect(trigger_set.columns).to include(:author_id)
+      expect(trigger_set.columns).to include(:published_at)
     end
 
     # describe "inverse" do
@@ -94,8 +94,8 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
 
       trigger_set = connection.strata_trigger_set(:strata_books, :books)
 
-      expect(trigger_set.column_names).not_to include(:author_id)
-      expect(trigger_set.column_names).to include(:published_at)
+      expect(trigger_set.columns).not_to include(:author_id)
+      expect(trigger_set.columns).to include(:published_at)
     end
 
     # describe "inverse" do

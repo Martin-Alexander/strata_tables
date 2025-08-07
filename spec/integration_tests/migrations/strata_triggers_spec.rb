@@ -13,7 +13,7 @@ RSpec.describe "migrations for strata triggers" do
     let(:migration) do
       Class.new(ActiveRecord::Migration[8.0]) do
         def change
-          create_strata_triggers(:strata_books, :books, [:id, :title, :pages])
+          create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages])
         end
       end.new
     end

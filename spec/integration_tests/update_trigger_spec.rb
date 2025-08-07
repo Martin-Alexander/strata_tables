@@ -4,11 +4,11 @@ RSpec.describe "update trigger" do
   let(:conn) { ActiveRecord::Base.connection }
 
   before do
-    conn.create_strata_triggers(:strata_books, :books, [:id, :title, :pages])
+    conn.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages])
   end
 
   after do
-    conn.drop_strata_triggers(:strata_books)
+    conn.drop_strata_triggers(:books, strata_table: :strata_books)
     DatabaseCleaner.clean_with :truncation
   end
 

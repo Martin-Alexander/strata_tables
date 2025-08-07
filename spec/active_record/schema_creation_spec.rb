@@ -12,24 +12,24 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
   describe "#accept" do
     let(:insert_trigger_definition) do
       StrataTables::ActiveRecord::InsertStrataTriggerDefinition.new(
-        :strata_books,
         :books,
+        :strata_books,
         [:id, :title, :pages, :published_at]
       )
     end
 
     let(:update_trigger_definition) do
       StrataTables::ActiveRecord::UpdateStrataTriggerDefinition.new(
-        :strata_books,
         :books,
+        :strata_books,
         [:id, :title, :pages, :published_at]
       )
     end
 
     let(:delete_trigger_definition) do
       StrataTables::ActiveRecord::DeleteStrataTriggerDefinition.new(
-        :strata_books,
-        :books
+        :books,
+        :strata_books
       )
     end
 
@@ -155,8 +155,8 @@ RSpec.describe StrataTables::ActiveRecord::SchemaCreation do
     context "given StrataTriggerSetDefinition" do
       let(:object) do
         StrataTables::ActiveRecord::StrataTriggerSetDefinition.new(
-          :strata_books,
           :books,
+          :strata_books,
           [:id, :title, :pages, :published_at]
         )
       end

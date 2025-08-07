@@ -4,11 +4,11 @@ RSpec.describe "delete trigger" do
   let(:connection) { ActiveRecord::Base.connection }
 
   before do
-    connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages])
+    connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages])
   end
 
   after do
-    connection.drop_strata_triggers(:strata_books)
+    connection.drop_strata_triggers(:books, strata_table: :strata_books)
     DatabaseCleaner.clean_with :truncation
   end
 

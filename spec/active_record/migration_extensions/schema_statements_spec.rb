@@ -9,7 +9,7 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
 
   describe "#create_strata_triggers" do
     it "creates an insert, update, and delete trigger" do
-      connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages, :published_at])
+      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
 
       expect(connection).to have_function(:strata_books_insert)
       expect(connection).to have_function(:strata_books_update)
@@ -38,18 +38,18 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
       it "can be inverted by CommandRecorder" do
         recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
 
-        inverse = recorder.inverse_of(:create_strata_triggers, [:strata_books, :books, [:id, :title, :pages]])
+        inverse = recorder.inverse_of(:create_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}])
 
-        expect(inverse).to eq([:drop_strata_triggers, [:strata_books, :books, [:id, :title, :pages]]])
+        expect(inverse).to eq([:drop_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}]])
       end
     end
   end
 
   describe "#drop_strata_triggers" do
     it "drops the insert, update, and delete triggers" do
-      connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages, :published_at])
+      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
 
-      connection.drop_strata_triggers(:strata_books)
+      connection.drop_strata_triggers(:books, strata_table: :strata_books)
 
       expect(connection).not_to have_function(:strata_books_insert)
       expect(connection).not_to have_function(:strata_books_update)
@@ -63,18 +63,18 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
       it "can be inverted by CommandRecorder" do
         recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
 
-        inverse = recorder.inverse_of(:drop_strata_triggers, [:strata_books, :books, [:id, :title, :pages]])
+        inverse = recorder.inverse_of(:drop_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}])
 
-        expect(inverse).to eq([:create_strata_triggers, [:strata_books, :books, [:id, :title, :pages]]])
+        expect(inverse).to eq([:create_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}]])
       end
     end
   end
 
   describe "#add_column_to_strata_triggers" do
     it "adds a column to the strata table" do
-      connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages, :published_at])
+      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
 
-      connection.add_column_to_strata_triggers(:strata_books, :books, :author_id)
+      connection.add_column_to_strata_triggers(:books, :author_id, strata_table: :strata_books)
 
       trigger_set = connection.strata_trigger_set(:strata_books, :books)
 
@@ -88,9 +88,9 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
 
   describe "#remove_column_from_strata_triggers" do
     it "removes a column from the strata table" do
-      connection.create_strata_triggers(:strata_books, :books, [:id, :title, :pages, :published_at])
+      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
 
-      connection.remove_column_from_strata_triggers(:strata_books, :books, :author_id)
+      connection.remove_column_from_strata_triggers(:books, :author_id, strata_table: :strata_books)
 
       trigger_set = connection.strata_trigger_set(:strata_books, :books)
 

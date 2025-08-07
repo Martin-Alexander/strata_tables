@@ -5,18 +5,26 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
     DatabaseCleaner.cleaning { example.run }
   end
 
-  let(:connection) { ActiveRecord::Base.connection }
+  subject { ActiveRecord::Base.connection }
 
   describe "#create_strata_triggers" do
-    it "creates an insert, update, and delete trigger" do
-      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
+    before { subject.create_strata_triggers(:books) }
 
-      expect(connection).to have_function(:strata_books_insert)
-      expect(connection).to have_function(:strata_books_update)
-      expect(connection).to have_function(:strata_books_delete)
-      expect(connection).to have_table(:books).with_trigger(:on_insert_strata_trigger)
-      expect(connection).to have_table(:books).with_trigger(:on_update_strata_trigger)
-      expect(connection).to have_table(:books).with_trigger(:on_delete_strata_trigger)
+    it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title pages published_at]) }
+    it { is_expected.to have_table(:books).with_strata_triggers }
+
+    context "when strata_table is provided" do
+      before { subject.create_strata_triggers(:books, strata_table: :history_books) }
+
+      it { is_expected.to have_strata_functions(:history_books).for_columns(%i[id title pages published_at]) }
+      it { is_expected.to have_table(:books).with_strata_triggers }
+    end
+
+    context "when column_names are provided" do
+      before { subject.create_strata_triggers(:books, column_names: %i[id title]) }
+
+      it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title]) }
+      it { is_expected.to have_table(:books).with_strata_triggers }
     end
 
     # context "when the strata table does not exist" do
@@ -33,73 +41,62 @@ RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
 
     # context "when the source table already has a strata trigger" do
     # end
-
-    describe "inverse" do
-      it "can be inverted by CommandRecorder" do
-        recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
-
-        inverse = recorder.inverse_of(:create_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}])
-
-        expect(inverse).to eq([:drop_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}]])
-      end
-    end
   end
 
   describe "#drop_strata_triggers" do
-    it "drops the insert, update, and delete triggers" do
-      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
-
-      connection.drop_strata_triggers(:books, strata_table: :strata_books)
-
-      expect(connection).not_to have_function(:strata_books_insert)
-      expect(connection).not_to have_function(:strata_books_update)
-      expect(connection).not_to have_function(:strata_books_delete)
-      expect(connection).not_to have_table(:books).with_trigger(:on_insert_strata_trigger)
-      expect(connection).not_to have_table(:books).with_trigger(:on_update_strata_trigger)
-      expect(connection).not_to have_table(:books).with_trigger(:on_delete_strata_trigger)
+    before do
+      subject.create_strata_triggers(:books)
+      subject.drop_strata_triggers(:books)
     end
 
-    describe "inverse" do
-      it "can be inverted by CommandRecorder" do
-        recorder = ActiveRecord::Migration::CommandRecorder.new(connection)
+    it { is_expected.not_to have_strata_functions(:strata_books) }
+    it { is_expected.not_to have_table(:books).with_strata_triggers }
 
-        inverse = recorder.inverse_of(:drop_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}])
-
-        expect(inverse).to eq([:create_strata_triggers, [:books, {strata_table: :strata_books, columns: [:id, :title, :pages]}]])
+    context "when strata_table is provided" do
+      before do
+        subject.create_strata_triggers(:books, strata_table: :history_books)
+        subject.drop_strata_triggers(:books, strata_table: :history_books)
       end
+
+      it { is_expected.not_to have_strata_functions(:history_books) }
+      it { is_expected.not_to have_table(:books).with_strata_triggers }
     end
   end
 
   describe "#add_column_to_strata_triggers" do
-    it "adds a column to the strata table" do
-      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
-
-      connection.add_column_to_strata_triggers(:books, :author_id, strata_table: :strata_books)
-
-      trigger_set = connection.strata_trigger_set(:strata_books, :books)
-
-      expect(trigger_set.columns).to include(:author_id)
-      expect(trigger_set.columns).to include(:published_at)
+    before do
+      subject.create_strata_triggers(:books)
+      subject.add_column_to_strata_triggers(:books, :author_id)
     end
 
-    # describe "inverse" do
-    # end
+    it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title pages published_at author_id]) }
+
+    context "when strata_table is provided" do
+      before do
+        subject.create_strata_triggers(:books, strata_table: :history_books)
+        subject.add_column_to_strata_triggers(:books, :author_id, strata_table: :history_books)
+      end
+
+      it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title pages published_at author_id]) }
+    end
   end
 
   describe "#remove_column_from_strata_triggers" do
-    it "removes a column from the strata table" do
-      connection.create_strata_triggers(:books, strata_table: :strata_books, columns: [:id, :title, :pages, :published_at])
-
-      connection.remove_column_from_strata_triggers(:books, :author_id, strata_table: :strata_books)
-
-      trigger_set = connection.strata_trigger_set(:strata_books, :books)
-
-      expect(trigger_set.columns).not_to include(:author_id)
-      expect(trigger_set.columns).to include(:published_at)
+    before do
+      subject.create_strata_triggers(:books)
+      subject.remove_column_from_strata_triggers(:books, :published_at)
     end
 
-    # describe "inverse" do
-    # end
+    it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title pages]) }
+
+    context "when strata_table is provided" do
+      before do
+        subject.create_strata_triggers(:books, strata_table: :history_books)
+        subject.remove_column_from_strata_triggers(:books, :published_at, strata_table: :history_books)
+      end
+
+      it { is_expected.to have_strata_functions(:strata_books).for_columns(%i[id title pages]) }
+    end
   end
 
   # describe "#strata_triggers" do

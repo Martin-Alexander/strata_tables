@@ -1,8 +1,8 @@
 require "rspec/expectations"
 
 RSpec::Matchers.define :have_table do |table|
-  chain :with_trigger do |trigger_name|
-    @with_trigger = have_trigger(table, trigger_name)
+  chain :with_strata_triggers do
+    @with_strata_triggers = have_strata_triggers(table)
   end
 
   chain :with_columns do |columns|
@@ -13,7 +13,7 @@ RSpec::Matchers.define :have_table do |table|
     return false unless connection.table_exists?(table)
 
     return @with_columns.matches?(connection) if @with_columns
-    return @with_trigger.matches?(connection) if @with_trigger
+    return @with_strata_triggers.matches?(connection) if @with_strata_triggers
 
     true
   end
@@ -22,7 +22,7 @@ RSpec::Matchers.define :have_table do |table|
     description = ["have table '#{table}'"]
 
     description << @with_columns.description if @with_columns
-    description << @with_trigger.description if @with_trigger
+    description << @with_strata_triggers.description if @with_strata_triggers
 
     description.join(", ")
   end
@@ -31,7 +31,7 @@ RSpec::Matchers.define :have_table do |table|
     description = ["expected db to have table '#{table}'"]
 
     description << @with_columns.failure_message if @with_columns
-    description << @with_trigger.failure_message if @with_trigger
+    description << @with_strata_triggers.failure_message if @with_strata_triggers
 
     description.join(", ")
   end
@@ -40,7 +40,7 @@ RSpec::Matchers.define :have_table do |table|
     description = ["expected db to not have table '#{table}'"]
 
     description << @with_columns.failure_message_when_negated if @with_columns
-    description << @with_trigger.failure_message_when_negated if @with_trigger
+    description << @with_strata_triggers.failure_message_when_negated if @with_strata_triggers
 
     description.join(", ")
   end

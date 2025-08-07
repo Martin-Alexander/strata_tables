@@ -7,7 +7,6 @@ require "strata_tables"
 
 require "support/matchers/be_tsrange"
 require "support/matchers/have_columns"
-require "support/matchers/have_function"
 require "support/matchers/have_strata_functions"
 require "support/matchers/have_strata_triggers"
 require "support/matchers/have_table"

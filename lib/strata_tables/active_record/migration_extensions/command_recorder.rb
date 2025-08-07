@@ -2,8 +2,8 @@ module StrataTables
   module ActiveRecord
     module CommandRecorder
       {
-        create_strata_triggers: :drop_strata_triggers,
-        add_column_to_strata_triggers: :remove_column_from_strata_triggers,
+        create_strata_table: :drop_strata_table,
+        add_strata_column: :remove_strata_column,
       }.each do |method, inverse|
         [[method, inverse], [inverse, method]].each do |method, inverse|
           class_eval <<-EOV, __FILE__, __LINE__ + 1

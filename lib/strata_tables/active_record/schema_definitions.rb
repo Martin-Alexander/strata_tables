@@ -12,14 +12,6 @@ module StrataTables
         @update_trigger = UpdateStrataTriggerDefinition.new(source_table, strata_table, column_names)
         @delete_trigger = DeleteStrataTriggerDefinition.new(source_table, strata_table)
       end
-
-      def add_column(column)
-        @column_names << column
-      end
-
-      def remove_column(column)
-        @column_names.delete(column)
-      end
     end
 
     InsertStrataTriggerDefinition = Struct.new(:source_table, :strata_table, :column_names)

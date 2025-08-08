@@ -29,8 +29,9 @@ RSpec.describe "migrations for strata triggers" do
       it "creates strata table" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:books).with_strata_triggers
-        expect(conn).to have_strata_functions(:strata_books)
+        expect(conn).to have_table(:strata_books)
+
+        expect(:books).to have_strata_table
       end
     end
 
@@ -40,8 +41,12 @@ RSpec.describe "migrations for strata triggers" do
       it "drops strata table" do
         migration.migrate(:down)
 
-        expect(conn).not_to have_table(:books).with_strata_triggers
-        expect(conn).not_to have_strata_functions(:strata_books)
+        expect(conn).not_to have_table(:strata_books)
+
+        expect(conn)
+          .to not_have_function(:strata_books_insert)
+          .and not_have_function(:strata_books_update)
+          .and not_have_function(:strata_books_delete)
       end
     end
   end
@@ -61,8 +66,7 @@ RSpec.describe "migrations for strata triggers" do
       it "drops strata table" do
         migration.migrate(:up)
 
-        expect(conn).not_to have_table(:books).with_strata_triggers
-        expect(conn).not_to have_strata_functions(:strata_books)
+        expect(conn).not_to have_table(:strata_books)
       end
     end
 
@@ -70,8 +74,9 @@ RSpec.describe "migrations for strata triggers" do
       it "creates strata table" do
         migration.migrate(:down)
 
-        expect(conn).to have_table(:books).with_strata_triggers
-        expect(conn).to have_strata_functions(:strata_books)
+        expect(conn).to have_table(:strata_books)
+
+        expect(:books).to have_strata_table
       end
     end
   end
@@ -80,46 +85,31 @@ RSpec.describe "migrations for strata triggers" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[8.0]) do
         def change
-          add_strata_column(:books, :author_id)
+          add_strata_column(:books, :subtitle, :string)
         end
       end
     end
 
     before do
       conn.create_strata_table(:books)
-      conn.add_column :books, :author_id, :integer, null: false
+      conn.add_column :books, :subtitle, :string
     end
 
     describe "#up" do
       it "adds strata column" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:strata_books).with_columns([
-          [:hid, :integer],
-          [:id, :integer],
-          [:title, :string],
-          [:pages, :integer],
-          [:published_at, :date],
-          [:validity, :tsrange],
-          [:author_id, :integer]
-        ])
+        expect(:strata_books).to have_column(:subtitle, :string)
       end
     end
 
     describe "#down" do
-      before { conn.add_strata_column(:books, :author_id) }
+      before { conn.add_strata_column(:books, :subtitle, :string) }
 
       it "removes strata column" do
         migration.migrate(:down)
 
-        expect(conn).to have_table(:strata_books).with_columns([
-          [:hid, :integer],
-          [:id, :integer],
-          [:title, :string],
-          [:pages, :integer],
-          [:published_at, :date],
-          [:validity, :tsrange]
-        ])
+        expect(:strata_books).not_to have_column(:subtitle, :string)
       end
     end
   end
@@ -128,7 +118,7 @@ RSpec.describe "migrations for strata triggers" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[8.0]) do
         def change
-          remove_strata_column(:books, :title)
+          remove_strata_column(:books, :title, :string)
         end
       end
     end
@@ -139,30 +129,17 @@ RSpec.describe "migrations for strata triggers" do
       it "removes strata column" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:strata_books).with_columns([
-          [:hid, :integer],
-          [:id, :integer],
-          [:pages, :integer],
-          [:published_at, :date],
-          [:validity, :tsrange]
-        ])
+        expect(:strata_books).not_to have_column(:title, :string)
       end
     end
 
     describe "#down" do
-      before { conn.remove_strata_column(:books, :title) }
+      before { conn.remove_strata_column(:books, :title, :string) }
 
       it "adds strata column" do
         migration.migrate(:down)
 
-        expect(conn).to have_table(:strata_books).with_columns([
-          [:hid, :integer],
-          [:id, :integer],
-          [:title, :string],
-          [:pages, :integer],
-          [:published_at, :date],
-          [:validity, :tsrange]
-        ])
+        expect(:strata_books).to have_column(:title, :string)
       end
     end
   end

@@ -4,9 +4,21 @@ module StrataTables
       def create_strata_table(source_table)
         source_columns = columns(source_table)
 
-        create_table :strata_books, primary_key: :hid do |t|
+        strata_table = "strata_#{source_table}"
+
+        create_table strata_table, primary_key: :hid do |t|
           source_columns.each do |column|
-            t.send(column.type, column.name)
+            t.send(
+              column.type,
+              column.name,
+              comment: column.comment,
+              collation: column.collation,
+              default: column.default,
+              limit: column.limit,
+              null: column.null,
+              precision: column.precision,
+              scale: column.scale
+            )
           end
 
           t.tsrange :validity, null: false
@@ -16,24 +28,26 @@ module StrataTables
       end
 
       def drop_strata_table(source_table)
-        drop_table :strata_books
+        strata_table = "strata_#{source_table}"
+
+        drop_table strata_table
 
         drop_strata_triggers(source_table)
       end
 
-      def add_strata_column(source_table, column_name)
-        source_columns = columns(source_table)
+      def add_strata_column(source_table, column_name, type, **options)
+        strata_table = "strata_#{source_table}"
 
-        new_column = source_columns.find { |c| c.name == column_name.to_s }
-
-        add_column :strata_books, new_column.name, new_column.type
+        add_column strata_table, column_name, type, **options
 
         drop_strata_triggers(source_table)
         create_strata_triggers(source_table)
       end
 
-      def remove_strata_column(source_table, column_name)
-        remove_column :strata_books, column_name
+      def remove_strata_column(source_table, column_name, type = nil, **options)
+        strata_table = "strata_#{source_table}"
+
+        remove_column strata_table, column_name, type, **options
 
         drop_strata_triggers(source_table)
         create_strata_triggers(source_table)
@@ -44,8 +58,6 @@ module StrataTables
 
         strata_table = "strata_#{source_table}"
         column_names = columns(source_table).map(&:name)
-
-        # raise ArgumentError, "Table '#{strata_table}' does not exist" unless table_exists?(strata_table)
 
         trigger_set = StrataTriggerSetDefinition.new(source_table, strata_table, column_names)
 

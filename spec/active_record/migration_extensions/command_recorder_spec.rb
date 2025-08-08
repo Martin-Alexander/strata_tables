@@ -22,17 +22,17 @@ RSpec.describe StrataTables::ActiveRecord::CommandRecorder do
 
     context "given a add_strata_column command" do
       it "returns a remove_strata_column command" do
-        inverse = recorder.inverse_of(:add_strata_column, [:books, :author_id])
+        inverse = recorder.inverse_of(:add_strata_column, [:books, :author_id, :integer])
 
-        expect(inverse).to eq([:remove_strata_column, [:books, :author_id]])
+        expect(inverse).to eq([:remove_strata_column, [:books, :author_id, :integer]])
       end
     end
 
     context "given a remove_strata_column command" do
       it "returns a add_strata_column command" do
-        inverse = recorder.inverse_of(:remove_strata_column, [:books, :author_id])
+        inverse = recorder.inverse_of(:remove_strata_column, [:books, :author_id, :integer])
 
-        expect(inverse).to eq([:add_strata_column, [:books, :author_id]])
+        expect(inverse).to eq([:add_strata_column, [:books, :author_id, :integer]])
       end
     end
   end

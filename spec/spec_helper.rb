@@ -1,4 +1,5 @@
 require "active_record"
+require "active_model"
 require "database_cleaner/active_record"
 require "yaml"
 require "byebug"
@@ -6,12 +7,16 @@ require "byebug"
 require "strata_tables"
 
 require "support/matchers/be_tsrange"
-require "support/matchers/have_columns"
-require "support/matchers/have_strata_functions"
-require "support/matchers/have_strata_triggers"
+require "support/matchers/have_strata_table"
+require "support/matchers/have_column"
+require "support/matchers/have_function"
 require "support/matchers/have_table"
+require "support/matchers/have_trigger"
+
 require "support/transaction_helper"
 require "support/ts_range"
+
+require "support/models/book"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
@@ -31,5 +36,9 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+
+  def conn
+    ActiveRecord::Base.connection
   end
 end

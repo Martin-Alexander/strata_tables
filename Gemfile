@@ -6,7 +6,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "database_cleaner-active_record"
-gem "byebug"
+gem "debug"
 gem "rails"
 gem "rake"
 gem "rspec"

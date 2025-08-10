@@ -1,8 +1,8 @@
 require "active_record"
 require "active_model"
 require "database_cleaner/active_record"
+require "debug"
 require "yaml"
-require "byebug"
 
 require "strata_tables"
 
@@ -17,6 +17,11 @@ require "support/transaction_helper"
 require "support/ts_range"
 
 require "support/models/book"
+require "support/models/user"
+require "support/models/product"
+require "support/models/product_category"
+require "support/models/promo"
+require "support/models/order_line_item"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]

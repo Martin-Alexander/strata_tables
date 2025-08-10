@@ -9,6 +9,7 @@ task default: %i[spec standard]
 
 require "active_record"
 require "yaml"
+require_relative "lib/strata_tables"
 
 namespace :db do
   desc "Create test database"

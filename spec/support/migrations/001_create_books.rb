@@ -1,4 +1,4 @@
-class CreateBooks < ActiveRecord::Migration[7.0]
+class CreateBooks < ActiveRecord::Migration[8.0]
   def change
     create_table(:authors) do |t|
       t.string :name

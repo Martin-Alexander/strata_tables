@@ -19,9 +19,9 @@ require "support/ts_range"
 require "support/models/book"
 require "support/models/user"
 require "support/models/product"
-require "support/models/product_category"
+require "support/models/category"
 require "support/models/promo"
-require "support/models/order_line_item"
+require "support/models/line_item"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]

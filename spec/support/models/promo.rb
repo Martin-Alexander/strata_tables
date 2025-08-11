@@ -1,13 +1,16 @@
 class Promo < ActiveRecord::Base
-  has_many :order_line_items
-
-  has_many :history, foreign_key: :id, class_name: "HistoryPromo"
+  has_many :line_items
 end
 
-class HistoryPromo < ActiveRecord::Base
+class Promo::Version < Promo
   self.table_name = "strata_promos"
+  self.primary_key = :hid
 
-  def temporal_id
-    self[:id]
+  has_many :line_item_versions, primary_key: :id, foreign_key: :promo_id, class_name: "LineItem::Version"
+
+  def line_items_at(time)
+    raise ArgumentError, "outside the validity range" unless validity.cover?(time)
+
+    line_item_versions.where("validity @> ?::timestamp", time)
   end
 end

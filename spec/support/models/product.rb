@@ -1,61 +1,24 @@
 class Product < ActiveRecord::Base
-  has_many :order_line_items
-  belongs_to :product_category
-
-  has_many :history, foreign_key: :id, class_name: "HistoryProduct"
-
-  def self.as_of(time)
-    HistoryProduct.as_of(time)
-  end
-
-  def as_of(time)
-    history.as_of(time).first
-  end
+  belongs_to :category, optional: true
+  has_many :line_items
 end
 
-class HistoryProduct < ActiveRecord::Base
+class Product::Version < Product
   self.table_name = "strata_products"
   self.primary_key = :hid
 
-  scope :as_of, ->(time) do
-    if time.is_a?(Range)
-      where("strata_products.validity && ?::timestamp", time)
-    else
-      where("strata_products.validity @> ?::timestamp", time)
-    end
+  has_many :category_versions, primary_key: :category_id, foreign_key: :id, class_name: "Category::Version"
+  has_many :line_item_versions, primary_key: :id, foreign_key: :product_id, class_name: "LineItem::Version"
+
+  def category_at(time)
+    raise ArgumentError, "outside the validity range" unless validity.cover?(time)
+
+    category_versions.find_by("validity @> ?::timestamp", time)
   end
 
-  def temporal_id
-    self[:id]
-  end
+  def line_items_at(time)
+    raise ArgumentError, "outside the validity range" unless validity.cover?(time)
 
-  def ur?
-    validity.begin.nil?
+    line_item_versions.where("validity @> ?::timestamp", time)
   end
-
-  def extant?
-    validity.end.nil?
-  end
-
-  def extinct?
-    validity.end.present?
-  end
-
-  belongs_to :temporal, foreign_key: :id, primary_key: :id, class_name: "Product", optional: true
-  belongs_to :temporal_product_category, foreign_key: :product_category_id, class_name: "ProductCategory", optional: true
-  has_many(
-    :product_categories,
-    ->(history_product) do
-      if history_product.extant?
-        where("validity && tsrange(?, NULL)", history_product.validity.begins)
-      else
-        where("validity && tsrange(?, ?)", history_product.validity.begin, history_product.validity.end)
-      end
-    end,
-    foreign_key: :id,
-    primary_key: :product_category_id,
-    class_name: "HistoryProductCategory"
-  )
-  # has_many :history
-  has_many :temporal_order_line_items, through: :temporal, source: :order_line_items, class_name: "OrderLineItem"
 end

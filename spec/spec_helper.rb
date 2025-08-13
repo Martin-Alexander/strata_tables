@@ -6,7 +6,6 @@ require "yaml"
 
 require "strata_tables"
 
-require "support/matchers/be_tsrange"
 require "support/matchers/have_strata_table"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
@@ -14,8 +13,8 @@ require "support/matchers/have_table"
 require "support/matchers/have_trigger"
 
 require "support/transaction_helper"
-require "support/ts_range"
 
+require "support/models/application_record"
 require "support/models/book"
 require "support/models/user"
 require "support/models/product"
@@ -23,7 +22,7 @@ require "support/models/category"
 require "support/models/promo"
 require "support/models/line_item"
 
-db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
 
@@ -45,5 +44,11 @@ RSpec.configure do |config|
 
   def conn
     ActiveRecord::Base.connection
+  end
+
+  def get_time
+    time = Time.current
+    truncated_usec = (time.usec / 1000) * 1000
+    Time.at(time.to_i, truncated_usec, :microsecond)
   end
 end

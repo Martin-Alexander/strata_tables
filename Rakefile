@@ -14,7 +14,7 @@ require_relative "lib/strata_tables"
 namespace :db do
   desc "Create test database"
   task :create do
-    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
     config = YAML.load_file(config_path)["test"]
     admin_config = config.merge("database" => "postgres")
 
@@ -24,7 +24,7 @@ namespace :db do
 
   desc "Drop test database"
   task :drop do
-    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
     config = YAML.load_file(config_path)["test"]
     admin_config = config.merge("database" => "postgres")
 
@@ -34,7 +34,7 @@ namespace :db do
 
   desc "Run migrations"
   task :migrate do
-    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
     config = YAML.load_file(config_path)["test"]
     ActiveRecord::Base.establish_connection(config)
 
@@ -48,7 +48,7 @@ namespace :db do
 
   desc "Rollback migrations"
   task :rollback do
-    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/database.yml" }
+    config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
     config = YAML.load_file(config_path)["test"]
     ActiveRecord::Base.establish_connection(config)
 

@@ -17,7 +17,7 @@ jobs:
           - '3.4.5'
 
     env:
-      DATABASE_CONFIG: spec/database.github.yml
+      DATABASE_CONFIG: spec/support/database.github.yml
 
     steps:
       - uses: actions/checkout@v4

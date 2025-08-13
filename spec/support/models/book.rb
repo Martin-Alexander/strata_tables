@@ -1,2 +1,2 @@
-class Book < ActiveRecord::Base
+class Book < ApplicationRecord
 end

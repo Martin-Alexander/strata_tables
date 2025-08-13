@@ -92,90 +92,23 @@ Category.all
 
 ### History
 
-Call `#history` to get its `Lifetime`. This represents the full history of a given record and contains all its versions
-and the time span in which it existed.
-
 ```ruby
-first_category.history
-# => #<Category::Lifetime item_id: 1, versions: 3, span: 2010-01-01 0:00...>
-```
-
-Versions have the primary key `hid`, and `validity` is the range of time the version was valid for. Ranges without an
-end indicate that the version is the current version.
-
-```ruby
-first_category.history.versions
-# => [
-#   #<Category::Version
-#     hid: 1,
-#     id: 1,
-#     name: "DVDs & VHS",
-#     parent_id: nil,
-#     validity: 2010-01-01 0:00...2010-01-01 2:00>,
-#   #<Category::Version
-#     hid: 2,
-#     id: 1,
-#     name: "Movies",
-#     parent_id: nil,
-#     validity: 2010-01-01 2:00...2010-01-01 6:00>,
-#   #<Category::Version
-#     hid: 4,
-#     id: 1,
-#     name: "Movies",
-#     parent_id: 2,
-#     validity: 2010-01-01 6:00...>,
-# ]
-```
-
-Passing a time into `#snapshot_at` will return a snapshot. These are like versions, but at a specific point of time
-within their validity range (passing in a time outside a version's validity range will raise an error).
-
-Although a version will, by definition, be the same at any point in its validity range, associated records can vary. So
-this is useful for exploring associations at a specific point in time.
-
-```ruby
-category_snapshot_1 = first_category.history.snapshot_at(t2)
+snapshot_at(t2) { Category::Snapshot.find(1) }
 # => #<Category::Snapshot
-#      at: "2010-01-01 2:00",
-#      hid: 1,
 #      id: 1,
 #      name: "DVDs & VHS",
 #      parent_id: nil,
 #      validity: 2010-01-01 0:00...2010-01-01 2:00>
 
-category_snapshot_1.products
+snapshot_at(t2) { Products::Snapshot.where(category_id: 1) }
 # => [
-#   #<Product::Snapshot
-#     at: "2010-01-01 2:00",
-#     hid: 1,
-#     id: 1,
-#     name: "Titanic",
-#     price: 799,
-#     category_id 1,
-#     validity: 2010-01-01 1:00...2010-01-01 7:00>
+#      #<Product::Snapshot
+#        id: 1,
+#        name: "Titanic",
+#        price: 799,
+#        category_id 1,
+#        validity: 2010-01-01 1:00...2010-01-01 7:00>
 # ]
-
-gattaca.history.snapshot_at(t5).category.parent
-# => nil
-
-gattaca.history.snapshot_at(t7).category.parent
-# => #<Category::Version hid: 5, id: 2, name: "Video", parent_id: nil, validity: 2010-01-01 5:00...>
-```
-
-Extinct records can be found by the ID they had when they existed.
-
-```ruby
-titanic_lifetime = Product::Lifetime.find(1)
-# => #<Product::Lifetime item_id: 1, versions 1, span: 2010-01-01 1:00...2010-01-01 7:00>
-
-titanic_lifetime.versions.first
-# => #<Product::Version
-#      hid: 1,
-#      id: 1,
-#      name: "Titanic",
-#      price: 799,
-#      category_id 1,
-#      validity: 2010-01-01 1:00...2010-01-01 7:00>
 ```
 
 ### Schema
@@ -188,7 +121,6 @@ CREATE TABLE public.categories (
 );
 
 CREATE TABLE public.strata_categories (
-    hid bigint NOT NULL,
     id bigint NOT NULL,
     name character varying NOT NULL,
     parent_id bigint,

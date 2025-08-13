@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::ActiveRecord::CommandRecorder do
+RSpec.describe StrataTables::CommandRecorder do
   let(:recorder) { ActiveRecord::Migration::CommandRecorder.new(ActiveRecord::Base.connection) }
 
   describe "#inverse_of" do

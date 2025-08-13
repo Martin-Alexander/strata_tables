@@ -12,8 +12,7 @@ RSpec::Matchers.define :have_strata_table do
   def correct_columns(table)
     strata_table = "strata_#{table}"
 
-    have_column(:hid, :integer).matches?(strata_table) &&
-      have_column(:id, :integer).matches?(strata_table) &&
+    have_column(:id, :integer).matches?(strata_table) &&
       have_column(:validity, :tsrange, null: false).matches?(strata_table)
   end
 

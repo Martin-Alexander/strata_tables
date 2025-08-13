@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::ActiveRecord::SchemaStatements do
+RSpec.describe StrataTables::SchemaStatements do
   around do |example|
     DatabaseCleaner.cleaning { example.run }
   end

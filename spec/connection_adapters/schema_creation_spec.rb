@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::SchemaCreation do
+RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
   around do |example|
     DatabaseCleaner.cleaning { example.run }
   end
@@ -11,7 +11,7 @@ RSpec.describe StrataTables::SchemaCreation do
 
   describe "#accept" do
     let(:insert_trigger_definition) do
-      StrataTables::InsertStrataTriggerDefinition.new(
+      StrataTables::ConnectionAdapters::InsertStrataTriggerDefinition.new(
         :books,
         :strata_books,
         [:id, :title, :pages, :published_at]
@@ -19,7 +19,7 @@ RSpec.describe StrataTables::SchemaCreation do
     end
 
     let(:update_trigger_definition) do
-      StrataTables::UpdateStrataTriggerDefinition.new(
+      StrataTables::ConnectionAdapters::UpdateStrataTriggerDefinition.new(
         :books,
         :strata_books,
         [:id, :title, :pages, :published_at]
@@ -27,7 +27,7 @@ RSpec.describe StrataTables::SchemaCreation do
     end
 
     let(:delete_trigger_definition) do
-      StrataTables::DeleteStrataTriggerDefinition.new(
+      StrataTables::ConnectionAdapters::DeleteStrataTriggerDefinition.new(
         :books,
         :strata_books
       )
@@ -114,7 +114,7 @@ RSpec.describe StrataTables::SchemaCreation do
 
     context "given StrataTriggerSetDefinition" do
       let(:object) do
-        StrataTables::StrataTriggerSetDefinition.new(
+        StrataTables::ConnectionAdapters::StrataTriggerSetDefinition.new(
           :books,
           :strata_books,
           [:id, :title, :pages, :published_at]

@@ -14,6 +14,8 @@ module StrataTables
         case macro
         when :has_many
           StrataTables::Reflection::HasManyReflection
+        when :has_one
+          StrataTables::Reflection::HasOneReflection
         when :belongs_to
           StrataTables::Reflection::BelongsToReflection
         else
@@ -29,6 +31,12 @@ module StrataTables
     end
 
     class HasManyReflection < ActiveRecord::Reflection::HasManyReflection
+      def klass
+        options[:klass]
+      end
+    end
+
+    class HasOneReflection < ActiveRecord::Reflection::HasOneReflection
       def klass
         options[:klass]
       end

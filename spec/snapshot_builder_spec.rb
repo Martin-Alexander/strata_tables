@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "#snapshot" do
+RSpec.describe StrataTables::SnapshotBuilder do
   after do
     DatabaseCleaner.clean_with :truncation
   end
@@ -81,6 +81,8 @@ RSpec.describe "#snapshot" do
   end
 
   describe "querying" do
+    let(:user) { User.new(first_name: "John", last_name: "Doe") }
+    let(:profile) { Profile.new(user: user, bio: "I am a profile") }
     let(:category) { Category.new(name: "Toys") }
     let(:product) { Product.new(name: "Lego", category: category, price: 100) }
     let(:line_item) { LineItem.new(product: product, quantity: 1) }
@@ -91,8 +93,10 @@ RSpec.describe "#snapshot" do
     before do
       category.save!
       t1
+      user.save!
       product.save!
       t2
+      profile.save!
       product.update!(name: "Lego 2", price: 200)
       line_item.save!
       category.update!(name: "Toys 2")
@@ -112,50 +116,46 @@ RSpec.describe "#snapshot" do
       end
     end
 
-    describe "associations" do
-      it "return snapshots" do
+    describe "has many" do
+      it "works as expected" do
         product_t2 = snapshot(Product, t2).first
+        product_t3 = snapshot(Product, t3).first
+
+        expect(product_t2.line_items.count).to eq(0)
+
+        expect(product_t3.line_items.count).to eq(1)
+        expect(product_t3.line_items.first).to be_a(LineItem)
+        expect(product_t3.line_items.first.class).to be < LineItem
+        expect(product_t3.line_items.first.product.name).to eq("Lego 2")
+      end
+    end
+
+    describe "belongs to" do
+      it "works as expected" do
+        product_t2 = snapshot(Product, t2).first
+        product_t3 = snapshot(Product, t3).first
 
         expect(product_t2.category).to be_a(Category)
         expect(product_t2.category.class).to be < Category
-        expect(product_t2.category.products.first).to be_a(Product)
-        expect(product_t2.category.products.first.class).to be < Product
+        expect(product_t2.category.name).to eq("Toys")
+        expect(product_t2.category.products.first.name).to eq("Lego")
+
+        expect(product_t3.category.name).to eq("Toys 2")
+        expect(product_t3.category.products.first.name).to eq("Lego 2")
       end
+    end
 
-      it "return snapshots at the given time" do
-        category_t2 = snapshot(Category, t2).first
-        category_t3 = snapshot(Category, t3).first
+    describe "has one" do
+      it "works as expected" do
+        user_t2 = snapshot(User, t2).first
+        user_t3 = snapshot(User, t3).first
 
-        expect(category_t2.products.first.name).to eq("Lego")
-        expect(category_t3.products.first.name).to eq("Lego 2")
-      end
+        expect(user_t2.profile).to be_nil
 
-      it "are chainable" do
-        product_t2 = snapshot(Category, t2).first.products.first
-        product_t3 = snapshot(Category, t3).first.products.first
-
-        expect(product_t2.line_items.count).to eq(0)
-        expect(product_t3.line_items.count).to eq(1)
-      end
-
-      describe "has many" do
-        it "works as expected" do
-          product_t2 = snapshot(Product, t2).first
-          product_t3 = snapshot(Product, t3).first
-
-          expect(product_t2.line_items.count).to eq(0)
-          expect(product_t3.line_items.count).to eq(1)
-        end
-      end
-
-      describe "belongs to" do
-        it "works as expected" do
-          product_t2 = snapshot(Product, t2).first
-          product_t3 = snapshot(Product, t3).first
-
-          expect(product_t2.category.name).to eq("Toys")
-          expect(product_t3.category.name).to eq("Toys 2")
-        end
+        expect(user_t3.profile).to be_a(Profile)
+        expect(user_t3.profile.class).to be < Profile
+        expect(user_t3.profile.bio).to eq("I am a profile")
+        expect(user_t3.profile.user).to eq(user_t3)
       end
     end
 

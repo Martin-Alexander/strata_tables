@@ -14,13 +14,7 @@ require "support/matchers/have_trigger"
 
 require "support/transaction_helper"
 
-require "support/models/application_record"
-require "support/models/book"
-require "support/models/user"
-require "support/models/product"
-require "support/models/category"
-require "support/models/promo"
-require "support/models/line_item"
+require "support/models"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]

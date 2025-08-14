@@ -3,7 +3,7 @@ module StrataTables
     module Builder
       class BelongsTo < ActiveRecord::Associations::Builder::BelongsTo
         def self.create_reflection(model, name, scope, options, &block)
-          raise ArgumentError, "association names must be a Symbol" unless name.kind_of?(Symbol)
+          raise ArgumentError, "association names must be a Symbol" unless name.is_a?(Symbol)
 
           validate_options(options)
 

@@ -1,5 +1,5 @@
 module StrataTables
-  class SnapshotterBuilder
+  class SnapshotBuilder
     def self.build(ar_class, time)
       _build(ar_class, time, {})
     end
@@ -89,10 +89,12 @@ module StrataTables
         reflection_builder = case association.macro
         when :has_many
           StrataTables::Associations::Builder::HasMany
+        when :has_one
+          StrataTables::Associations::Builder::HasOne
         when :belongs_to
           StrataTables::Associations::Builder::BelongsTo
         else
-          raise "Unsupported Macro: #{macro}"
+          raise "Unsupported Macro: #{association.macro}"
         end
 
         reflection = reflection_builder.build(*args)

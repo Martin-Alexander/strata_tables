@@ -1,7 +1,7 @@
 module StrataTables
   module Associations
     module Builder
-      class HasMany < ActiveRecord::Associations::Builder::HasMany
+      class HasOne < ActiveRecord::Associations::Builder::HasOne
         def self.create_reflection(model, name, scope, options, &block)
           raise ArgumentError, "association names must be a Symbol" unless name.is_a?(Symbol)
 

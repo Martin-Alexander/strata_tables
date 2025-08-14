@@ -4,7 +4,5 @@ class CreatePromos < ActiveRecord::Migration[7.0]
       t.string :name, null: false
       t.integer :discount_percentage, null: false
     end
-
-    create_strata_table :promos
   end
 end

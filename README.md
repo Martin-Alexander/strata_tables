@@ -75,41 +75,62 @@ titanic.destroy # too soon?
 # => #<Product id: 1, name: "Titanic", price: 799, category_id: 1>
 ```
 
-### Current State
-
-```ruby
-Product.all
-# => [
-    #<Product id: 2, name: "Gattaca", price: 299, category_id: 1>
-# ]
-
-Category.all
-# => [
-    #<Category id: 1, name: "Movies", parent_id: 2>,
-    #<Category id: 2, name: "Video", parent_id: nil>
-# ]
-```
-
 ### History
 
 ```ruby
-snapshot_at(t2) { Category::Snapshot.find(1) }
-# => #<Category::Snapshot
+movies_category = Category.find_by(name: "Movies")
+# => #<Category id: 1, name: "Movies", parent_id: 2>
+
+movies_category.products
+# => [#<Product id: 2, name: "Gattaca", price: 299, category_id: 1>]
+
+snapshot(Category, t2)
+# => CategorySnapshot@2010-01-01T02:00:00Z(id: integer, name: string, parent_id: integer, validity: tsrange)
+
+movies_category_t2 = snapshot(movies_category, t2)
+# => #<CategorySnapshot@2010-01-01T02:00:00Z
 #      id: 1,
 #      name: "DVDs & VHS",
 #      parent_id: nil,
-#      validity: 2010-01-01 0:00...2010-01-01 2:00>
+#      validity: 2010-01-01 0:01...2010-01-01 2:01>
 
-snapshot_at(t2) { Products::Snapshot.where(category_id: 1) }
+movies_category_t2.products
 # => [
-#      #<Product::Snapshot
+#      #<ProductSnapshot@2010-01-01T02:00:00Z
 #        id: 1,
 #        name: "Titanic",
 #        price: 799,
 #        category_id 1,
-#        validity: 2010-01-01 1:00...2010-01-01 7:00>
+#        validity: 2010-01-01 1:01...2010-01-01 7:01>
 # ]
+
+movies_category_t4 = snapshot(movies_category, t4)
+# => #<CategorySnapshot@2010-01-01T04:00:00Z
+#      id: 1,
+#      name: "Movies",
+#      parent_id: nil,
+#      validity: 2010-01-01 2:01...2010-01-01 6:01>
+
+movies_category_t4.products
+# => [
+#      #<ProductSnapshot@2010-01-01T04:00:00Z
+#        id: 1,
+#        name: "Titanic",
+#        price: 799,
+#        category_id 1,
+#        validity: 2010-01-01 1:01...2010-01-01 7:01>,
+#      #<ProductSnapshot@2010-01-01T04:00:00Z
+#        id: 2,
+#        name: "Gattaca",
+#        price: 799,
+#        category_id 1,
+#        validity: 2010-01-01 3:01...2010-01-01 4:01>
+# ]
+
+snapshot(Product, t4).where.not(price: 299).count
+# => 2
 ```
+
 
 ### Schema
 

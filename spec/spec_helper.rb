@@ -31,6 +31,7 @@ DatabaseCleaner.allow_remote_database_url = true
 
 RSpec.configure do |config|
   config.include TransactionHelper
+  config.include StrataTables
 
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"

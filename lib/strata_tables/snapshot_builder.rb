@@ -39,6 +39,10 @@ module StrataTables
           label
         end
 
+        def readonly?
+          true
+        end
+
         def label
           self.class.label
         end

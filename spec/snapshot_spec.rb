@@ -99,6 +99,12 @@ RSpec.describe "#snapshot" do
       t3
     end
 
+    describe "#readonly?" do
+      it "returns true" do
+        expect(snapshot(Product, get_time).first.readonly?).to be(true)
+      end
+    end
+
     describe "::all" do
       it "returns the snapshots at the given time" do
         expect(snapshot(Product, t1).all).to be_empty

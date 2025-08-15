@@ -2,10 +2,8 @@ module StrataTables
   module Reflection
     class << self
       def create(macro, name, scope, options, ar)
-        # reflection = reflection_class_for(macro).new(name, scope, options, ar)
-        # options[:through] ? ThroughReflection.new(reflection) : reflection
-
-        reflection_class_for(macro).new(name, scope, options, ar)
+        reflection = reflection_class_for(macro).new(name, scope, options, ar)
+        options[:through] ? StrataTables::Reflection::ThroughReflection.new(reflection) : reflection
       end
 
       private
@@ -37,6 +35,12 @@ module StrataTables
     end
 
     class HasOneReflection < ActiveRecord::Reflection::HasOneReflection
+      def klass
+        options[:klass]
+      end
+    end
+
+    class ThroughReflection < ActiveRecord::Reflection::ThroughReflection
       def klass
         options[:klass]
       end

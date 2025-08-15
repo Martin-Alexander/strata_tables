@@ -116,6 +116,38 @@ RSpec.describe StrataTables::SnapshotBuilder do
       end
     end
 
+    describe "::joins" do
+      it "works as expected" do
+        categories_t1 = snapshot(Category, t1).joins(:products)
+        categories_t2 = snapshot(Category, t2).joins(:products)
+
+        expect(categories_t1.count).to eq(0)
+        expect(categories_t2.count).to eq(1)
+      end
+    end
+
+    describe "::eager_load" do
+      it "works as expected" do
+        categories_t1 = snapshot(Category, t1).eager_load(:products)
+        categories_t2 = snapshot(Category, t2).eager_load(:products)
+
+        expect(categories_t1.count).to eq(1)
+        expect(categories_t2.count).to eq(1)
+        expect(categories_t2.first.products).to be_loaded
+      end
+    end
+
+    describe "::preload" do
+      it "works as expected" do
+        categories_t1 = snapshot(Category, t1).preload(:products)
+        categories_t2 = snapshot(Category, t2).preload(:products)
+
+        expect(categories_t1.count).to eq(1)
+        expect(categories_t2.count).to eq(1)
+        expect(categories_t2.first.products).to be_loaded
+      end
+    end
+
     describe "has many" do
       it "works as expected" do
         product_t2 = snapshot(Product, t2).first
@@ -159,35 +191,49 @@ RSpec.describe StrataTables::SnapshotBuilder do
       end
     end
 
-    describe "::joins" do
+    describe "has many through" do
       it "works as expected" do
-        categories_t1 = snapshot(Category, t1).joins(:products)
-        categories_t2 = snapshot(Category, t2).joins(:products)
+        category_t2 = snapshot(Category, t2).first
+        category_t3 = snapshot(Category, t3).first
 
-        expect(categories_t1.count).to eq(0)
-        expect(categories_t2.count).to eq(1)
+        expect(category_t2.line_items.count).to eq(0)
+
+        expect(category_t3.line_items.count).to eq(1)
+        expect(category_t3.line_items.first).to be_a(LineItem)
+        expect(category_t3.line_items.first.class).to be < LineItem
+        expect(category_t3.line_items.first.product.name).to eq("Lego 2")
       end
-    end
 
-    describe "::eager_load" do
-      it "works as expected" do
-        categories_t1 = snapshot(Category, t1).eager_load(:products)
-        categories_t2 = snapshot(Category, t2).eager_load(:products)
+      describe "::joins" do
+        it "works as expected" do
+          categories_t2 = snapshot(Category, t2).joins(:line_items)
+          categories_t3 = snapshot(Category, t3).joins(:line_items)
 
-        expect(categories_t1.count).to eq(1)
-        expect(categories_t2.count).to eq(1)
-        expect(categories_t2.first.products).to be_loaded
+          expect(categories_t2.count).to eq(0)
+          expect(categories_t3.count).to eq(1)
+        end
       end
-    end
 
-    describe "::preload" do
-      it "works as expected" do
-        categories_t1 = snapshot(Category, t1).preload(:products)
-        categories_t2 = snapshot(Category, t2).preload(:products)
+      describe "::eager_load" do
+        it "works as expected" do
+          categories_t2 = snapshot(Category, t2).eager_load(:line_items)
+          categories_t3 = snapshot(Category, t3).eager_load(:line_items)
 
-        expect(categories_t1.count).to eq(1)
-        expect(categories_t2.count).to eq(1)
-        expect(categories_t2.first.products).to be_loaded
+          expect(categories_t2.count).to eq(1)
+          expect(categories_t3.count).to eq(1)
+          expect(categories_t3.first.line_items).to be_loaded
+        end
+      end
+
+      describe "::preload" do
+        it "works as expected" do
+          categories_t2 = snapshot(Category, t2).preload(:line_items)
+          categories_t3 = snapshot(Category, t3).preload(:line_items)
+
+          expect(categories_t2.count).to eq(1)
+          expect(categories_t3.count).to eq(1)
+          expect(categories_t3.first.line_items).to be_loaded
+        end
       end
     end
   end

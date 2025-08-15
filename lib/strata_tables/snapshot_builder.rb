@@ -76,15 +76,8 @@ module StrataTables
 
       klass_repo[ar_class.name] = klass
 
-      klass.reflect_on_all_associations.dup.each do |association|
+      klass.reflect_on_all_associations.each do |association|
         assoc_klass = klass_repo[association.klass.name] || _build(association.klass, time, klass_repo)
-
-        args = [
-          klass,
-          association.name,
-          association.scope,
-          association.options.merge(klass: assoc_klass, foreign_key: association.foreign_key)
-        ]
 
         reflection_builder = case association.macro
         when :has_many
@@ -97,7 +90,15 @@ module StrataTables
           raise "Unsupported Macro: #{association.macro}"
         end
 
-        reflection = reflection_builder.build(*args)
+        reflection = reflection_builder.build(
+          klass,
+          association.name,
+          association.scope,
+          association.options.merge(
+            klass: assoc_klass,
+            foreign_key: association.foreign_key
+          )
+        )
 
         ActiveRecord::Reflection.add_reflection(klass, association.name, reflection)
       end

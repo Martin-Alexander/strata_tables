@@ -86,6 +86,7 @@ RSpec.describe StrataTables::SnapshotBuilder do
     let(:category) { Category.new(name: "Toys") }
     let(:product) { Product.new(name: "Lego", category: category, price: 100) }
     let(:line_item) { LineItem.new(product: product, quantity: 1) }
+    let(:tag) { Tag.new(name: "Lego", taggable: product) }
     let(:t1) { get_time }
     let(:t2) { get_time }
     let(:t3) { get_time }
@@ -95,11 +96,13 @@ RSpec.describe StrataTables::SnapshotBuilder do
       t1
       user.save!
       product.save!
+      tag.save!
       t2
       profile.save!
+      category.update!(name: "Toys 2")
       product.update!(name: "Lego 2", price: 200)
       line_item.save!
-      category.update!(name: "Toys 2")
+      tag.update!(name: "Lego 2")
       t3
     end
 
@@ -160,6 +163,21 @@ RSpec.describe StrataTables::SnapshotBuilder do
         expect(product_t3.line_items.first.class).to be < LineItem
         expect(product_t3.line_items.first.product.name).to eq("Lego 2")
       end
+
+      describe "polymorphic" do
+        it "works as expected" do
+          product_t2 = snapshot(Product, t2).first
+          product_t3 = snapshot(Product, t3).first
+
+          expect(product_t2.tags.count).to eq(1)
+          expect(product_t2.tags.first).to be_a(Tag)
+          expect(product_t2.tags.first.class).to be < Tag
+          expect(product_t2.tags.first.name).to eq("Lego")
+
+          expect(product_t3.tags.count).to eq(1)
+          expect(product_t3.tags.first.name).to eq("Lego 2")
+        end
+      end
     end
 
     describe "belongs to" do
@@ -174,6 +192,19 @@ RSpec.describe StrataTables::SnapshotBuilder do
 
         expect(product_t3.category.name).to eq("Toys 2")
         expect(product_t3.category.products.first.name).to eq("Lego 2")
+      end
+
+      describe "polymorphic" do
+        it "works as expected" do
+          tag_t2 = snapshot(Tag, t2).first
+          tag_t3 = snapshot(Tag, t3).first
+
+          expect(tag_t2.taggable).to be_a(Product)
+          expect(tag_t2.taggable.class).to be < Product
+          expect(tag_t2.taggable.name).to eq("Lego")
+
+          expect(tag_t3.taggable.name).to eq("Lego 2")
+        end
       end
     end
 

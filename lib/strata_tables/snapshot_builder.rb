@@ -6,7 +6,7 @@ module StrataTables
 
     private_class_method
 
-    def self._build(ar_class, time, klass_repo = {})
+    def self._build(ar_class, time, snapshot_klass_repo = {})
       klass = Class.new(ar_class) do
         self.table_name = "strata_#{ar_class.table_name}"
 
@@ -74,35 +74,35 @@ module StrataTables
         end
       end
 
-      klass_repo[ar_class.name] = klass
+      snapshot_klass_repo[ar_class.name] = klass
 
-      klass.reflect_on_all_associations.each do |association|
-        assoc_klass = klass_repo[association.klass.name] || _build(association.klass, time, klass_repo)
+      klass.reflect_on_all_associations.dup.each do |reflection|
+        next if reflection.polymorphic?
 
-        reflection_builder = case association.macro
-        when :has_many
-          StrataTables::Associations::Builder::HasMany
-        when :has_one
-          StrataTables::Associations::Builder::HasOne
-        when :belongs_to
-          StrataTables::Associations::Builder::BelongsTo
-        else
-          raise "Unsupported Macro: #{association.macro}"
-        end
+        snapshot_klass = snapshot_klass_repo[reflection.klass.name] ||
+          _build(reflection.klass, time, snapshot_klass_repo)
 
-        # foreign_key is often not present in options and is derived from the association name. We can't rely on
-        # derivation from class name.
-        reflection = reflection_builder.build(
-          klass,
-          association.name,
-          association.scope,
-          association.options.merge(
-            klass: assoc_klass,
-            foreign_key: association.foreign_key
-          )
+        klass.send(
+          reflection.macro,
+          reflection.name,
+          reflection.scope,
+          **reflection.options.merge(foreign_key: reflection.foreign_key)
         )
 
-        ActiveRecord::Reflection.add_reflection(klass, association.name, reflection)
+        new_reflection = klass.reflect_on_association(reflection.name)
+
+        new_reflection.define_singleton_method(:klass) do
+          snapshot_klass
+        end
+      end
+
+      klass.define_singleton_method(:polymorphic_class_for) do |name|
+        # TODO: what is this conditional?
+        if store_full_class_name
+          snapshot_klass_repo[name] || SnapshotBuilder._build(super(name), time, snapshot_klass_repo)
+        else
+          compute_type(name)
+        end
       end
 
       klass

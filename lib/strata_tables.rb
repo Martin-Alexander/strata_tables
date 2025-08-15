@@ -1,11 +1,7 @@
-require_relative "strata_tables/associations/builder/belongs_to"
-require_relative "strata_tables/associations/builder/has_many"
-require_relative "strata_tables/associations/builder/has_one"
 require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"
 require_relative "strata_tables/connection_adapters/schema_statements"
 require_relative "strata_tables/migration/command_recorder"
-require_relative "strata_tables/reflection"
 require_relative "strata_tables/snapshot_builder"
 
 module StrataTables

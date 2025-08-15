@@ -33,11 +33,17 @@ class Setup < ActiveRecord::Migration[8.0]
       t.string :bio
     end
 
+    create_table :tags do |t|
+      t.string :name, null: false
+      t.references :taggable, polymorphic: true, null: false
+    end
+
     create_strata_table :users
     create_strata_table :categories
     create_strata_table :products
     create_strata_table :line_items
     create_strata_table :profiles
+    create_strata_table :tags
 
     create_table :authors do |t|
       t.string :name

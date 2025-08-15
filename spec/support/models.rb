@@ -23,6 +23,7 @@ end
 class Product < ApplicationRecord
   belongs_to :category, optional: true
   has_many :line_items
+  has_many :tags, as: :taggable
 end
 
 class Promo < ApplicationRecord
@@ -31,4 +32,8 @@ end
 
 class Profile < ApplicationRecord
   belongs_to :user
+end
+
+class Tag < ApplicationRecord
+  belongs_to :taggable, polymorphic: true
 end

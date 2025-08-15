@@ -90,6 +90,8 @@ module StrataTables
           raise "Unsupported Macro: #{association.macro}"
         end
 
+        # foreign_key is often not present in options and is derived from the association name. We can't rely on
+        # derivation from class name.
         reflection = reflection_builder.build(
           klass,
           association.name,

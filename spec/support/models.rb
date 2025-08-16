@@ -4,6 +4,15 @@ end
 
 class User < ApplicationRecord
   has_one :profile
+  belongs_to :team
+end
+
+class Profile < ApplicationRecord
+  belongs_to :user
+end
+
+class Team < ApplicationRecord
+  has_many :users
 end
 
 class Book < ApplicationRecord

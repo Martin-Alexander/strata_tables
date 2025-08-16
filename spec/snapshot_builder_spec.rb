@@ -81,7 +81,8 @@ RSpec.describe StrataTables::SnapshotBuilder do
   end
 
   describe "querying" do
-    let(:user) { User.new(first_name: "John", last_name: "Doe") }
+    let(:team) { Team.create!(name: "Team 1") }
+    let(:user) { User.new(first_name: "John", last_name: "Doe", team: team) }
     let(:profile) { Profile.new(user: user, bio: "I am a profile") }
     let(:category) { Category.new(name: "Toys") }
     let(:product) { Product.new(name: "Lego", category: category, price: 100) }
@@ -265,6 +266,23 @@ RSpec.describe StrataTables::SnapshotBuilder do
           expect(categories_t3.count).to eq(1)
           expect(categories_t3.first.line_items).to be_loaded
         end
+      end
+    end
+
+    context "when a model is not backed by a temporal table" do
+      it "works as expected" do
+        user_t2 = snapshot(User, t2).first
+
+        expect(user_t2.team.class).to eq(Team)
+        expect(user_t2.team.name).to eq("Team 1")
+
+        team_t2 = snapshot(Team, t2).first
+
+        expect(team_t2.users.count).to eq(1)
+        expect(team_t2.users.first).to be_a(User)
+        expect(team_t2.users.first.class).to be < User
+        expect(team_t2.users.first.first_name).to eq("John")
+        expect(team_t2.users.first.last_name).to eq("Doe")
       end
     end
   end

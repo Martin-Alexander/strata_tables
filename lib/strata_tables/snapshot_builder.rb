@@ -8,17 +8,19 @@ module StrataTables
 
     def self._build(ar_class, time, snapshot_klass_repo = {})
       klass = Class.new(ar_class) do
-        self.table_name = "strata_#{ar_class.table_name}"
+        if ActiveRecord::Base.connection.table_exists?("strata_#{ar_class.table_name}")
+          self.table_name = "strata_#{ar_class.table_name}"
+
+          default_scope do
+            time_constraint
+          end
+
+          def self.time_constraint
+            where("#{table_name}.validity @> ?::timestamp", @time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N %z"))
+          end
+        end
 
         @time = time
-
-        default_scope do
-          time_constraint
-        end
-
-        def self.time_constraint
-          where("#{table_name}.validity @> ?::timestamp", @time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N %z"))
-        end
 
         def self.label
           "#{superclass.name}Snapshot@#{@time.iso8601}"
@@ -77,7 +79,7 @@ module StrataTables
       snapshot_klass_repo[ar_class.name] = klass
 
       klass.reflect_on_all_associations.dup.each do |reflection|
-        next if reflection.polymorphic?
+        next if reflection.polymorphic? || !ActiveRecord::Base.connection.table_exists?("strata_#{reflection.klass.table_name}")
 
         snapshot_klass = snapshot_klass_repo[reflection.klass.name] ||
           _build(reflection.klass, time, snapshot_klass_repo)

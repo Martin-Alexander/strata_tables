@@ -1,8 +1,13 @@
 class Setup < ActiveRecord::Migration[8.0]
   def change
+    create_table :teams do |t|
+      t.string :name, null: false
+    end
+
     create_table :users do |t|
       t.string :first_name, null: false
       t.string :last_name, null: false
+      t.references :team, foreign_key: true, index: true
     end
 
     create_table :categories do |t|

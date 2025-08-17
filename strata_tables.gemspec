@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.email = ["martingianna@gmail.com"]
 
   # TODO
-  # spec.summary = "TODO"
-  # spec.description = "TODO"
+  spec.summary = "TODO"
+  spec.description = "TODO"
 
   spec.homepage = "https://github.com/Martin-Alexander/strata_tables"
   spec.license = "MIT"

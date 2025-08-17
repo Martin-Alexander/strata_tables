@@ -41,6 +41,10 @@ module StrataTables
           label
         end
 
+        def self.name
+          superclass.name
+        end
+
         def readonly?
           true
         end
@@ -81,30 +85,29 @@ module StrataTables
       klass.reflect_on_all_associations.dup.each do |reflection|
         next if reflection.polymorphic? || !ActiveRecord::Base.connection.table_exists?("strata_#{reflection.klass.table_name}")
 
-        snapshot_klass = snapshot_klass_repo[reflection.klass.name] ||
-          _build(reflection.klass, time, snapshot_klass_repo)
+        snapshot_klass = snapshot_klass_repo[reflection.klass.name] || _build(reflection.klass, time, snapshot_klass_repo)
 
         klass.send(
           reflection.macro,
           reflection.name,
           reflection.scope,
-          **reflection.options.merge(foreign_key: reflection.foreign_key)
+          **reflection.options.merge(
+            foreign_key: reflection.foreign_key,
+            anonymous_class: snapshot_klass
+          )
         )
-
-        new_reflection = klass.reflect_on_association(reflection.name)
-
-        new_reflection.define_singleton_method(:klass) do
-          snapshot_klass
-        end
       end
 
       klass.define_singleton_method(:polymorphic_class_for) do |name|
-        # TODO: what is this conditional?
-        if store_full_class_name
-          snapshot_klass_repo[name] || SnapshotBuilder._build(super(name), time, snapshot_klass_repo)
-        else
-          compute_type(name)
-        end
+        polymorphic_klass = super(name)
+
+        snapshot_klass_repo[polymorphic_klass.name] || SnapshotBuilder._build(polymorphic_klass, time, snapshot_klass_repo)
+      end
+
+      klass.define_singleton_method(:sti_class_for) do |name|
+        sti_klass = super(name)
+
+        snapshot_klass_repo[sti_klass.name] || SnapshotBuilder._build(sti_klass, time, snapshot_klass_repo)
       end
 
       klass

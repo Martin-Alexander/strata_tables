@@ -82,7 +82,8 @@ RSpec.describe StrataTables::SnapshotBuilder do
 
   describe "querying" do
     let(:team) { Team.create!(name: "Team 1") }
-    let(:user) { User.new(first_name: "John", last_name: "Doe", team: team) }
+    let(:client) { Client.new(name: "Client 1", type: "Client") }
+    let(:user) { User.new(first_name: "John", last_name: "Doe", team: team, company: client) }
     let(:profile) { Profile.new(user: user, bio: "I am a profile") }
     let(:category) { Category.new(name: "Toys") }
     let(:product) { Product.new(name: "Lego", category: category, price: 100) }
@@ -94,16 +95,22 @@ RSpec.describe StrataTables::SnapshotBuilder do
 
     before do
       category.save!
+      client.save!
+
       t1
+
       user.save!
       product.save!
       tag.save!
+
       t2
+
       profile.save!
       category.update!(name: "Toys 2")
       product.update!(name: "Lego 2", price: 200)
       line_item.save!
       tag.update!(name: "Lego 2")
+
       t3
     end
 
@@ -283,6 +290,26 @@ RSpec.describe StrataTables::SnapshotBuilder do
         expect(team_t2.users.first.class).to be < User
         expect(team_t2.users.first.first_name).to eq("John")
         expect(team_t2.users.first.last_name).to eq("Doe")
+      end
+    end
+
+    describe "single table inheritance" do
+      it "works as expected" do
+        client_t1 = snapshot(Client, t1).first
+        user_t2 = snapshot(User, t2).first
+
+        expect(client_t1).to be_a(Client)
+        expect(client_t1.class).to be < Client
+        expect(client_t1.name).to eq("Client 1")
+        expect(client_t1.users).to be_empty
+
+        expect(user_t2.company).to be_a(Client)
+        expect(user_t2.company.class).to be < Client
+        expect(user_t2.company.name).to eq("Client 1")
+        expect(user_t2.company.users.count).to eq(1)
+
+        expect(user_t2.company.users.first).to be_a(User)
+        expect(user_t2.company.users.first.class).to be < User
       end
     end
   end

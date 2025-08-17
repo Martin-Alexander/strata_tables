@@ -2,17 +2,28 @@ class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 end
 
-class User < ApplicationRecord
-  has_one :profile
-  belongs_to :team
+class Company < ApplicationRecord
+  has_many :users
+end
+
+class Client < Company
+end
+
+class Firm < Company
+end
+
+class Team < ApplicationRecord
+  has_many :users
 end
 
 class Profile < ApplicationRecord
   belongs_to :user
 end
 
-class Team < ApplicationRecord
-  has_many :users
+class User < ApplicationRecord
+  has_one :profile
+  belongs_to :team
+  belongs_to :company, optional: true, class_name: "Client"
 end
 
 class Book < ApplicationRecord
@@ -22,11 +33,6 @@ class Category < ApplicationRecord
   has_many :products
   has_many :line_items, through: :products
   belongs_to :parent, class_name: "Category"
-end
-
-class LineItem < ApplicationRecord
-  belongs_to :product
-  belongs_to :promo, optional: true
 end
 
 class Product < ApplicationRecord
@@ -39,8 +45,9 @@ class Promo < ApplicationRecord
   has_many :line_items
 end
 
-class Profile < ApplicationRecord
-  belongs_to :user
+class LineItem < ApplicationRecord
+  belongs_to :product
+  belongs_to :promo, optional: true
 end
 
 class Tag < ApplicationRecord

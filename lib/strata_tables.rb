@@ -2,11 +2,13 @@ require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"
 require_relative "strata_tables/connection_adapters/schema_statements"
 require_relative "strata_tables/migration/command_recorder"
-require_relative "strata_tables/snapshot_builder"
+require_relative "strata_tables/snapshot"
+require_relative "strata_tables/snapshots/builder"
+require_relative "strata_tables/snapshots/display"
 
 module StrataTables
   def snapshot(ar_class, time)
-    SnapshotBuilder.build(ar_class, time)
+    Snapshots::Builder.build(ar_class, time)
   end
 end
 

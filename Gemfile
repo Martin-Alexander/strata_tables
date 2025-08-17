@@ -7,7 +7,6 @@ gemspec
 
 gem "database_cleaner-active_record"
 gem "debug"
-gem "rails"
 gem "rake"
 gem "rspec"
 gem "standard"

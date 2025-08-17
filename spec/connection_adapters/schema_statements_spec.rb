@@ -23,7 +23,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and have_column(:price, :decimal, precision: 10, scale: 2)
         .and have_column(:summary, :string, collation: "en_US.utf8")
         .and have_column(:pages, :integer, comment: "Number of pages")
-        .and have_column(:published_at, :date, default: "2025-01-01")
+        .and have_column(:published_at, :date, default: Date.new(2025, 1, 1))
         .and have_column(:author_id, :integer)
     end
 

@@ -1,4 +1,4 @@
-class Setup < ActiveRecord::Migration[8.0]
+class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"]
   def change
     create_table :companies do |t|
       t.string :name, null: false

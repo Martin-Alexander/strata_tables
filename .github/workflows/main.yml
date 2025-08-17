@@ -10,13 +10,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} - ${{ matrix.appraisal }}
     strategy:
       matrix:
         ruby:
           - '3.4.5'
+        appraisal:
+          - 'ar_7'
+          - 'ar_8'
+          - 'ar_edge'
 
     env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.appraisal }}.gemfile
       DATABASE_CONFIG: spec/support/database.github.yml
 
     steps:

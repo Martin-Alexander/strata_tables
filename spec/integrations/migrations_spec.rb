@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe "migrations for strata triggers" do
   conn = ActiveRecord::Base.connection
+  migration_version = "#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"
 
   around do |example|
     original_verbose = ActiveRecord::Migration.verbose
@@ -18,7 +19,7 @@ RSpec.describe "migrations for strata triggers" do
 
   describe "create_strata_table" do
     let(:migration_class) do
-      Class.new(ActiveRecord::Migration[8.0]) do
+      Class.new(ActiveRecord::Migration[migration_version]) do
         def change
           create_strata_table(:books)
         end
@@ -53,7 +54,7 @@ RSpec.describe "migrations for strata triggers" do
 
   describe "drop_strata_table" do
     let(:migration_class) do
-      Class.new(ActiveRecord::Migration[8.0]) do
+      Class.new(ActiveRecord::Migration[migration_version]) do
         def change
           drop_strata_table(:books)
         end
@@ -83,7 +84,7 @@ RSpec.describe "migrations for strata triggers" do
 
   describe "add_strata_column" do
     let(:migration_class) do
-      Class.new(ActiveRecord::Migration[8.0]) do
+      Class.new(ActiveRecord::Migration[migration_version]) do
         def change
           add_strata_column(:books, :subtitle, :string)
         end
@@ -116,7 +117,7 @@ RSpec.describe "migrations for strata triggers" do
 
   describe "remove_strata_column" do
     let(:migration_class) do
-      Class.new(ActiveRecord::Migration[8.0]) do
+      Class.new(ActiveRecord::Migration[migration_version]) do
         def change
           remove_strata_column(:books, :title, :string)
         end

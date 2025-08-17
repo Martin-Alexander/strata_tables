@@ -6,13 +6,17 @@ Gem::Specification.new do |spec|
   spec.authors = ["Martin-Alexander"]
   spec.email = ["martingianna@gmail.com"]
 
-  spec.summary = "TODO"
-  spec.description = "TODO"
+  # TODO
+  # spec.summary = "TODO"
+  # spec.description = "TODO"
+
   spec.homepage = "https://github.com/Martin-Alexander/strata_tables"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 
+  # TODO
   # spec.metadata["allowed_push_host"] = "TODO'"
+
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/Martin-Alexander/strata_tables"
   spec.metadata["changelog_uri"] = "https://github.com/Martin-Alexander/strata_tables/CHANGELOG.md"
@@ -31,6 +35,4 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "activerecord", ">= 7.0"
   spec.add_dependency "pg"
-  spec.add_development_dependency "database_cleaner-active_record"
-  spec.add_development_dependency "rails"
 end

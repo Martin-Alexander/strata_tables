@@ -1,5 +1,4 @@
 require "active_record"
-require "active_model"
 require "database_cleaner/active_record"
 require "debug"
 require "yaml"

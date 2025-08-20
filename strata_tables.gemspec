@@ -4,8 +4,8 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.name = "strata_tables"
   s.version = StrataTables::VERSION
-  s.summary = "Unintuitive temporal tables for ActiveRecord"
-  s.description = "Unintuitive temporal tables for ActiveRecord"
+  s.summary = "Unintrusive temporal tables for ActiveRecord"
+  s.description = "Unintrusive temporal tables for ActiveRecord"
 
   s.required_ruby_version = ">= 3.2.0"
 

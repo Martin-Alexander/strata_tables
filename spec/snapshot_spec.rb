@@ -6,7 +6,7 @@ RSpec.describe StrataTables::Snapshot do
   end
 
   let(:team) { Team.create!(name: "Team 1") }
-  let(:client) { Client.new(name: "Client 1", type: "Client") }
+  let(:client) { Client.new(name: "Client 1") }
   let(:user) { User.new(first_name: "John", last_name: "Doe", team: team, company: client) }
   let(:profile) { Profile.new(user: user, bio: "I am a profile") }
   let(:category) { Category.new(name: "Toys") }

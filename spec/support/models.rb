@@ -1,5 +1,7 @@
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
+
+  include StrataTables::Model
 end
 
 class Company < ApplicationRecord
@@ -37,6 +39,7 @@ end
 
 class Product < ApplicationRecord
   belongs_to :category, optional: true
+  has_many :category_versions, primary_key: :category_id, foreign_key: :id, class_name: "Category::Version"
   has_many :line_items
   has_many :tags, as: :taggable
 end

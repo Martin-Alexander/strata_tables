@@ -6,7 +6,7 @@ module StrataTables
       include Snapshots::Display
 
       if backed_by_strata_table?(self)
-        self.table_name = "strata_#{superclass.table_name}"
+        self.table_name = "#{superclass.table_name}_versions"
 
         default_scope { validity_constraint }
       end
@@ -30,7 +30,7 @@ module StrataTables
 
     class_methods do
       def backed_by_strata_table?(klass)
-        connection.table_exists?("strata_#{klass.table_name}")
+        connection.table_exists?("#{klass.table_name}_versions")
       end
 
       def validity_constraint

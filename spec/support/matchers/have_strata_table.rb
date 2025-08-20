@@ -10,7 +10,7 @@ RSpec::Matchers.define :have_strata_table do
   private
 
   def correct_columns(table)
-    strata_table = "strata_#{table}"
+    strata_table = "#{table}_versions"
 
     have_column(:id, :integer).matches?(strata_table) &&
       have_column(:validity, :tsrange, null: false).matches?(strata_table)
@@ -23,7 +23,7 @@ RSpec::Matchers.define :have_strata_table do
   end
 
   def correct_functions(table)
-    strata_table = "strata_#{table}"
+    strata_table = "#{table}_versions"
 
     have_function("#{strata_table}_insert").matches?(conn) &&
       have_function("#{strata_table}_update").matches?(conn) &&

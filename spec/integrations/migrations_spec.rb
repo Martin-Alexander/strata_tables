@@ -30,7 +30,7 @@ RSpec.describe "migrations for strata triggers" do
       it "creates strata table" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:strata_books)
+        expect(conn).to have_table(:books_versions)
 
         expect(:books).to have_strata_table
       end
@@ -42,7 +42,7 @@ RSpec.describe "migrations for strata triggers" do
       it "drops strata table" do
         migration.migrate(:down)
 
-        expect(conn).not_to have_table(:strata_books)
+        expect(conn).not_to have_table(:books_versions)
 
         expect(conn)
           .to not_have_function(:strata_books_insert)
@@ -67,7 +67,7 @@ RSpec.describe "migrations for strata triggers" do
       it "drops strata table" do
         migration.migrate(:up)
 
-        expect(conn).not_to have_table(:strata_books)
+        expect(conn).not_to have_table(:books_versions)
       end
     end
 
@@ -75,7 +75,7 @@ RSpec.describe "migrations for strata triggers" do
       it "creates strata table" do
         migration.migrate(:down)
 
-        expect(conn).to have_table(:strata_books)
+        expect(conn).to have_table(:books_versions)
 
         expect(:books).to have_strata_table
       end
@@ -100,7 +100,7 @@ RSpec.describe "migrations for strata triggers" do
       it "adds strata column" do
         migration.migrate(:up)
 
-        expect(:strata_books).to have_column(:subtitle, :string)
+        expect(:books_versions).to have_column(:subtitle, :string)
       end
     end
 
@@ -110,7 +110,7 @@ RSpec.describe "migrations for strata triggers" do
       it "removes strata column" do
         migration.migrate(:down)
 
-        expect(:strata_books).not_to have_column(:subtitle, :string)
+        expect(:books_versions).not_to have_column(:subtitle, :string)
       end
     end
   end
@@ -130,7 +130,7 @@ RSpec.describe "migrations for strata triggers" do
       it "removes strata column" do
         migration.migrate(:up)
 
-        expect(:strata_books).not_to have_column(:title, :string)
+        expect(:books_versions).not_to have_column(:title, :string)
       end
     end
 
@@ -140,7 +140,7 @@ RSpec.describe "migrations for strata triggers" do
       it "adds strata column" do
         migration.migrate(:down)
 
-        expect(:strata_books).to have_column(:title, :string)
+        expect(:books_versions).to have_column(:title, :string)
       end
     end
   end

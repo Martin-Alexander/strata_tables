@@ -13,7 +13,7 @@ RSpec.describe "deletes" do
   let(:strata_book_class) do
     Class.new(ActiveRecord::Base) do
       def self.model_name
-        ActiveModel::Name.new(self, nil, "StrataBook")
+        ActiveModel::Name.new(self, nil, "BooksVersion")
       end
     end
   end

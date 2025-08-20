@@ -13,11 +13,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     it "creates a strata table" do
       conn.create_strata_table(:books)
 
-      expect(conn).to have_table(:strata_books)
+      expect(conn).to have_table(:books_versions)
 
       expect(:books).to have_strata_table
 
-      expect(:strata_books)
+      expect(:books_versions)
         .to have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
         .and have_column(:price, :decimal, precision: 10, scale: 2)
@@ -45,7 +45,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       expect(conn).to have_table(:books)
 
-      expect(conn).not_to have_table(:strata_books)
+      expect(conn).not_to have_table(:books_versions)
 
       expect(:books)
         .to not_have_trigger(:on_insert_strata_trigger)
@@ -53,9 +53,9 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and not_have_trigger(:on_delete_strata_trigger)
 
       expect(conn)
-        .to not_have_function(:strata_books_insert)
-        .and not_have_function(:strata_books_update)
-        .and not_have_function(:strata_books_delete)
+        .to not_have_function(:books_versions_insert)
+        .and not_have_function(:books_versions_update)
+        .and not_have_function(:books_versions_delete)
     end
   end
 
@@ -65,13 +65,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     it "adds a strata column" do
       conn.add_strata_column(:books, :subtitle, :string)
 
-      expect(:strata_books).to have_column(:subtitle, :string)
+      expect(:books_versions).to have_column(:subtitle, :string)
     end
 
     context "when source table does not exist" do
       it "raises an error" do
         expect { conn.add_strata_column(:teddies, :author_id, :integer) }
-          .to raise_error(ActiveRecord::StatementInvalid, /relation "strata_teddies" does not exist/)
+          .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies_versions" does not exist/)
       end
     end
 
@@ -80,7 +80,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       it "raises an error" do
         expect { conn.add_strata_column(:teddies, :author_id, :integer) }
-          .to raise_error(ActiveRecord::StatementInvalid, /relation "strata_teddies" does not exist/)
+          .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies_versions" does not exist/)
       end
     end
   end
@@ -91,13 +91,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     it "removes a strata column" do
       conn.remove_strata_column(:books, :title)
 
-      expect(:strata_books).to not_have_column(:title, :string)
+      expect(:books_versions).to not_have_column(:title, :string)
     end
 
     context "when column does not exist on strata table" do
       it "raises an error" do
         expect { conn.remove_strata_column(:books, :publisher_id) }
-          .to raise_error(ActiveRecord::StatementInvalid, /column "publisher_id" of relation "strata_books" does not exist/)
+          .to raise_error(ActiveRecord::StatementInvalid, /column "publisher_id" of relation "books_versions" does not exist/)
       end
     end
 
@@ -115,7 +115,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       it "raises an error" do
         expect { conn.remove_strata_column(:books, :title) }
-          .to raise_error(ActiveRecord::StatementInvalid, /relation "strata_books" does not exist/)
+          .to raise_error(ActiveRecord::StatementInvalid, /relation "books_versions" does not exist/)
       end
     end
   end

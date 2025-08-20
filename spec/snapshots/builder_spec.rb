@@ -12,7 +12,7 @@ RSpec.describe StrataTables::Snapshots::Builder do
 
     expect(klass).to be_a(Class)
     expect(klass).to be < Product
-    expect(klass.table_name).to eq("strata_products")
+    expect(klass.table_name).to eq("products_versions")
   end
 
   context "when given an ActiveRecord instance" do

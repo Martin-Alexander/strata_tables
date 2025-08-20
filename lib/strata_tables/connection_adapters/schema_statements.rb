@@ -4,7 +4,7 @@ module StrataTables
       def create_strata_table(source_table)
         source_columns = columns(source_table)
 
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
 
         create_table strata_table, id: false do |t|
           source_columns.each do |column|
@@ -28,7 +28,7 @@ module StrataTables
       end
 
       def drop_strata_table(source_table)
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
 
         drop_table strata_table
 
@@ -36,7 +36,7 @@ module StrataTables
       end
 
       def add_strata_column(source_table, column_name, type, **options)
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
 
         add_column strata_table, column_name, type, **options
 
@@ -45,7 +45,7 @@ module StrataTables
       end
 
       def remove_strata_column(source_table, column_name, type = nil, **options)
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
 
         remove_column strata_table, column_name, type, **options
 
@@ -56,7 +56,7 @@ module StrataTables
       def create_strata_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
         column_names = columns(source_table).map(&:name)
 
         trigger_set = StrataTriggerSetDefinition.new(source_table, strata_table, column_names)
@@ -65,7 +65,7 @@ module StrataTables
       end
 
       def drop_strata_triggers(source_table)
-        strata_table = "strata_#{source_table}"
+        strata_table = "#{source_table}_versions"
 
         execute "DROP FUNCTION #{strata_table}_insert() CASCADE"
         execute "DROP FUNCTION #{strata_table}_update() CASCADE"

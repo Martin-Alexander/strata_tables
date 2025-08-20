@@ -1,12 +1,12 @@
 module StrataTables
   module ConnectionAdapters
     module SchemaStatements
-      def create_strata_table(source_table)
+      def create_temporal_table(source_table)
         source_columns = columns(source_table)
 
-        strata_table = "#{source_table}_versions"
+        temporal_table = "#{source_table}_versions"
 
-        create_table strata_table, id: false do |t|
+        create_table temporal_table, id: false do |t|
           source_columns.each do |column|
             t.send(
               column.type,
@@ -24,52 +24,52 @@ module StrataTables
           t.tstzrange :validity, null: false
         end
 
-        create_strata_triggers(source_table)
+        create_temporal_triggers(source_table)
       end
 
-      def drop_strata_table(source_table)
-        strata_table = "#{source_table}_versions"
+      def drop_temporal_table(source_table)
+        temporal_table = "#{source_table}_versions"
 
-        drop_table strata_table
+        drop_table temporal_table
 
-        drop_strata_triggers(source_table)
+        drop_temporal_triggers(source_table)
       end
 
-      def add_strata_column(source_table, column_name, type, **options)
-        strata_table = "#{source_table}_versions"
+      def add_temporal_column(source_table, column_name, type, **options)
+        temporal_table = "#{source_table}_versions"
 
-        add_column strata_table, column_name, type, **options
+        add_column temporal_table, column_name, type, **options
 
-        drop_strata_triggers(source_table)
-        create_strata_triggers(source_table)
+        drop_temporal_triggers(source_table)
+        create_temporal_triggers(source_table)
       end
 
-      def remove_strata_column(source_table, column_name, type = nil, **options)
-        strata_table = "#{source_table}_versions"
+      def remove_temporal_column(source_table, column_name, type = nil, **options)
+        temporal_table = "#{source_table}_versions"
 
-        remove_column strata_table, column_name, type, **options
+        remove_column temporal_table, column_name, type, **options
 
-        drop_strata_triggers(source_table)
-        create_strata_triggers(source_table)
+        drop_temporal_triggers(source_table)
+        create_temporal_triggers(source_table)
       end
 
-      def create_strata_triggers(source_table)
+      def create_temporal_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        strata_table = "#{source_table}_versions"
+        temporal_table = "#{source_table}_versions"
         column_names = columns(source_table).map(&:name)
 
-        trigger_set = StrataTriggerSetDefinition.new(source_table, strata_table, column_names)
+        trigger_set = StrataTriggerSetDefinition.new(source_table, temporal_table, column_names)
 
         execute schema_creation.accept(trigger_set)
       end
 
-      def drop_strata_triggers(source_table)
-        strata_table = "#{source_table}_versions"
+      def drop_temporal_triggers(source_table)
+        temporal_table = "#{source_table}_versions"
 
-        execute "DROP FUNCTION #{strata_table}_insert() CASCADE"
-        execute "DROP FUNCTION #{strata_table}_update() CASCADE"
-        execute "DROP FUNCTION #{strata_table}_delete() CASCADE"
+        execute "DROP FUNCTION #{temporal_table}_insert() CASCADE"
+        execute "DROP FUNCTION #{temporal_table}_update() CASCADE"
+        execute "DROP FUNCTION #{temporal_table}_delete() CASCADE"
       end
     end
   end

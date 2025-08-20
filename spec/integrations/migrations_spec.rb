@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "migrations for strata triggers" do
+RSpec.describe "migrations for temporal triggers" do
   conn = ActiveRecord::Base.connection
   migration_version = "#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"
 
@@ -17,29 +17,29 @@ RSpec.describe "migrations for strata triggers" do
     migration_class.new
   end
 
-  describe "create_strata_table" do
+  describe "create_temporal_table" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[migration_version]) do
         def change
-          create_strata_table(:books)
+          create_temporal_table(:books)
         end
       end
     end
 
     describe "#up" do
-      it "creates strata table" do
+      it "creates temporal table" do
         migration.migrate(:up)
 
         expect(conn).to have_table(:books_versions)
 
-        expect(:books).to have_strata_table
+        expect(:books).to have_temporal_table
       end
     end
 
     describe "#down" do
-      before { conn.create_strata_table(:books) }
+      before { conn.create_temporal_table(:books) }
 
-      it "drops strata table" do
+      it "drops temporal table" do
         migration.migrate(:down)
 
         expect(conn).not_to have_table(:books_versions)
@@ -52,19 +52,19 @@ RSpec.describe "migrations for strata triggers" do
     end
   end
 
-  describe "drop_strata_table" do
+  describe "drop_temporal_table" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[migration_version]) do
         def change
-          drop_strata_table(:books)
+          drop_temporal_table(:books)
         end
       end
     end
 
     describe "#up" do
-      before { conn.create_strata_table(:books) }
+      before { conn.create_temporal_table(:books) }
 
-      it "drops strata table" do
+      it "drops temporal table" do
         migration.migrate(:up)
 
         expect(conn).not_to have_table(:books_versions)
@@ -72,32 +72,32 @@ RSpec.describe "migrations for strata triggers" do
     end
 
     describe "#down" do
-      it "creates strata table" do
+      it "creates temporal table" do
         migration.migrate(:down)
 
         expect(conn).to have_table(:books_versions)
 
-        expect(:books).to have_strata_table
+        expect(:books).to have_temporal_table
       end
     end
   end
 
-  describe "add_strata_column" do
+  describe "add_temporal_column" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[migration_version]) do
         def change
-          add_strata_column(:books, :subtitle, :string)
+          add_temporal_column(:books, :subtitle, :string)
         end
       end
     end
 
     before do
-      conn.create_strata_table(:books)
+      conn.create_temporal_table(:books)
       conn.add_column :books, :subtitle, :string
     end
 
     describe "#up" do
-      it "adds strata column" do
+      it "adds temporal column" do
         migration.migrate(:up)
 
         expect(:books_versions).to have_column(:subtitle, :string)
@@ -105,9 +105,9 @@ RSpec.describe "migrations for strata triggers" do
     end
 
     describe "#down" do
-      before { conn.add_strata_column(:books, :subtitle, :string) }
+      before { conn.add_temporal_column(:books, :subtitle, :string) }
 
-      it "removes strata column" do
+      it "removes temporal column" do
         migration.migrate(:down)
 
         expect(:books_versions).not_to have_column(:subtitle, :string)
@@ -115,19 +115,19 @@ RSpec.describe "migrations for strata triggers" do
     end
   end
 
-  describe "remove_strata_column" do
+  describe "remove_temporal_column" do
     let(:migration_class) do
       Class.new(ActiveRecord::Migration[migration_version]) do
         def change
-          remove_strata_column(:books, :title, :string)
+          remove_temporal_column(:books, :title, :string)
         end
       end
     end
 
-    before { conn.create_strata_table(:books) }
+    before { conn.create_temporal_table(:books) }
 
     describe "#up" do
-      it "removes strata column" do
+      it "removes temporal column" do
         migration.migrate(:up)
 
         expect(:books_versions).not_to have_column(:title, :string)
@@ -135,9 +135,9 @@ RSpec.describe "migrations for strata triggers" do
     end
 
     describe "#down" do
-      before { conn.remove_strata_column(:books, :title, :string) }
+      before { conn.remove_temporal_column(:books, :title, :string) }
 
-      it "adds strata column" do
+      it "adds temporal column" do
         migration.migrate(:down)
 
         expect(:books_versions).to have_column(:title, :string)

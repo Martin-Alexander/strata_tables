@@ -47,7 +47,7 @@ RSpec.describe StrataTables::Model do
       expect(Product::Version.table_name).to eq("products_versions")
     end
 
-    context "one a model that is not backed by a strata table" do
+    context "one a model that is not backed by a temporal table" do
       it "returns a subclass of the original model" do
         expect(Team::Version).to be < Team
       end
@@ -106,7 +106,7 @@ RSpec.describe StrataTables::Model do
       expect(product_version.category).to be_a(Category::Version)
     end
 
-    context "when the associated model is not backed by a strata table" do
+    context "when the associated model is not backed by a temporal table" do
       it "returns the version" do
         expect(user_version.team).to be_a(Team::Version)
       end

@@ -5,7 +5,7 @@ require "yaml"
 
 require "strata_tables"
 
-require "support/matchers/have_strata_table"
+require "support/matchers/have_temporal_table"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
 require "support/matchers/have_table"

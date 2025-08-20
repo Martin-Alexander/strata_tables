@@ -5,7 +5,7 @@ class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveR
       t.string :type, null: false
     end
 
-    create_strata_table :companies
+    create_temporal_table :companies
 
     create_table :teams do |t|
       t.string :name, null: false
@@ -18,14 +18,14 @@ class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveR
       t.references :company, foreign_key: true, index: true
     end
 
-    create_strata_table :users
+    create_temporal_table :users
 
     create_table :categories do |t|
       t.string :name, null: false
       t.references :parent, foreign_key: {to_table: :categories}
     end
 
-    create_strata_table :categories
+    create_temporal_table :categories
 
     create_table :products do |t|
       t.string :name, null: false
@@ -33,7 +33,7 @@ class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveR
       t.references :category, foreign_key: true, index: true
     end
 
-    create_strata_table :products
+    create_temporal_table :products
 
     create_table :promos do |t|
       t.string :name, null: false
@@ -47,21 +47,21 @@ class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveR
       t.timestamps
     end
 
-    create_strata_table :line_items
+    create_temporal_table :line_items
 
     create_table :profiles do |t|
       t.references :user, foreign_key: true, index: true
       t.string :bio
     end
 
-    create_strata_table :profiles
+    create_temporal_table :profiles
 
     create_table :tags do |t|
       t.string :name, null: false
       t.references :taggable, polymorphic: true, null: false
     end
 
-    create_strata_table :tags
+    create_temporal_table :tags
 
     create_table :authors do |t|
       t.string :name

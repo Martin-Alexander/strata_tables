@@ -23,9 +23,9 @@ module StrataTables
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.strata_table}_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.temporal_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
+              INSERT INTO #{quote_table_name(o.temporal_table)} (#{fields}, validity)
               VALUES (#{values}, tstzrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
@@ -33,7 +33,7 @@ module StrataTables
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON #{quote_table_name(o.source_table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_insert();
+            FOR EACH ROW EXECUTE PROCEDURE #{o.temporal_table}_insert();
         SQL
       end
 
@@ -42,19 +42,19 @@ module StrataTables
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.strata_table}_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION #{o.temporal_table}_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
               END IF;
 
-              UPDATE #{quote_table_name(o.strata_table)}
+              UPDATE #{quote_table_name(o.temporal_table)}
               SET validity = tstzrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
-              INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
+              INSERT INTO #{quote_table_name(o.temporal_table)} (#{fields}, validity)
               VALUES (#{values}, tstzrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
@@ -62,15 +62,15 @@ module StrataTables
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON #{quote_table_name(o.source_table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_update();
+            FOR EACH ROW EXECUTE PROCEDURE #{o.temporal_table}_update();
         SQL
       end
 
       def visit_DeleteStrataTriggerDefinition(o)
         <<-SQL.squish
-          CREATE OR REPLACE FUNCTION #{o.strata_table}_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION #{o.temporal_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
-              UPDATE #{quote_table_name(o.strata_table)}
+              UPDATE #{quote_table_name(o.temporal_table)}
               SET validity = tstzrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
@@ -81,7 +81,7 @@ module StrataTables
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON #{quote_table_name(o.source_table)}
-            FOR EACH ROW EXECUTE PROCEDURE #{o.strata_table}_delete();
+            FOR EACH ROW EXECUTE PROCEDURE #{o.temporal_table}_delete();
         SQL
       end
     end

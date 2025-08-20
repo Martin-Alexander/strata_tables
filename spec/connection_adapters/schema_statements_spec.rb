@@ -5,17 +5,17 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     DatabaseCleaner.cleaning { example.run }
   end
 
-  RSpec.shared_context "with a strata table setup for books" do
-    before { conn.create_strata_table(:books) }
+  RSpec.shared_context "with a temporal table setup for books" do
+    before { conn.create_temporal_table(:books) }
   end
 
-  describe "#create_strata_table" do
-    it "creates a strata table" do
-      conn.create_strata_table(:books)
+  describe "#create_temporal_table" do
+    it "creates a temporal table" do
+      conn.create_temporal_table(:books)
 
       expect(conn).to have_table(:books_versions)
 
-      expect(:books).to have_strata_table
+      expect(:books).to have_temporal_table
 
       expect(:books_versions)
         .to have_column(:id, :integer)
@@ -31,17 +31,17 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
     context "when source table does not exist" do
       it "raises an error" do
-        expect { conn.create_strata_table(:teddies) }
+        expect { conn.create_temporal_table(:teddies) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies" does not exist/)
       end
     end
   end
 
-  describe "#drop_strata_table" do
-    include_context "with a strata table setup for books"
+  describe "#drop_temporal_table" do
+    include_context "with a temporal table setup for books"
 
-    it "drops a strata table" do
-      conn.drop_strata_table(:books)
+    it "drops a temporal table" do
+      conn.drop_temporal_table(:books)
 
       expect(conn).to have_table(:books)
 
@@ -59,44 +59,44 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     end
   end
 
-  describe "#add_strata_column" do
-    include_context "with a strata table setup for books"
+  describe "#add_temporal_column" do
+    include_context "with a temporal table setup for books"
 
-    it "adds a strata column" do
-      conn.add_strata_column(:books, :subtitle, :string)
+    it "adds a temporal column" do
+      conn.add_temporal_column(:books, :subtitle, :string)
 
       expect(:books_versions).to have_column(:subtitle, :string)
     end
 
     context "when source table does not exist" do
       it "raises an error" do
-        expect { conn.add_strata_column(:teddies, :author_id, :integer) }
+        expect { conn.add_temporal_column(:teddies, :author_id, :integer) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies_versions" does not exist/)
       end
     end
 
-    context "when strata table does not exist" do
+    context "when temporal table does not exist" do
       before { conn.create_table(:teddies) }
 
       it "raises an error" do
-        expect { conn.add_strata_column(:teddies, :author_id, :integer) }
+        expect { conn.add_temporal_column(:teddies, :author_id, :integer) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies_versions" does not exist/)
       end
     end
   end
 
-  describe "#remove_strata_column" do
-    include_context "with a strata table setup for books"
+  describe "#remove_temporal_column" do
+    include_context "with a temporal table setup for books"
 
-    it "removes a strata column" do
-      conn.remove_strata_column(:books, :title)
+    it "removes a temporal column" do
+      conn.remove_temporal_column(:books, :title)
 
       expect(:books_versions).to not_have_column(:title, :string)
     end
 
-    context "when column does not exist on strata table" do
+    context "when column does not exist on temporal table" do
       it "raises an error" do
-        expect { conn.remove_strata_column(:books, :publisher_id) }
+        expect { conn.remove_temporal_column(:books, :publisher_id) }
           .to raise_error(ActiveRecord::StatementInvalid, /column "publisher_id" of relation "books_versions" does not exist/)
       end
     end
@@ -105,16 +105,16 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       before { conn.drop_table(:books) }
 
       it "raises an error" do
-        expect { conn.remove_strata_column(:books, :title) }
+        expect { conn.remove_temporal_column(:books, :title) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "books" does not exist/)
       end
     end
 
-    context "when strata table does not exist" do
-      before { conn.drop_strata_table(:books) }
+    context "when temporal table does not exist" do
+      before { conn.drop_temporal_table(:books) }
 
       it "raises an error" do
-        expect { conn.remove_strata_column(:books, :title) }
+        expect { conn.remove_temporal_column(:books, :title) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "books_versions" does not exist/)
       end
     end

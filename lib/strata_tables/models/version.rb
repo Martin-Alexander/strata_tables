@@ -55,7 +55,7 @@ module StrataTables
             as_of_time = Thread.current[:strata_tables_as_of_time]
 
             if as_of_time
-              where("#{table_name}.validity @> ?::timestamp", as_of_time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N %z"))
+              where("#{table_name}.validity @> ?::timestamptz", as_of_time)
             else
               all
             end

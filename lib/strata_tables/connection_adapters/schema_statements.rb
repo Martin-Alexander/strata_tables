@@ -21,7 +21,7 @@ module StrataTables
             )
           end
 
-          t.tsrange :validity, null: false
+          t.tstzrange :validity, null: false
         end
 
         create_strata_triggers(source_table)

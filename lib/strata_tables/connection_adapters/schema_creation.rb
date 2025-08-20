@@ -26,7 +26,7 @@ module StrataTables
           CREATE OR REPLACE FUNCTION #{o.strata_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
-              VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
+              VALUES (#{values}, tstzrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
@@ -49,13 +49,13 @@ module StrataTables
               END IF;
 
               UPDATE #{quote_table_name(o.strata_table)}
-              SET validity = tsrange(lower(validity), timezone('UTC', now()))
+              SET validity = tstzrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
               INSERT INTO #{quote_table_name(o.strata_table)} (#{fields}, validity)
-              VALUES (#{values}, tsrange(timezone('UTC', now()), NULL));
+              VALUES (#{values}, tstzrange(timezone('UTC', now()), NULL));
 
               RETURN NULL;
             END;
@@ -71,7 +71,7 @@ module StrataTables
           CREATE OR REPLACE FUNCTION #{o.strata_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE #{quote_table_name(o.strata_table)}
-              SET validity = tsrange(lower(validity), timezone('UTC', now()))
+              SET validity = tstzrange(lower(validity), timezone('UTC', now()))
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);

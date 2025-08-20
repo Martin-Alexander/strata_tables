@@ -22,5 +22,14 @@ module StrataTables
   end
 end
 
-ActiveRecord::ConnectionAdapters::AbstractAdapter.include StrataTables::ConnectionAdapters::SchemaStatements
-ActiveRecord::Migration::CommandRecorder.include StrataTables::Migration::CommandRecorder
+ActiveSupport.on_load(:active_record) do
+  begin
+    require "active_record/connection_adapters/postgresql_adapter"
+  rescue LoadError
+  end
+
+  if defined? ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
+    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include StrataTables::ConnectionAdapters::SchemaStatements
+    ActiveRecord::Migration::CommandRecorder.include StrataTables::Migration::CommandRecorder
+  end
+end

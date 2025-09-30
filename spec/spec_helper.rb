@@ -13,11 +13,11 @@ require "support/matchers/have_trigger"
 
 require "support/transaction_helper"
 
-require "support/models"
-
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
+
+require "support/models"
 
 DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true

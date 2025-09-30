@@ -2,20 +2,16 @@ require "spec_helper"
 
 RSpec.describe "deletes" do
   before do
-    conn.create_temporal_table(:books)
+    setup_tables(:books) do |t|
+      t.string :title
+      t.integer :pages
+    end
+    setup_model("Book")
+    setup_version_model("Book")
   end
 
   after do
-    conn.drop_temporal_table(:books)
-    DatabaseCleaner.clean_with :truncation
-  end
-
-  let(:temporal_book_class) do
-    Class.new(ActiveRecord::Base) do
-      def self.model_name
-        ActiveModel::Name.new(self, nil, "BooksVersion")
-      end
-    end
+    teardown_tables(:books)
   end
 
   it "sets current temporal record's upper bound validity to the current time" do
@@ -27,8 +23,8 @@ RSpec.describe "deletes" do
       Book.first.destroy!
     end
 
-    expect(temporal_book_class.count).to eq(1)
-    expect(temporal_book_class.first).to have_attributes(
+    expect(Book::Version.count).to eq(1)
+    expect(Book::Version.first).to have_attributes(
       title: "The Great Gatsby",
       pages: 180,
       validity: insert_time...delete_time
@@ -42,8 +38,8 @@ RSpec.describe "deletes" do
         Book.first.destroy!
       end
 
-      expect(temporal_book_class.count).to eq(1)
-      expect(temporal_book_class.first).to have_attributes(
+      expect(Book::Version.count).to eq(1)
+      expect(Book::Version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
         validity: nil

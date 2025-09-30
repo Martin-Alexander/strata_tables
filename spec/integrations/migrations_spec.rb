@@ -1,29 +1,33 @@
 require "spec_helper"
 
 RSpec.describe "migrations for temporal triggers" do
-  conn = ActiveRecord::Base.connection
   migration_version = "#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"
 
   around do |example|
-    original_verbose = ActiveRecord::Migration.verbose
-    ActiveRecord::Migration.verbose = false
+    og_verbose, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false
 
     DatabaseCleaner.cleaning { example.run }
 
-    ActiveRecord::Migration.verbose = original_verbose
+    ActiveRecord::Migration.verbose = og_verbose
+  end
+
+  before do
+    conn.create_table(:books) do |t|
+      t.string :title
+    end
   end
 
   let(:migration) do
-    migration_class.new
+    migration_klass = Class.new(ActiveRecord::Migration[migration_version])
+
+    migration_klass.define_method(:change, &migration_change)
+
+    migration_klass.new
   end
 
   describe "create_temporal_table" do
-    let(:migration_class) do
-      Class.new(ActiveRecord::Migration[migration_version]) do
-        def change
-          create_temporal_table(:books)
-        end
-      end
+    let(:migration_change) do
+      -> { create_temporal_table(:books) }
     end
 
     describe "#up" do
@@ -53,12 +57,8 @@ RSpec.describe "migrations for temporal triggers" do
   end
 
   describe "drop_temporal_table" do
-    let(:migration_class) do
-      Class.new(ActiveRecord::Migration[migration_version]) do
-        def change
-          drop_temporal_table(:books)
-        end
-      end
+    let(:migration_change) do
+      -> { drop_temporal_table(:books) }
     end
 
     describe "#up" do
@@ -83,12 +83,8 @@ RSpec.describe "migrations for temporal triggers" do
   end
 
   describe "add_temporal_column" do
-    let(:migration_class) do
-      Class.new(ActiveRecord::Migration[migration_version]) do
-        def change
-          add_temporal_column(:books, :subtitle, :string)
-        end
-      end
+    let(:migration_change) do
+      -> { add_temporal_column(:books, :subtitle, :string) }
     end
 
     before do
@@ -116,12 +112,8 @@ RSpec.describe "migrations for temporal triggers" do
   end
 
   describe "remove_temporal_column" do
-    let(:migration_class) do
-      Class.new(ActiveRecord::Migration[migration_version]) do
-        def change
-          remove_temporal_column(:books, :title, :string)
-        end
-      end
+    let(:migration_change) do
+      -> { remove_temporal_column(:books, :title, :string) }
     end
 
     before { conn.create_temporal_table(:books) }

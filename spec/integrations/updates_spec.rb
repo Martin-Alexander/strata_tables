@@ -2,20 +2,16 @@ require "spec_helper"
 
 RSpec.describe "updates" do
   before do
-    conn.create_temporal_table(:books)
+    setup_tables(:books) do |t|
+      t.string :title
+      t.integer :pages
+    end
+    setup_model("Book")
+    setup_version_model("Book")
   end
 
   after do
-    conn.drop_temporal_table(:books)
-    DatabaseCleaner.clean_with :truncation
-  end
-
-  let(:temporal_book_class) do
-    Class.new(ActiveRecord::Base) do
-      def self.model_name
-        ActiveModel::Name.new(self, nil, "BooksVersion")
-      end
-    end
+    teardown_tables(:books)
   end
 
   it "sets current temporal record's upper bound validity to the current time and creates a new temporal record" do
@@ -27,15 +23,11 @@ RSpec.describe "updates" do
       Book.first.update!(title: "The Greatest Gatsby")
     end
 
-    expect(temporal_book_class.count).to eq(2)
-    expect(temporal_book_class.find_by(title: "The Great Gatsby")).to have_attributes(
-      pages: 180,
-      validity: insert_time...update_time
-    )
-    expect(temporal_book_class.find_by(title: "The Greatest Gatsby")).to have_attributes(
-      pages: 180,
-      validity: update_time...
-    )
+    expect(Book::Version.count).to eq(2)
+    expect(Book::Version.find_by(title: "The Great Gatsby"))
+      .to have_attributes(pages: 180, validity: insert_time...update_time)
+    expect(Book::Version.find_by(title: "The Greatest Gatsby"))
+      .to have_attributes(pages: 180, validity: update_time...)
   end
 
   context "when the update doesn't change the record" do
@@ -46,8 +38,8 @@ RSpec.describe "updates" do
 
       Book.first.update!(title: "The Great Gatsby")
 
-      expect(temporal_book_class.count).to eq(1)
-      expect(temporal_book_class.first).to have_attributes(
+      expect(Book::Version.count).to eq(1)
+      expect(Book::Version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
         validity: insert_time...
@@ -66,22 +58,25 @@ RSpec.describe "updates" do
         Book.first.update!(title: "The Absolutely Greatest Gatsby")
       end
 
-      expect(temporal_book_class.count).to eq(3)
-      expect(temporal_book_class.find_by(title: "The Great Gatsby")).to have_attributes(
-        title: "The Great Gatsby",
-        pages: 180,
-        validity: insert_time...update_time
-      )
-      expect(temporal_book_class.find_by(title: "The Greatest Gatsby")).to have_attributes(
-        title: "The Greatest Gatsby",
-        pages: 180,
-        validity: nil
-      )
-      expect(temporal_book_class.find_by(title: "The Absolutely Greatest Gatsby")).to have_attributes(
-        title: "The Absolutely Greatest Gatsby",
-        pages: 180,
-        validity: update_time...
-      )
+      expect(Book::Version.count).to eq(3)
+      expect(Book::Version.find_by(title: "The Great Gatsby"))
+        .to have_attributes(
+          title: "The Great Gatsby",
+          pages: 180,
+          validity: insert_time...update_time
+        )
+      expect(Book::Version.find_by(title: "The Greatest Gatsby"))
+        .to have_attributes(
+          title: "The Greatest Gatsby",
+          pages: 180,
+          validity: nil
+        )
+      expect(Book::Version.find_by(title: "The Absolutely Greatest Gatsby"))
+        .to have_attributes(
+          title: "The Absolutely Greatest Gatsby",
+          pages: 180,
+          validity: update_time...
+        )
     end
   end
 end

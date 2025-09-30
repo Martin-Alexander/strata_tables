@@ -38,6 +38,6 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Run migrations
-        run: bundle exec rake db:drop db:create db:migrate
+        run: bundle exec rake db:drop db:create
       - name: Run the default task
         run: bundle exec rake

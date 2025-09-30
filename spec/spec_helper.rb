@@ -5,15 +5,13 @@ require "yaml"
 
 require "strata_tables"
 
+require "support/active_record_helper"
 require "support/matchers/have_temporal_table"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
 require "support/matchers/have_table"
 require "support/matchers/have_trigger"
-
 require "support/transaction_helper"
-
-require "support/models"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
@@ -23,6 +21,7 @@ DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true
 
 RSpec.configure do |config|
+  config.include ActiveRecordHelper
   config.include TransactionHelper
   config.include StrataTables
 
@@ -41,8 +40,6 @@ RSpec.configure do |config|
   end
 
   def get_time
-    time = Time.current
-    truncated_usec = (time.usec / 1000) * 1000
-    Time.at(time.to_i, truncated_usec, :microsecond)
+    Time.current
   end
 end

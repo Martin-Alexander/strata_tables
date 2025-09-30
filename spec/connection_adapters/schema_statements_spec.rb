@@ -21,7 +21,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .to have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
         .and have_column(:price, :decimal, precision: 10, scale: 2)
-        .and have_column(:summary, :string, collation: "en_US.utf8")
+        .and have_column(:summary, :string, collation: "en_US")
         .and have_column(:pages, :integer, comment: "Number of pages")
         # TODO: support old and new version of the `#column_exists?` method
         # .and have_column(:published_at, :date, default: Date.new(2025, 1, 1))

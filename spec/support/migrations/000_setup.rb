@@ -70,7 +70,7 @@ class Setup < ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveR
     create_table :books do |t|
       t.string :title, null: false, limit: 100
       t.decimal :price, precision: 10, scale: 2
-      t.string :summary, collation: "en_US.utf8"
+      t.string :summary, collation: "en_US"
       t.integer :pages, comment: "Number of pages"
       t.date :published_at, default: "2025-01-01"
       t.references :author, foreign_key: true, index: true

@@ -46,58 +46,64 @@ end
 ```
 
 ```
-                                  Table "public.authors"
-╔════════╤═══════════════════╤═══════════╤══════════╤═════════════════════════════════════╗
-║ Column │       Type        │ Collation │ Nullable │               Default               ║
-╠════════╪═══════════════════╪═══════════╪══════════╪═════════════════════════════════════╣
-║ id     │ bigint            │           │ not null │ nextval('authors_id_seq'::regclass) ║
-║ name   │ character varying │           │          │                                     ║
-╚════════╧═══════════════════╧═══════════╧══════════╧═════════════════════════════════════╝
+          Table "public.authors"
+╔════════╤═══════════════════╤══════════╗
+║ Column │       Type        │ Nullable ║
+╠════════╪═══════════════════╪══════════╣
+║ id     │ bigint            │ not null ║
+║ name   │ character varying │          ║
+╚════════╧═══════════════════╧══════════╝
 Indexes:
     "authors_pkey" PRIMARY KEY, btree (id)
 Triggers:
-    on_delete_strata_trigger AFTER DELETE ON authors FOR EACH ROW EXECUTE FUNCTION authors_versions_delete()
-    on_insert_strata_trigger AFTER INSERT ON authors FOR EACH ROW EXECUTE FUNCTION authors_versions_insert()
-    on_update_strata_trigger AFTER UPDATE ON authors FOR EACH ROW EXECUTE FUNCTION authors_versions_update()
+    on_delete_strata_trigger AFTER DELETE ON authors FOR EACH ROW EXECUTE
+FUNCTION authors_versions_delete()
+    on_insert_strata_trigger AFTER INSERT ON authors FOR EACH ROW EXECUTE
+FUNCTION authors_versions_insert()
+    on_update_strata_trigger AFTER UPDATE ON authors FOR EACH ROW EXECUTE
+FUNCTION authors_versions_update()
 
-                                        Table "public.authors_versions"
-╔════════════╤═══════════════════╤═══════════╤══════════╤══════════════════════════════════════════════════════╗
-║   Column   │       Type        │ Collation │ Nullable │                       Default                        ║
-╠════════════╪═══════════════════╪═══════════╪══════════╪══════════════════════════════════════════════════════╣
-║ version_id │ bigint            │           │ not null │ nextval('authors_versions_version_id_seq'::regclass) ║
-║ id         │ bigint            │           │ not null │                                                      ║
-║ name       │ character varying │           │          │                                                      ║
-║ validity   │ tstzrange         │           │ not null │                                                      ║
-╚════════════╧═══════════════════╧═══════════╧══════════╧══════════════════════════════════════════════════════╝
+            Table "public.authors_versions"
+╔════════════╤═══════════════════╤══════════╗
+║   Column   │       Type        │ Nullable ║
+╠════════════╪═══════════════════╪══════════╣
+║ version_id │ bigint            │ not null ║
+║ id         │ bigint            │ not null ║
+║ name       │ character varying │          ║
+║ validity   │ tstzrange         │ not null ║
+╚════════════╧═══════════════════╧══════════╝
 Indexes:
     "authors_versions_pkey" PRIMARY KEY, btree (version_id)
 
-                                    Table "public.books"
-╔═══════════╤═══════════════════╤═══════════╤══════════╤═══════════════════════════════════╗
-║  Column   │       Type        │ Collation │ Nullable │              Default              ║
-╠═══════════╪═══════════════════╪═══════════╪══════════╪═══════════════════════════════════╣
-║ id        │ bigint            │           │ not null │ nextval('books_id_seq'::regclass) ║
-║ title     │ character varying │           │          │                                   ║
-║ author_id │ bigint            │           │          │                                   ║
-╚═══════════╧═══════════════════╧═══════════╧══════════╧═══════════════════════════════════╝
+            Table "public.books"
+╔═══════════╤═══════════════════╤══════════╗
+║  Column   │       Type        │ Nullable ║
+╠═══════════╪═══════════════════╪══════════╣
+║ id        │ bigint            │ not null ║
+║ title     │ character varying │          ║
+║ author_id │ bigint            │          ║
+╚═══════════╧═══════════════════╧══════════╝
 Indexes:
     "books_pkey" PRIMARY KEY, btree (id)
     "index_books_on_author_id" btree (author_id)
 Triggers:
-    on_delete_strata_trigger AFTER DELETE ON books FOR EACH ROW EXECUTE FUNCTION books_versions_delete()
-    on_insert_strata_trigger AFTER INSERT ON books FOR EACH ROW EXECUTE FUNCTION books_versions_insert()
-    on_update_strata_trigger AFTER UPDATE ON books FOR EACH ROW EXECUTE FUNCTION books_versions_update()
+    on_delete_strata_trigger AFTER DELETE ON books FOR EACH ROW EXECUTE FUNCTION
+books_versions_delete()
+    on_insert_strata_trigger AFTER INSERT ON books FOR EACH ROW EXECUTE FUNCTION
+books_versions_insert()
+    on_update_strata_trigger AFTER UPDATE ON books FOR EACH ROW EXECUTE FUNCTION
+books_versions_update()
 
-                                        Table "public.books_versions"
-╔════════════╤═══════════════════╤═══════════╤══════════╤════════════════════════════════════════════════════╗
-║   Column   │       Type        │ Collation │ Nullable │                      Default                       ║
-╠════════════╪═══════════════════╪═══════════╪══════════╪════════════════════════════════════════════════════╣
-║ version_id │ bigint            │           │ not null │ nextval('books_versions_version_id_seq'::regclass) ║
-║ id         │ bigint            │           │ not null │                                                    ║
-║ title      │ character varying │           │          │                                                    ║
-║ author_id  │ bigint            │           │          │                                                    ║
-║ validity   │ tstzrange         │           │ not null │                                                    ║
-╚════════════╧═══════════════════╧═══════════╧══════════╧════════════════════════════════════════════════════╝
+         Table "public.books_versions"
+╔════════════╤═══════════════════╤══════════╗
+║   Column   │       Type        │ Nullable ║
+╠════════════╪═══════════════════╪══════════╣
+║ version_id │ bigint            │ not null ║
+║ id         │ bigint            │ not null ║
+║ title      │ character varying │          ║
+║ author_id  │ bigint            │          ║
+║ validity   │ tstzrange         │ not null ║
+╚════════════╧═══════════════════╧══════════╝
 Indexes:
     "books_versions_pkey" PRIMARY KEY, btree (version_id)
 

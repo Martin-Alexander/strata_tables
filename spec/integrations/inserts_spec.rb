@@ -2,16 +2,18 @@ require "spec_helper"
 
 RSpec.describe "inserts" do
   before do
-    setup_tables(:books) do |t|
+    conn.create_table(:books) do |t|
       t.string :title
       t.integer :pages
     end
-    setup_model("Book")
-    setup_version_model("Book")
+    conn.create_temporal_table(:books)
+    stub_const("Book", Class.new(ActiveRecord::Base))
+    stub_const("Book::Version", Class.new(Book) { include StrataTables::Model })
   end
 
   after do
-    teardown_tables(:books)
+    conn.drop_table(:books)
+    conn.drop_temporal_table(:books)
   end
 
   it "creates a new temporal record" do

@@ -5,7 +5,6 @@ require "yaml"
 
 require "strata_tables"
 
-require "support/active_record_helper"
 require "support/matchers/have_temporal_table"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
@@ -21,7 +20,6 @@ DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true
 
 RSpec.configure do |config|
-  config.include ActiveRecordHelper
   config.include TransactionHelper
   config.include StrataTables
 
@@ -37,9 +35,5 @@ RSpec.configure do |config|
 
   def conn
     ActiveRecord::Base.connection
-  end
-
-  def get_time
-    Time.current
   end
 end

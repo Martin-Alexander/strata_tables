@@ -6,7 +6,7 @@ module StrataTables
 
         temporal_table = "#{source_table}_versions"
 
-        create_table temporal_table, id: false do |t|
+        create_table temporal_table, primary_key: :version_id do |t|
           source_columns.each do |column|
             t.send(
               column.type,

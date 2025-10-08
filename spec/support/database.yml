@@ -1,7 +1,3 @@
 test:
   adapter: postgresql
   database: strata_tables_test
-  username: postgres
-  password: postgres
-  host: localhost
-  port: 5432

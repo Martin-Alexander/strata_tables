@@ -15,6 +15,7 @@ require "support/transaction_helper"
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
+ActiveRecord::Base.logger = Logger.new(STDOUT) if ENV.fetch("AR_LOG") { false }
 
 DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true

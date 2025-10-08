@@ -1,3 +1,4 @@
+require_relative "strata_tables/associations/preloader/through_association"
 require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"
 require_relative "strata_tables/connection_adapters/schema_statements"
@@ -5,6 +6,7 @@ require_relative "strata_tables/migration/command_recorder"
 require_relative "strata_tables/model"
 require_relative "strata_tables/reflection/association_reflection"
 require_relative "strata_tables/relation"
+require_relative "strata_tables/relation/merger"
 
 ActiveSupport.on_load(:active_record) do
   begin
@@ -13,9 +15,11 @@ ActiveSupport.on_load(:active_record) do
   end
 
   if defined? ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
+    ActiveRecord::Associations::Preloader::ThroughAssociation.prepend StrataTables::Associations::Preloader::ThroughAssociation
     ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include StrataTables::ConnectionAdapters::SchemaStatements
     ActiveRecord::Migration::CommandRecorder.include StrataTables::Migration::CommandRecorder
-    ActiveRecord::Relation.prepend StrataTables::Relation
     ActiveRecord::Reflection::AssociationReflection.prepend StrataTables::Reflection::AssociationReflection
+    ActiveRecord::Relation.prepend StrataTables::Relation
+    ActiveRecord::Relation::Merger.prepend StrataTables::Relation::Merger
   end
 end

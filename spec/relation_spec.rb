@@ -1,6 +1,20 @@
 require "spec_helper"
 
 RSpec.describe ActiveRecord::Relation, "#as_of" do
+  shared_examples "filters associated eager loaded records by validity" do
+    it "filters associated eager loaded records by validity" do
+      expect(relation.as_of(@t1).first.books.size).to eq(0)
+      expect(relation.as_of(@t2).first.books.size).to eq(1)
+    end
+  end
+
+  shared_examples "does not filter associated eager loaded records by validity" do
+    it "does not filter associated eager loaded records by validity" do
+      expect(relation.as_of(@t1).first.books.size).to eq(2)
+      expect(relation.as_of(@t2).first.books.size).to eq(2)
+    end
+  end
+
   before do
     conn.create_table(:authors) do |t|
       t.string :name
@@ -55,7 +69,11 @@ RSpec.describe ActiveRecord::Relation, "#as_of" do
     end
 
     it "returns records with as_of set" do
-      expect(relation.as_of(@t3).first._as_of).to eq(@t3)
+      expect(relation.as_of(@t3).first.as_of_value).to eq(@t3)
+    end
+
+    it "does not filter by validity when called with nil" do
+      expect(relation.as_of(nil).count).to eq(1)
     end
 
     context "when the table is not a temporal table" do
@@ -64,12 +82,6 @@ RSpec.describe ActiveRecord::Relation, "#as_of" do
       it "does not filter by validity" do
         expect(relation.as_of(@t0).count).to eq(1)
         expect(relation.as_of(@t1).count).to eq(1)
-      end
-    end
-
-    context "when called with nil" do
-      it "does not filter by validity" do
-        expect(relation.count).to eq(1)
       end
     end
   end
@@ -83,13 +95,11 @@ RSpec.describe ActiveRecord::Relation, "#as_of" do
     end
 
     it "returns records with as_of set" do
-      expect(relation.as_of(@t3).first._as_of).to eq(@t3)
+      expect(relation.as_of(@t3).first.as_of_value).to eq(@t3)
     end
 
-    context "when called with nil" do
-      it "does not filter by validity" do
-        expect(relation.count).to eq(2)
-      end
+    it "does not filter by validity when called with nil" do
+      expect(relation.as_of(nil).count).to eq(2)
     end
 
     context "when the association has a scope" do
@@ -124,12 +134,11 @@ RSpec.describe ActiveRecord::Relation, "#as_of" do
     end
   end
 
-  join_sql = <<~SQL.squish
-    JOIN books_versions as bv ON bv.author_id = authors_versions.id
-  SQL
-
-  context "given .joins(\"#{join_sql}\")" do
-    let(:relation) { Author::Version.joins(join_sql) }
+  context "given .joins(\"sql_string\")" do
+    let(:relation) do
+      Author::Version
+        .joins("JOIN books_versions as bv ON bv.author_id = authors_versions.id")
+    end
 
     it "does not filter association by validity" do
       expect(relation.as_of(@t1).count).to eq(2)
@@ -140,29 +149,71 @@ RSpec.describe ActiveRecord::Relation, "#as_of" do
   context "given .eager_load(:books)" do
     let(:relation) { Author::Version.eager_load(:books) }
 
-    it "filters associated eager loaded records by validity" do
-      expect(relation.as_of(@t1).first.books.size).to eq(0)
-      expect(relation.as_of(@t2).first.books.size).to eq(1)
+    include_examples "filters associated eager loaded records by validity"
+
+    context "when the base table is not a temporal table" do
+      let(:skip_authors_temporal_table) { true }
+
+      include_examples "filters associated eager loaded records by validity"
+    end
+
+    context "when the associated table is not a temporal table" do
+      let(:skip_books_temporal_table) { true }
+
+      include_examples "does not filter associated eager loaded records by validity"
     end
   end
 
-  context "given .includes(:books).joins(\"#{join_sql}\").references(:books)" do
+  context "given .includes(:books).joins(\"sql_string\").references(:books)" do
     let(:relation) do
-      Author::Version.includes(:books).joins(join_sql).references(:books)
+      Author::Version
+        .includes(:books)
+        .joins("JOIN books_versions as bv ON bv.author_id = authors_versions.id")
+        .references(:books)
     end
 
-    it "filters associated eager loaded records by validity" do
-      expect(relation.as_of(@t1).first.books.size).to eq(0)
-      expect(relation.as_of(@t2).first.books.size).to eq(1)
+    include_examples "filters associated eager loaded records by validity"
+
+    context "when the base table is not a temporal table" do
+      let(:skip_authors_temporal_table) { true }
+      let(:relation) do
+        Author::Version
+          .includes(:books)
+          .joins("JOIN books_versions as bv ON bv.author_id = authors.id")
+          .references(:books)
+      end
+
+      include_examples "filters associated eager loaded records by validity"
+    end
+
+    context "when the associated table is not a temporal table" do
+      let(:skip_books_temporal_table) { true }
+      let(:relation) do
+        Author::Version
+          .includes(:books)
+          .joins("JOIN books as b ON b.author_id = authors_versions.id")
+          .references(:books)
+      end
+
+      include_examples "does not filter associated eager loaded records by validity"
     end
   end
 
   context "given .preload(:books)" do
     let(:relation) { Author::Version.preload(:books) }
 
-    it "filters associated eager loaded records by validity" do
-      expect(relation.as_of(@t1).first.books.size).to eq(0)
-      expect(relation.as_of(@t2).first.books.size).to eq(1)
+    include_examples "filters associated eager loaded records by validity"
+
+    context "when the base table is not a temporal table" do
+      let(:skip_authors_temporal_table) { true }
+
+      include_examples "filters associated eager loaded records by validity"
+    end
+
+    context "when the associated table is not a temporal table" do
+      let(:skip_books_temporal_table) { true }
+
+      include_examples "does not filter associated eager loaded records by validity"
     end
   end
 end

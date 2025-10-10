@@ -8,7 +8,7 @@ RSpec.describe "inserts" do
     end
     conn.create_temporal_table(:books)
     stub_const("Book", Class.new(ActiveRecord::Base))
-    stub_const("Book::Version", Class.new(Book) { include StrataTables::Model })
+    stub_const("Book::Version", Class.new(Book) { include StrataTables::VersionModel })
   end
 
   after do

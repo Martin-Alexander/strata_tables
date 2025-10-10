@@ -7,6 +7,7 @@ require_relative "strata_tables/model"
 require_relative "strata_tables/reflection/association_reflection"
 require_relative "strata_tables/relation"
 require_relative "strata_tables/relation/merger"
+require_relative "strata_tables/version_model"
 
 ActiveSupport.on_load(:active_record) do
   begin

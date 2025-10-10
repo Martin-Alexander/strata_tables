@@ -9,7 +9,7 @@ RSpec.describe "updates" do
     conn.create_temporal_table(:books)
     stub_const("Book", Class.new(ActiveRecord::Base))
     stub_const("Book::Version", Class.new(Book) do
-      include StrataTables::Model
+      include StrataTables::VersionModel
     end)
   end
 

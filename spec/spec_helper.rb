@@ -1,5 +1,4 @@
 require "active_record"
-require "database_cleaner/active_record"
 require "debug"
 require "yaml"
 
@@ -16,9 +15,6 @@ db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
 ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
-
-DatabaseCleaner.strategy = :transaction
-DatabaseCleaner.allow_remote_database_url = true
 
 def randomize_sequences!(*columns)
   conn.tables.each do |table|

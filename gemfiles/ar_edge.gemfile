@@ -2,7 +2,6 @@
 
 source "https://rubygems.org"
 
-gem "database_cleaner-active_record"
 gem "debug"
 gem "rake"
 gem "rspec"

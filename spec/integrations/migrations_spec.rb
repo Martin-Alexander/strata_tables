@@ -6,7 +6,7 @@ RSpec.describe "migrations for temporal triggers" do
   around do |example|
     og_verbose, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false
 
-    DatabaseCleaner.cleaning { example.run }
+    example.run
 
     ActiveRecord::Migration.verbose = og_verbose
   end
@@ -15,6 +15,11 @@ RSpec.describe "migrations for temporal triggers" do
     conn.create_table(:books) do |t|
       t.string :title
     end
+  end
+
+  after do
+    conn.drop_table(:books) if conn.table_exists?(:books)
+    conn.drop_table(:books_versions) if conn.table_exists?(:books_versions)
   end
 
   let(:migration) do

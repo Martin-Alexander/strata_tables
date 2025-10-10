@@ -1,10 +1,6 @@
 require "spec_helper"
 
 RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
-  around do |example|
-    DatabaseCleaner.cleaning { example.run }
-  end
-
   subject { described_class.new(connection) }
 
   let(:connection) { ActiveRecord::Base.connection }

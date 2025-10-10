@@ -2,7 +2,7 @@ module StrataTables
   module Reflection
     module AssociationReflection
       def check_eager_loadable!
-        if klass.include?(StrataTables::Model)
+        if active_record.include?(StrataTables::Model)
           _check_eager_loadable!
         else
           super

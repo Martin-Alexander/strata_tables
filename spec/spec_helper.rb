@@ -15,10 +15,28 @@ require "support/transaction_helper"
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
 db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
-ActiveRecord::Base.logger = Logger.new(STDOUT) if ENV.fetch("AR_LOG") { false }
+ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
 
 DatabaseCleaner.strategy = :transaction
 DatabaseCleaner.allow_remote_database_url = true
+
+def randomize_sequences!(*columns)
+  conn.tables.each do |table|
+    next if table == "schema_migrations" || table == "ar_internal_metadata"
+
+    columns.each do |column|
+      sequence_name = conn.execute(
+        "SELECT pg_get_serial_sequence('#{table}', '#{column}')"
+      ).first&.fetch("pg_get_serial_sequence")
+
+      if sequence_name
+        offset = Math.exp(2 + rand * (10 - 2)).to_i
+        conn.execute("SELECT setval('#{sequence_name}', #{offset})")
+      end
+    rescue ActiveRecord::StatementInvalid
+    end
+  end
+end
 
 RSpec.configure do |config|
   config.include TransactionHelper

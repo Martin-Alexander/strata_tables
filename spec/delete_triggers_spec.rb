@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "deletes" do
+RSpec.describe "delete triggers" do
   before do
     conn.create_table(:books) do |t|
       t.string :title

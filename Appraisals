@@ -13,7 +13,7 @@
   7.2.1
   7.2.0
 ].each do |version|
-  appraise "ar-#{version.gsub(".", "_")}" do
+  appraise "ar-#{version.tr(".", "_")}" do
     gem "activerecord", version
   end
 end

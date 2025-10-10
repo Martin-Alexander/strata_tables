@@ -162,21 +162,22 @@ RSpec.describe "associations" do
     end
 
     before do
-      stub_const("Library", Class.new(ActiveRecord::Base) do
+      stub_const("ApplicationRecord", Class.new(ActiveRecord::Base) do
+        self.abstract_class = true
+
+        include StrataTables::Model
+      end)
+      stub_const("Library", Class.new(ApplicationRecord) do
         has_many :books
       end)
-      stub_const("Author", Class.new(ActiveRecord::Base) do
+      stub_const("Author", Class.new(ApplicationRecord) do
         has_many :books
         has_many :libraries, through: :books
       end)
-      stub_const("Book", Class.new(ActiveRecord::Base) do
+      stub_const("Book", Class.new(ApplicationRecord) do
         belongs_to :author
         belongs_to :library
       end)
-
-      stub_const("Library::Version", Class.new(Library) { include StrataTables::Model })
-      stub_const("Author::Version", Class.new(Author) { include StrataTables::Model })
-      stub_const("Book::Version", Class.new(Book) { include StrataTables::Model })
     end
   end
 
@@ -686,22 +687,18 @@ RSpec.describe "associations" do
     end
 
     before do
-      stub_const("Author", Class.new(ActiveRecord::Base) do
+      stub_const("Author", Class.new(ApplicationRecord) do
         has_many :books
         has_many :libraries, through: :books
         has_many :employees, through: :libraries
       end)
-      stub_const("Library", Class.new(ActiveRecord::Base) do
+      stub_const("Library", Class.new(ApplicationRecord) do
         has_many :books
         has_many :employees
       end)
-      stub_const("Employee", Class.new(ActiveRecord::Base) do
+      stub_const("Employee", Class.new(ApplicationRecord) do
         belongs_to :library
       end)
-
-      stub_const("Author::Version", Class.new(Author) { include StrataTables::Model })
-      stub_const("Library::Version", Class.new(Library) { include StrataTables::Model })
-      stub_const("Employee::Version", Class.new(Employee) { include StrataTables::Model })
 
       # t0
       # t1 author_v1
@@ -1073,11 +1070,9 @@ RSpec.describe "associations" do
     include_context "scenario"
 
     before do
-      stub_const("Picture", Class.new(ActiveRecord::Base) do
+      stub_const("Picture", Class.new(ApplicationRecord) do
         belongs_to :imageable, polymorphic: true
       end)
-
-      stub_const("Picture::Version", Class.new(Picture) { include StrataTables::Model })
 
       Author.has_many :pictures, as: :imageable
       Book.has_many :pictures, as: :imageable

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "inserts" do
+RSpec.describe "insert triggers" do
   before do
     conn.create_table(:books) do |t|
       t.string :title

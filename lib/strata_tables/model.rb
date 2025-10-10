@@ -33,7 +33,7 @@ module StrataTables
     end
 
     def as_of(time)
-      as_of!(time) unless respond_to?(:validity) && !validity.cover?(time)
+      reload.as_of!(time) # unless respond_to?(:validity) && !validity.cover?(time)
     end
 
     def as_of!(time)
@@ -65,6 +65,48 @@ module StrataTables
       end
     end
 
+    # def base_scope(reflection, owner)
+    #   reflection.scope ? instance_exec(owner, &reflection.scope) : all
+    # end
+
+    # def has_many_through_scope(reflection, scope, owner)
+    #   if owner&.as_of_value
+    #     return scope._as_of(owner.as_of_value)
+    #   end
+
+    #   return scope
+    # end
+    
+    # def instance_dependent_scope(klass, reflection, scope, owner)
+    #   assoc_table = reflection.klass.version.table_name
+    #   if owner.as_of_value
+    #     scope.as_of(owner.as_of_value)
+    #   elsif klass.version_table_backing?
+    #     if reflection.macro == :has_many
+    #       if owner.validity_end
+    #         scope.where(
+    #           "#{assoc_table}.validity @> ?::timestamptz", owner.validity_end
+    #         )
+    #       else
+    #         scope.where("upper_inf(#{assoc_table}.validity)")
+    #       end
+    #     else
+    #       if owner.validity_end
+    #         scope.where(
+    #           "#{assoc_table}.validity @> upper(#{klass.table_name}.validity)"
+    #         )
+    #       else
+    #         scope.where("upper_inf(#{assoc_table}.validity)")
+    #       end
+    #     end
+    #   else
+    #     scope.where("upper_inf(#{assoc_table}.validity)")
+    #   end
+    # end
+
+    # def instance_independent_scope(reflection, scope)
+    # end
+
     def versionfiy_associations(klass, base)
       base.reflect_on_all_associations.each do |reflection|
         options = {
@@ -73,17 +115,49 @@ module StrataTables
           class_name: "#{reflection.klass.name}::Version"
         }
 
-        # options[:disable_joins] = true if reflection.is_a?(ActiveRecord::Reflection::ThroughReflection)
-
         klass.send(
           reflection.macro,
           reflection.name,
           ->(owner = nil) do
             scope = reflection.scope ? instance_exec(owner, &reflection.scope) : all
 
+            # puts "Owner: #{owner.class}\tActive record: #{reflection.active_record.version}\tClass: #{reflection.klass.version}\tThrough: #{reflection.options[:through]}"
+
+            # assoc_klass = reflection.klass.version
+
+            # klass_table = klass.table_name
+            # assoc_klass_table = assoc_klass.table_name
+
+            # klass_temporal = klass.version_table_backing?
+            # assoc_klass_temporal = assoc_klass.version_table_backing?
+
+            # is_through_assoc = reflection.options.has_key?(:through)
+            # is_has_many_assoc = reflection.macro == :has_many
+
+            # if is_through_assoc
+            #   if owner&.as_of_value
+            #     return scope._as_of(owner.as_of_value)
+            #   end
+
+            #   return scope
+            # end
+
+            # if !assoc_klass_temporal
+            #   if owner&.as_of_value
+            #     return scope._as_of(owner.as_of_value)
+            #   end
+
+            #   return scope
+            # end
+
+
             if !reflection.klass.version.version_table_backing?
               if owner&.as_of_value
-                return scope.as_of(owner.as_of_value)
+                if reflection.options.has_key?(:through)
+                  return scope._as_of(owner.as_of_value)
+                else
+                  return scope.as_of(owner.as_of_value)
+                end
               else
                 return scope
               end
@@ -93,13 +167,38 @@ module StrataTables
 
             if owner
               if owner.as_of_value
-                scope.as_of(owner.as_of_value)
-              elsif owner.respond_to?(:validity) && owner.validity_end
-                scope.where("#{assoc_table}.validity @> ?::timestamptz", owner.validity_end)
+                if reflection.options.has_key?(:through)
+                  scope._as_of(owner.as_of_value)
+                else
+                  scope.as_of(owner.as_of_value)
+                end
+              elsif klass.version_table_backing?
+                if reflection.options.has_key?(:through)
+                  scope
+                elsif reflection.macro == :has_many
+                  if owner.validity_end
+                    scope.where(
+                      "#{assoc_table}.validity @> ?::timestamptz",
+                      owner.validity_end
+                    )
+                  else
+                    scope.where("upper_inf(#{assoc_table}.validity)")
+                  end
+                else
+                  if owner.validity_end
+                    scope.where(
+                      "#{assoc_table}.validity @> upper(#{klass.table_name}.validity)"
+                    )
+                  else
+                    scope.where("upper_inf(#{assoc_table}.validity)")
+                  end
+                end
               else
                 scope.where("upper_inf(#{assoc_table}.validity)")
               end
             else
+              return scope if reflection.options.has_key?(:through)
+
               upper = ->(arg) do
                 Arel::Nodes::NamedFunction.new("upper", [arg])
               end
@@ -112,14 +211,14 @@ module StrataTables
               own_table = klass.arel_table
 
               if klass.version_table_backing?
-                # scope.where(Arel.sql("#{assoc_table}.validity @> upper(#{klass.table_name}.validity) OR (upper_inf(#{assoc_table}.validity) AND upper_inf(#{klass.table_name}.validity))"))
-
-                both_extant = Arel::Nodes::Grouping.new(upper_inf.call(new_table[:validity]).and(upper_inf.call(own_table[:validity])))
-                assoc_existed_at_owners_upper_bound = new_table[:validity].contains(upper.call(own_table[:validity]))
+                both_extant = Arel::Nodes::Grouping.new(
+                  upper_inf.call(new_table[:validity])
+                    .and(upper_inf.call(own_table[:validity]))
+                )
+                assoc_existed_at_owners_upper_bound = new_table[:validity]
+                  .contains(upper.call(own_table[:validity]))
 
                 node = assoc_existed_at_owners_upper_bound.or(both_extant)
-
-                # books_versions.validity @> upper(authors_versions.validity) OR (upper_inf(books_versions.validity) AND upper_inf(authors_versions.validity))
 
                 def node.strata_tag
                   true

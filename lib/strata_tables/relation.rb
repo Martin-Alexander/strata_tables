@@ -5,8 +5,12 @@ module StrataTables
     end
 
     def as_of!(time)
-      if time && table_name.end_with?("_versions")
-        where!("#{table_name}.validity @> ?::timestamptz", time)
+      if table_name.end_with?("_versions")
+        if time
+          where!("#{table_name}.validity @> ?::timestamptz", time)
+        else
+          where!("upper_inf(#{table_name}.validity)")
+        end
       end
 
       self.as_of_value = time

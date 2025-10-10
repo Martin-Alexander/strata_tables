@@ -5,7 +5,6 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in strata_tables.gemspec
 gemspec
 
-gem "database_cleaner-active_record"
 gem "debug"
 gem "rake"
 gem "rspec"

@@ -1,8 +1,8 @@
 require "spec_helper"
 
 RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
-  around do |example|
-    DatabaseCleaner.cleaning { example.run }
+  shared_context "with a temporal table setup for books" do
+    before { conn.create_temporal_table(:books) }
   end
 
   before do
@@ -19,8 +19,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     end
   end
 
-  RSpec.shared_context "with a temporal table setup for books" do
-    before { conn.create_temporal_table(:books) }
+  after do
+    conn.drop_table(:books) if conn.table_exists?(:books)
+    conn.drop_table(:authors) if conn.table_exists?(:authors)
+    conn.drop_table(:teddies) if conn.table_exists?(:teddies)
+
+    conn.drop_table(:books_versions) if conn.table_exists?(:books_versions)
+    conn.drop_table(:authors_versions) if conn.table_exists?(:authors_versions)
   end
 
   describe "#create_temporal_table" do

@@ -1,11 +1,21 @@
-appraise "ar-7" do
-  gem "activerecord", ">= 7.0", "< 8.0"
-  gem "pg"
-end
-
-appraise "ar-8" do
-  gem "activerecord", ">= 8.0", "< 9.0"
-  gem "pg"
+%w[
+  8.0.3
+  8.0.2.1
+  8.0.2
+  8.0.1
+  8.0.0.1
+  8.0.0
+  7.2.2.2
+  7.2.2.1
+  7.2.2
+  7.2.1.2
+  7.2.1.1
+  7.2.1
+  7.2.0
+].each do |version|
+  appraise "ar-#{version.gsub(".", "_")}" do
+    gem "activerecord", version
+  end
 end
 
 appraise "ar-edge" do

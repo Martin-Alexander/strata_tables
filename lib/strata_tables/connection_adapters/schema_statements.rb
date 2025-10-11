@@ -1,8 +1,12 @@
 module StrataTables
   module ConnectionAdapters
     module SchemaStatements
-      def create_temporal_table(source_table)
-        source_columns = columns(source_table)
+      def create_temporal_table(source_table, **options)
+        except = options[:except]&.map(&:to_sym) || []
+
+        source_columns = columns(source_table).reject do |column|
+          except.include?(column.name.to_sym)
+        end
 
         temporal_table = "#{source_table}_versions"
 

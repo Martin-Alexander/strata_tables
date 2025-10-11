@@ -16,6 +16,8 @@ db_config = YAML.load_file(db_config_path)["test"]
 ActiveRecord::Base.establish_connection(db_config)
 ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
 
+PlPgsqlFunction = Struct.new(:name, :body)
+
 RSpec.configure do |config|
   config.include TransactionHelper
   config.include StrataTables
@@ -31,8 +33,6 @@ RSpec.configure do |config|
   end
 
   RSpec::Matchers.alias_matcher :have_attrs, :have_attributes
-
-  PlPgsqlFunction = Struct.new(:name, :body)
 
   def conn
     ActiveRecord::Base.connection

@@ -2,8 +2,7 @@ module StrataTables
   module Migration
     module CommandRecorder
       {
-        create_temporal_table: :drop_temporal_table,
-        add_temporal_column: :remove_temporal_column
+        create_temporal_table: :drop_temporal_table
       }.each do |method, inverse|
         [[method, inverse], [inverse, method]].each do |method, inverse|
           class_eval <<-EOV, __FILE__, __LINE__ + 1

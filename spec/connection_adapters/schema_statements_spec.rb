@@ -48,6 +48,25 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and have_column(:author_id, :integer)
     end
 
+    context "with 'except'" do
+      it "omits columns from the history table" do
+        conn.create_temporal_table(:books, except: [:title, :price, :summary])
+
+        expect(conn).to have_table(:books_versions)
+
+        expect(:books).to have_temporal_table
+
+        expect(:books_versions)
+          .to not_have_column(:title)
+          .and(not_have_column(:price))
+          .and(not_have_column(:summary))
+          .and(have_column(:id))
+          .and(have_column(:pages))
+          .and(have_column(:published_at))
+          .and(have_column(:author_id))
+      end
+    end
+
     context "when source table does not exist" do
       it "raises an error" do
         expect { conn.create_temporal_table(:teddies) }

@@ -39,24 +39,6 @@ module StrataTables
         drop_temporal_triggers(source_table)
       end
 
-      def add_temporal_column(source_table, column_name, type, **options)
-        temporal_table = "#{source_table}_versions"
-
-        add_column temporal_table, column_name, type, **options
-
-        drop_temporal_triggers(source_table)
-        create_temporal_triggers(source_table)
-      end
-
-      def remove_temporal_column(source_table, column_name, type = nil, **options)
-        temporal_table = "#{source_table}_versions"
-
-        remove_column temporal_table, column_name, type, **options
-
-        drop_temporal_triggers(source_table)
-        create_temporal_triggers(source_table)
-      end
-
       def create_temporal_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 

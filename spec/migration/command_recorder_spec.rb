@@ -19,21 +19,5 @@ RSpec.describe StrataTables::Migration::CommandRecorder do
         expect(inverse).to eq([:create_temporal_table, [:books]])
       end
     end
-
-    context "given a add_temporal_column command" do
-      it "returns a remove_temporal_column command" do
-        inverse = recorder.inverse_of(:add_temporal_column, [:books, :author_id, :integer])
-
-        expect(inverse).to eq([:remove_temporal_column, [:books, :author_id, :integer]])
-      end
-    end
-
-    context "given a remove_temporal_column command" do
-      it "returns a add_temporal_column command" do
-        inverse = recorder.inverse_of(:remove_temporal_column, [:books, :author_id, :integer])
-
-        expect(inverse).to eq([:add_temporal_column, [:books, :author_id, :integer]])
-      end
-    end
   end
 end

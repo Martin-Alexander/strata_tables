@@ -33,14 +33,14 @@ class CreateAuthorsAndBooks < ActiveRecord::Migration[8.0]
       t.string :name
     end
 
-    create_temporal_table :products
+    create_history_table :products
 
     create_table :books do |t|
       t.string :title
       t.references :authors, null: false, foreign_key: true
     end
 
-    create_temporal_table :books
+    create_history_table :books
   end
 end
 ```

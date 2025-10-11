@@ -12,9 +12,9 @@ RSpec.describe "model" do
       t.references :author
     end
 
-    conn.create_temporal_table(:countries)
-    conn.create_temporal_table(:authors)
-    conn.create_temporal_table(:books)
+    conn.create_history_table(:countries)
+    conn.create_history_table(:authors)
+    conn.create_history_table(:books)
   end
 
   after(:context) do
@@ -22,9 +22,9 @@ RSpec.describe "model" do
     conn.drop_table(:authors)
     conn.drop_table(:books)
 
-    conn.drop_temporal_table(:countries)
-    conn.drop_temporal_table(:authors)
-    conn.drop_temporal_table(:books)
+    conn.drop_history_table(:countries)
+    conn.drop_history_table(:authors)
+    conn.drop_history_table(:books)
   end
 
   before do

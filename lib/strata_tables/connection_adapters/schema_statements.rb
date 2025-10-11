@@ -1,16 +1,16 @@
 module StrataTables
   module ConnectionAdapters
     module SchemaStatements
-      def create_temporal_table(source_table, **options)
+      def create_history_table(source_table, **options)
         except = options[:except]&.map(&:to_sym) || []
 
         source_columns = columns(source_table).reject do |column|
           except.include?(column.name.to_sym)
         end
 
-        temporal_table = "#{source_table}_versions"
+        history_table = "#{source_table}_versions"
 
-        create_table temporal_table, primary_key: :version_id do |t|
+        create_table history_table, primary_key: :version_id do |t|
           source_columns.each do |column|
             t.send(
               column.type,
@@ -28,34 +28,34 @@ module StrataTables
           t.tstzrange :validity, null: false
         end
 
-        create_temporal_triggers(source_table)
+        create_history_triggers(source_table)
       end
 
-      def drop_temporal_table(source_table)
-        temporal_table = "#{source_table}_versions"
+      def drop_history_table(source_table)
+        history_table = "#{source_table}_versions"
 
-        drop_table temporal_table
+        drop_table history_table
 
-        drop_temporal_triggers(source_table)
+        drop_history_triggers(source_table)
       end
 
-      def create_temporal_triggers(source_table)
+      def create_history_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        temporal_table = "#{source_table}_versions"
+        history_table = "#{source_table}_versions"
         column_names = columns(source_table).map(&:name)
 
-        trigger_set = StrataTriggerSetDefinition.new(source_table, temporal_table, column_names)
+        trigger_set = StrataTriggerSetDefinition.new(source_table, history_table, column_names)
 
         execute schema_creation.accept(trigger_set)
       end
 
-      def drop_temporal_triggers(source_table)
-        temporal_table = "#{source_table}_versions"
+      def drop_history_triggers(source_table)
+        history_table = "#{source_table}_versions"
 
-        execute "DROP FUNCTION #{temporal_table}_insert() CASCADE"
-        execute "DROP FUNCTION #{temporal_table}_update() CASCADE"
-        execute "DROP FUNCTION #{temporal_table}_delete() CASCADE"
+        execute "DROP FUNCTION #{history_table}_insert() CASCADE"
+        execute "DROP FUNCTION #{history_table}_update() CASCADE"
+        execute "DROP FUNCTION #{history_table}_delete() CASCADE"
       end
     end
   end

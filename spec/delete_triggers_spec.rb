@@ -6,7 +6,7 @@ RSpec.describe "delete triggers" do
       t.string :title
       t.integer :pages
     end
-    conn.create_temporal_table(:books)
+    conn.create_history_table(:books)
     stub_const("Book", Class.new(ActiveRecord::Base))
     stub_const("Book::Version", Class.new(Book) do
       include StrataTables::VersionModel
@@ -15,10 +15,10 @@ RSpec.describe "delete triggers" do
 
   after do
     conn.drop_table(:books)
-    conn.drop_temporal_table(:books)
+    conn.drop_history_table(:books)
   end
 
-  it "sets current temporal record's upper bound validity to the current time" do
+  it "sets current history record's upper bound validity to the current time" do
     insert_time = transaction_with_time(conn) do
       Book.create!(title: "The Great Gatsby", pages: 180)
     end
@@ -36,7 +36,7 @@ RSpec.describe "delete triggers" do
   end
 
   context "when inserting and deleting in a single transaction" do
-    it "creates a temporal record with an empty validity range" do
+    it "creates a history record with an empty validity range" do
       conn.transaction do
         Book.create!(title: "The Great Gatsby", pages: 180)
         Book.first.destroy!

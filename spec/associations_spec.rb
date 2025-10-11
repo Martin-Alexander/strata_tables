@@ -144,17 +144,17 @@ RSpec.describe "associations" do
         t.references :library
       end
 
-      conn.create_temporal_table(:books)
-      conn.create_temporal_table(:authors)
-      conn.create_temporal_table(:libraries)
+      conn.create_history_table(:books)
+      conn.create_history_table(:authors)
+      conn.create_history_table(:libraries)
 
       randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do
-      conn.drop_temporal_table(:books) if conn.table_exists?(:books_versions)
-      conn.drop_temporal_table(:authors) if conn.table_exists?(:authors_versions)
-      conn.drop_temporal_table(:libraries) if conn.table_exists?(:libraries_versions)
+      conn.drop_history_table(:books) if conn.table_exists?(:books_versions)
+      conn.drop_history_table(:authors) if conn.table_exists?(:authors_versions)
+      conn.drop_history_table(:libraries) if conn.table_exists?(:libraries_versions)
 
       conn.drop_table(:books)
       conn.drop_table(:authors)
@@ -303,13 +303,13 @@ RSpec.describe "associations" do
       include_examples "eager loading books"
     end
 
-    context "without books temporal table" do
+    context "without books history table" do
       before(:context) do
-        conn.drop_temporal_table(:books)
+        conn.drop_history_table(:books)
       end
 
       after(:context) do
-        conn.create_temporal_table(:books)
+        conn.create_history_table(:books)
       end
 
       it "all author versions have the same books" do
@@ -378,13 +378,13 @@ RSpec.describe "associations" do
       end
     end
 
-    context "without authors temporal table" do
+    context "without authors history table" do
       before(:context) do
-        conn.drop_temporal_table(:authors)
+        conn.drop_history_table(:authors)
       end
 
       after(:context) do
-        conn.create_temporal_table(:authors)
+        conn.create_history_table(:authors)
       end
 
       context "without as-of" do
@@ -565,13 +565,13 @@ RSpec.describe "associations" do
       include_examples "eager loading libraries"
     end
 
-    context "without books temporal table" do
+    context "without books history table" do
       before(:context) do
-        conn.drop_temporal_table(:books)
+        conn.drop_history_table(:books)
       end
 
       after(:context) do
-        conn.create_temporal_table(:books)
+        conn.create_history_table(:books)
       end
 
       context "without as-of" do
@@ -677,11 +677,11 @@ RSpec.describe "associations" do
         t.references :library
       end
 
-      conn.create_temporal_table(:employees)
+      conn.create_history_table(:employees)
     end
 
     after(:context) do
-      conn.drop_temporal_table(:employees) if conn.table_exists?(:employees_versions)
+      conn.drop_history_table(:employees) if conn.table_exists?(:employees_versions)
 
       conn.drop_table(:employees)
     end
@@ -796,13 +796,13 @@ RSpec.describe "associations" do
       include_examples "eager loading employees"
     end
 
-    context "without books temporal table" do
+    context "without books history table" do
       before(:context) do
-        conn.drop_temporal_table(:books)
+        conn.drop_history_table(:books)
       end
 
       after(:context) do
-        conn.create_temporal_table(:books)
+        conn.create_history_table(:books)
       end
 
       # t0           <- book_v ->
@@ -871,13 +871,13 @@ RSpec.describe "associations" do
       end
     end
 
-    context "without libraries temporal table" do
+    context "without libraries history table" do
       before(:context) do
-        conn.drop_temporal_table(:libraries)
+        conn.drop_history_table(:libraries)
       end
 
       after(:context) do
-        conn.create_temporal_table(:libraries)
+        conn.create_history_table(:libraries)
       end
 
       # t0                         library_v
@@ -1056,11 +1056,11 @@ RSpec.describe "associations" do
         t.string :imageable_type
       end
 
-      conn.create_temporal_table(:pictures)
+      conn.create_history_table(:pictures)
     end
 
     after(:context) do
-      conn.drop_temporal_table(:pictures) if conn.table_exists?(:pictures_versions)
+      conn.drop_history_table(:pictures) if conn.table_exists?(:pictures_versions)
 
       conn.drop_table(:pictures)
     end

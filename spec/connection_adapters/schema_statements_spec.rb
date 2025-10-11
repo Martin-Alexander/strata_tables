@@ -1,8 +1,8 @@
 require "spec_helper"
 
 RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
-  shared_context "with a temporal table setup for books" do
-    before { conn.create_temporal_table(:books) }
+  shared_context "with a history table setup for books" do
+    before { conn.create_history_table(:books) }
   end
 
   before do
@@ -28,13 +28,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     conn.drop_table(:authors_versions) if conn.table_exists?(:authors_versions)
   end
 
-  describe "#create_temporal_table" do
-    it "creates a temporal table" do
-      conn.create_temporal_table(:books)
+  describe "#create_history_table" do
+    it "creates a history table" do
+      conn.create_history_table(:books)
 
       expect(conn).to have_table(:books_versions)
 
-      expect(:books).to have_temporal_table
+      expect(:books).to have_history_table
 
       expect(:books_versions)
         .to have_column(:id, :integer)
@@ -50,11 +50,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
     context "with 'except'" do
       it "omits columns from the history table" do
-        conn.create_temporal_table(:books, except: [:title, :price, :summary])
+        conn.create_history_table(:books, except: [:title, :price, :summary])
 
         expect(conn).to have_table(:books_versions)
 
-        expect(:books).to have_temporal_table
+        expect(:books).to have_history_table
 
         expect(:books_versions)
           .to not_have_column(:title)
@@ -69,17 +69,17 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
     context "when source table does not exist" do
       it "raises an error" do
-        expect { conn.create_temporal_table(:teddies) }
+        expect { conn.create_history_table(:teddies) }
           .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies" does not exist/)
       end
     end
   end
 
-  describe "#drop_temporal_table" do
-    include_context "with a temporal table setup for books"
+  describe "#drop_history_table" do
+    include_context "with a history table setup for books"
 
-    it "drops a temporal table" do
-      conn.drop_temporal_table(:books)
+    it "drops a history table" do
+      conn.drop_history_table(:books)
 
       expect(conn).to have_table(:books)
 

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "migrations for temporal triggers" do
+RSpec.describe "migrations for history triggers" do
   migration_version = "#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"
 
   around do |example|
@@ -30,25 +30,25 @@ RSpec.describe "migrations for temporal triggers" do
     migration_klass.new
   end
 
-  describe "create_temporal_table" do
+  describe "create_history_table" do
     let(:migration_change) do
-      -> { create_temporal_table(:books) }
+      -> { create_history_table(:books) }
     end
 
     describe "#up" do
-      it "creates temporal table" do
+      it "creates history table" do
         migration.migrate(:up)
 
         expect(conn).to have_table(:books_versions)
 
-        expect(:books).to have_temporal_table
+        expect(:books).to have_history_table
       end
     end
 
     describe "#down" do
-      before { conn.create_temporal_table(:books) }
+      before { conn.create_history_table(:books) }
 
-      it "drops temporal table" do
+      it "drops history table" do
         migration.migrate(:down)
 
         expect(conn).not_to have_table(:books_versions)
@@ -61,15 +61,15 @@ RSpec.describe "migrations for temporal triggers" do
     end
   end
 
-  describe "drop_temporal_table" do
+  describe "drop_history_table" do
     let(:migration_change) do
-      -> { drop_temporal_table(:books) }
+      -> { drop_history_table(:books) }
     end
 
     describe "#up" do
-      before { conn.create_temporal_table(:books) }
+      before { conn.create_history_table(:books) }
 
-      it "drops temporal table" do
+      it "drops history table" do
         migration.migrate(:up)
 
         expect(conn).not_to have_table(:books_versions)
@@ -77,12 +77,12 @@ RSpec.describe "migrations for temporal triggers" do
     end
 
     describe "#down" do
-      it "creates temporal table" do
+      it "creates history table" do
         migration.migrate(:down)
 
         expect(conn).to have_table(:books_versions)
 
-        expect(:books).to have_temporal_table
+        expect(:books).to have_history_table
       end
     end
   end

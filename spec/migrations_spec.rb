@@ -14,6 +14,7 @@ RSpec.describe "migrations for history triggers" do
   before do
     conn.create_table(:books) do |t|
       t.string :title
+      t.string :author_name
     end
   end
 
@@ -30,7 +31,7 @@ RSpec.describe "migrations for history triggers" do
     migration_klass.new
   end
 
-  describe "create_history_table" do
+  describe "create_history_table :books" do
     let(:migration_change) do
       -> { create_history_table(:books) }
     end
@@ -57,6 +58,35 @@ RSpec.describe "migrations for history triggers" do
           .to not_have_function(:strata_books_insert)
           .and not_have_function(:strata_books_update)
           .and not_have_function(:strata_books_delete)
+      end
+    end
+  end
+
+  describe "create_history_table :books, except: [:author_name]" do
+    let(:migration_change) do
+      -> { create_history_table(:books, except: [:author_name]) }
+    end
+
+    describe "#up" do
+      it "creates history table" do
+        migration.migrate(:up)
+
+        expect(conn).to have_table(:books_versions)
+
+        expect(:books).to have_history_table
+
+        expect(:books_versions).to(have_column(:title)
+          .and(not_have_column(:author_name)))
+      end
+    end
+
+    describe "#down" do
+      before { conn.create_history_table(:books, except: [:author_name]) }
+
+      it "drops history table" do
+        migration.migrate(:down)
+
+        expect(conn).not_to have_table(:books_versions)
       end
     end
   end

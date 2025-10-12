@@ -29,9 +29,11 @@ module StrataTables
         end
 
         create_history_triggers(source_table)
+
+        copy_data(source_table, history_table, source_columns) if options[:copy_data]
       end
 
-      def drop_history_table(source_table)
+      def drop_history_table(source_table, **options)
         history_table = "#{source_table}_versions"
 
         drop_table history_table
@@ -56,6 +58,18 @@ module StrataTables
         execute "DROP FUNCTION #{history_table}_insert() CASCADE"
         execute "DROP FUNCTION #{history_table}_update() CASCADE"
         execute "DROP FUNCTION #{history_table}_delete() CASCADE"
+      end
+
+      private
+
+      def copy_data(source_table, history_table, columns)
+        fields = columns.map(&:name).join(", ")
+
+        execute(<<~SQL.squish)
+          INSERT INTO #{quote_table_name(history_table)} (#{fields}, validity)
+          SELECT #{fields}, tstzrange(timezone('UTC', now()), NULL)
+          FROM #{quote_table_name(source_table)};
+        SQL
       end
     end
   end

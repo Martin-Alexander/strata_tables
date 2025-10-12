@@ -67,6 +67,34 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       end
     end
 
+    context "with 'copy_data'" do
+      it "inserts data from current table into history table" do
+        stub_const("ApplicationRecord", Class.new(ActiveRecord::Base) do
+          self.abstract_class = true
+          include StrataTables::Model
+        end)
+        stub_const("Author", Class.new(ApplicationRecord))
+        stub_const("Book", Class.new(ApplicationRecord))
+
+        bob = Author.create!(name: "Bob")
+
+        Book.create!(title: "Calliou", price: 1000, pages: 10, author_id: bob.id)
+        Book.create!(title: "Calliou 2", price: 500, pages: 10, author_id: bob.id)
+
+        @t0 = Time.current
+
+        conn.create_history_table(:authors)
+        conn.create_history_table(:books, copy_data: true)
+
+        @t1 = Time.current
+
+        expect(Author.version.count).to eq(0)
+        expect(Book.version.count).to eq(2)
+        expect(Book.version.all.as_of(@t0).count).to eq(0)
+        expect(Book.version.all.as_of(@t1).count).to eq(2)
+      end
+    end
+
     context "when source table does not exist" do
       it "raises an error" do
         expect { conn.create_history_table(:teddies) }

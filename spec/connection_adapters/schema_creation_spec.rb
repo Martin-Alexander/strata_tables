@@ -35,7 +35,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
-        expect(sql).to eq(<<~SQL.squish)
+        expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION books_versions_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO "books_versions" (id, title, pages, published_at, validity)
@@ -57,7 +57,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
-        expect(sql).to eq(<<~SQL.squish)
+        expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION books_versions_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
@@ -89,7 +89,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
       it "returns the correct SQL" do
         sql = subject.accept(object)
 
-        expect(sql).to eq(<<~SQL.squish)
+        expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION books_versions_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE "books_versions"

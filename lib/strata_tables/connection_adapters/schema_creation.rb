@@ -22,7 +22,7 @@ module StrataTables
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
-        <<-SQL.squish
+        <<~SQL
           CREATE OR REPLACE FUNCTION #{o.history_table}_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, validity)
@@ -41,7 +41,7 @@ module StrataTables
         fields = o.column_names.join(", ")
         values = o.column_names.map { |c| "NEW.#{c}" }.join(", ")
 
-        <<-SQL.squish
+        <<~SQL
           CREATE OR REPLACE FUNCTION #{o.history_table}_update() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
@@ -67,7 +67,7 @@ module StrataTables
       end
 
       def visit_DeleteStrataTriggerDefinition(o)
-        <<-SQL.squish
+        <<~SQL
           CREATE OR REPLACE FUNCTION #{o.history_table}_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE #{quote_table_name(o.history_table)}

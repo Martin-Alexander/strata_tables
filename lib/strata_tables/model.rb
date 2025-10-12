@@ -3,6 +3,8 @@ module StrataTables
     extend ActiveSupport::Concern
 
     class_methods do
+      delegate :as_of, to: :version
+
       def version
         "#{name}::Version".constantize
       end
@@ -18,6 +20,10 @@ module StrataTables
           super
         end
       end
+    end
+
+    def as_of(time)
+      self.class.version.as_of(time).find_by(id: id)
     end
   end
 end

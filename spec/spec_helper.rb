@@ -4,11 +4,13 @@ require "yaml"
 
 require "strata_tables"
 
-require "support/matchers/have_history_table"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
+require "support/matchers/have_history_table"
+require "support/matchers/have_loaded"
 require "support/matchers/have_table"
 require "support/matchers/have_trigger"
+require "support/timestamping_helper"
 require "support/transaction_helper"
 
 db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
@@ -20,6 +22,7 @@ PlPgsqlFunction = Struct.new(:name, :body)
 
 RSpec.configure do |config|
   config.include TransactionHelper
+  config.include TimestampingHelper
   config.include StrataTables
 
   # Enable flags like --only-failures and --next-failure

@@ -7,6 +7,8 @@ module StrataTables
     end
 
     class_methods do
+      delegate :as_of, to: :all
+
       def reversionify(base = nil)
         StrataTables::VersionModel.versionify(self, base || superclass)
       end

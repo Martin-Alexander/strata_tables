@@ -1,3 +1,5 @@
+require "spec_helper"
+
 RSpec.describe "model" do
   before(:context) do
     conn.create_table(:countries) do |t|
@@ -43,13 +45,32 @@ RSpec.describe "model" do
     stub_const("Book", Class.new(ApplicationRecord) do
       belongs_to :author
     end)
+
+    t_0
+    bob = Author.create!(name: "Bob")
+    t_1
+    Author.create!(name: "Bill")
+    t_2
+    bob.update(name: "Bob 2")
+    t_3
   end
 
   after do
     conn.truncate(:countries)
     conn.truncate(:authors)
     conn.truncate(:books)
+
+    conn.truncate(:countries_versions)
+    conn.truncate(:authors_versions)
+    conn.truncate(:books_versions)
   end
+
+  let(:author_bob) { Author.find_by!(name: "Bob 2")}
+  let(:author_bill) { Author.find_by!(name: "Bill")}
+
+  let(:author_bob_v1) { Author::Version.find_by!(name: "Bob") }
+  let(:author_bill_v1) { Author::Version.find_by!(name: "Bill") }
+  let(:author_bob_v2) { Author::Version.find_by!(name: "Bob 2") }
 
   it "::version returns the model's version class" do
     expect(Author.table_name).to eq("authors")
@@ -57,6 +78,25 @@ RSpec.describe "model" do
     expect(Author.version).to be < Author
     expect(Author.version).to be_include(StrataTables::VersionModel)
     expect(Author.version.name).to eq("Author::Version")
+  end
+
+  it "::as_of is delegated to ::version" do
+    expect(Author.as_of(t_0)).to be_empty
+    expect(Author.as_of(t_1)).to contain_exactly(author_bob_v1)
+    expect(Author.as_of(t_2)).to contain_exactly(author_bob_v1, author_bill_v1)
+    expect(Author.as_of(t_3)).to contain_exactly( author_bill_v1, author_bob_v2)
+  end
+
+  it "#as_of returns the latest version of the record" do
+    expect(author_bob.as_of(t_0)).to be_nil
+    expect(author_bob.as_of(t_1)).to eq(author_bob_v1)
+    expect(author_bob.as_of(t_2)).to eq(author_bob_v1)
+    expect(author_bob.as_of(t_3)).to eq(author_bob_v2)
+
+    expect(author_bill.as_of(t_0)).to be_nil
+    expect(author_bill.as_of(t_1)).to be_nil
+    expect(author_bill.as_of(t_2)).to eq(author_bill_v1)
+    expect(author_bill.as_of(t_3)).to eq(author_bill_v1)
   end
 
   it "version class is versionified" do

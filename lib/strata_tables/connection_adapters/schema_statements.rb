@@ -28,7 +28,9 @@ module StrataTables
           t.tstzrange :validity, null: false
         end
 
-        add_exclusion_constraint(history_table, "id WITH =, validity WITH &&", using: :gist)
+        if extension_enabled?(:btree_gist)
+          add_exclusion_constraint(history_table, "id WITH =, validity WITH &&", using: :gist)
+        end
 
         create_history_triggers(source_table)
 

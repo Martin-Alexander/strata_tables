@@ -30,6 +30,8 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
   describe "#create_history_table" do
     it "creates a history table" do
+      conn.enable_extension(:btree_gist)
+
       conn.create_history_table(:books)
 
       expect(conn).to have_table(:books__history)
@@ -51,6 +53,21 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         "id WITH =, validity WITH &&",
         {using: :gist}
       )
+    end
+
+    context "when btree_gist extension is not enabled" do
+      it "does not crate a temporal exclusion constraint" do
+        conn.disable_extension(:btree_gist)
+
+        conn.create_history_table(:books)
+
+        expect(:books).to have_history_table
+
+        expect(:books__history).to_not have_exclusion_constraint(
+          "id WITH =, validity WITH &&",
+          {using: :gist}
+        )
+      end
     end
 
     context "with 'except'" do

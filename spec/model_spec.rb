@@ -17,6 +17,8 @@ RSpec.describe "model" do
     conn.create_history_table(:countries)
     conn.create_history_table(:authors)
     conn.create_history_table(:books)
+
+    randomize_sequences!(:id, :version_id)
   end
 
   after(:context) do

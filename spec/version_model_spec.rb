@@ -6,6 +6,8 @@ RSpec.describe "version model" do
       t.string :name
     end
     conn.create_history_table(:authors)
+
+    randomize_sequences!(:id, :version_id)
   end
 
   after(:context) do

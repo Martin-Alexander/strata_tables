@@ -601,6 +601,8 @@ RSpec.describe "associations" do
       end
 
       conn.create_history_table(:employees)
+
+      randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do
@@ -980,6 +982,8 @@ RSpec.describe "associations" do
       end
 
       conn.create_history_table(:pictures)
+
+      randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do

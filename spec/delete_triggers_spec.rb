@@ -7,6 +7,9 @@ RSpec.describe "delete triggers" do
       t.integer :pages
     end
     conn.create_history_table(:books)
+
+    randomize_sequences!(:id, :version_id)
+
     stub_const("Book", Class.new(ActiveRecord::Base))
     stub_const("Book::Version", Class.new(Book) do
       include StrataTables::VersionModel

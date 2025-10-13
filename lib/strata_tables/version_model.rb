@@ -3,6 +3,8 @@ module StrataTables
     extend ActiveSupport::Concern
 
     included do
+      attr_accessor :as_of_value
+
       reversionify
     end
 
@@ -26,24 +28,8 @@ module StrataTables
       end
     end
 
-    def validity_start
-      validity.begin if respond_to?(:validity)
-    end
-
-    def validity_end
-      validity.end if respond_to?(:validity)
-    end
-
-    def as_of_value=(time)
-      @as_of_value = time
-    end
-
-    def as_of_value
-      @as_of_value
-    end
-
     def as_of(time)
-      reload.as_of!(time) # unless respond_to?(:validity) && !validity.cover?(time)
+      reload.as_of!(time)
     end
 
     def as_of!(time)

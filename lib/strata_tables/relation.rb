@@ -17,15 +17,6 @@ module StrataTables
       self
     end
 
-    def _as_of(time)
-      spawn._as_of!(time)
-    end
-
-    def _as_of!(time)
-      self.as_of_value = time
-      self
-    end
-
     def as_of_value
       @values.fetch(:as_of, nil)
     end

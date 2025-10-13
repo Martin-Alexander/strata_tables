@@ -46,6 +46,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         # .and have_column(:published_at, :date, default: Date.new(2025, 1, 1))
         .and have_column(:published_at, :date)
         .and have_column(:author_id, :integer)
+
+      expect(:books__history).to have_exclusion_constraint(
+        "id WITH =, validity WITH &&",
+        {using: :gist}
+      )
     end
 
     context "with 'except'" do

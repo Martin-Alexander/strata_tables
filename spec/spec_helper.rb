@@ -5,6 +5,7 @@ require "strata_tables"
 
 require "support/db_config"
 require "support/matchers/have_column"
+require "support/matchers/has_exclusion_constraint"
 require "support/matchers/have_function"
 require "support/matchers/have_history_table"
 require "support/matchers/have_loaded"

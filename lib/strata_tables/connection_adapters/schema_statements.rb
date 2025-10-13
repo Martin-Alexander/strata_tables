@@ -28,6 +28,8 @@ module StrataTables
           t.tstzrange :validity, null: false
         end
 
+        add_exclusion_constraint(history_table, "id WITH =, validity WITH &&", using: :gist)
+
         create_history_triggers(source_table)
 
         copy_data(source_table, history_table, source_columns) if options[:copy_data]

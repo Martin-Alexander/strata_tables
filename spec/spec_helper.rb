@@ -1,9 +1,9 @@
 require "active_record"
 require "debug"
-require "yaml"
 
 require "strata_tables"
 
+require "support/db_config"
 require "support/matchers/have_column"
 require "support/matchers/have_function"
 require "support/matchers/have_history_table"
@@ -13,9 +13,7 @@ require "support/matchers/have_trigger"
 require "support/timestamping_helper"
 require "support/transaction_helper"
 
-db_config_path = ENV.fetch("DATABASE_CONFIG") { "spec/support/database.yml" }
-db_config = YAML.load_file(db_config_path)["test"]
-ActiveRecord::Base.establish_connection(db_config)
+ActiveRecord::Base.establish_connection(DbConfig.get)
 ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
 
 PlPgsqlFunction = Struct.new(:name, :body)

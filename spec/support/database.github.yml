@@ -1,7 +1,2 @@
-test:
-  adapter: postgresql
-  database: strata_tables_test
-  username: runner
-  password: ""
-  host: localhost
-  port: 5432
+username: runner
+password: ""

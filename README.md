@@ -101,7 +101,9 @@ class ApplicationRecord < ActiveRecord::Base
 
   include StrataTables::Model
 end
+```
 
+```ruby
 time = 1.day.ago
 # => 2025-10-13 19:00:00 UTC
 

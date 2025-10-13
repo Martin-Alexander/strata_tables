@@ -1,6 +1,6 @@
 # Strata Tables
 
-Temporal tables for ActiveRecord. This gem automatically maintains a companion `*_versions` table for a source table and keeps it up to date via database triggers. It also provides convenient model helpers for querying historical data and "as of" time-travel reads.
+Temporal tables for ActiveRecord. This gem automatically maintains a companion `*__history` table for a source table and keeps it up to date via database triggers. It also provides convenient model helpers for querying historical data and "as of" time-travel reads.
 
 ## Requirements
 
@@ -57,13 +57,13 @@ Indexes:
     "authors_pkey" PRIMARY KEY, btree (id)
 Triggers:
     on_delete_strata_trigger AFTER DELETE ON authors FOR EACH ROW EXECUTE
-FUNCTION authors_versions_delete()
+FUNCTION authors__history_delete()
     on_insert_strata_trigger AFTER INSERT ON authors FOR EACH ROW EXECUTE
-FUNCTION authors_versions_insert()
+FUNCTION authors__history_insert()
     on_update_strata_trigger AFTER UPDATE ON authors FOR EACH ROW EXECUTE
-FUNCTION authors_versions_update()
+FUNCTION authors__history_update()
 
-            Table "public.authors_versions"
+            Table "public.authors__history"
 ╔════════════╤═══════════════════╤══════════╗
 ║   Column   │       Type        │ Nullable ║
 ╠════════════╪═══════════════════╪══════════╣
@@ -73,7 +73,7 @@ FUNCTION authors_versions_update()
 ║ validity   │ tstzrange         │ not null ║
 ╚════════════╧═══════════════════╧══════════╝
 Indexes:
-    "authors_versions_pkey" PRIMARY KEY, btree (version_id)
+    "authors__history_pkey" PRIMARY KEY, btree (version_id)
 
             Table "public.books"
 ╔═══════════╤═══════════════════╤══════════╗
@@ -88,13 +88,13 @@ Indexes:
     "index_books_on_author_id" btree (author_id)
 Triggers:
     on_delete_strata_trigger AFTER DELETE ON books FOR EACH ROW EXECUTE FUNCTION
-books_versions_delete()
+books__history_delete()
     on_insert_strata_trigger AFTER INSERT ON books FOR EACH ROW EXECUTE FUNCTION
-books_versions_insert()
+books__history_insert()
     on_update_strata_trigger AFTER UPDATE ON books FOR EACH ROW EXECUTE FUNCTION
-books_versions_update()
+books__history_update()
 
-         Table "public.books_versions"
+         Table "public.books__history"
 ╔════════════╤═══════════════════╤══════════╗
 ║   Column   │       Type        │ Nullable ║
 ╠════════════╪═══════════════════╪══════════╣
@@ -105,11 +105,11 @@ books_versions_update()
 ║ validity   │ tstzrange         │ not null ║
 ╚════════════╧═══════════════════╧══════════╝
 Indexes:
-    "books_versions_pkey" PRIMARY KEY, btree (version_id)
+    "books__history_pkey" PRIMARY KEY, btree (version_id)
 
 ```
 
-Now any insert/update/delete on `books` will update `bookss_versions`. The versions table mirrors the source columns and adds a non-null `validity` column of type `tstzrange` that captures the valid time range for each row version.
+Now any insert/update/delete on `books` will update `books__history`. The history table mirrors the source columns and adds a non-null `validity` column of type `tstzrange` that captures the valid time range for each row version.
 
 Find author records as they were 10 months ago:
 
@@ -175,23 +175,23 @@ The queries above would produce SQL that looks roughly something like this:
 ```sql
 -- authors = Author.as_of(t1.ago)
 SELECT *
-  FROM authors_versions
-WHERE authors_versions.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
+  FROM authors__history
+WHERE authors__history.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
 
 -- authors.first.books
 SELECT *
-  FROM books_versions
-WHERE books_versions.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
-  AND books_versions.author_id = 1
+  FROM books__history
+WHERE books__history.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
+  AND books__history.author_id = 1
 
 -- Book.as_of(t1).includes(:author).where(authors: { id: authors.first.id })
 SELECT *
-  FROM books_versions
-LEFT OUTER JOIN authors_versions
-  ON authors_versions.id = books_versions.author_id
-  AND books_versions.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
-WHERE authors_versions.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
-  AND books_versions.author_id = 1
+  FROM books__history
+LEFT OUTER JOIN authors__history
+  ON authors__history.id = books__history.author_id
+  AND books__history.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
+WHERE authors__history.validity @> '2024-12-01 00:00:00 UTC'::timestamptz
+  AND books__history.author_id = 1
 ```
 
 ## Contributing

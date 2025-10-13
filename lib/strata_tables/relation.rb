@@ -5,7 +5,7 @@ module StrataTables
     end
 
     def as_of!(time)
-      if table_name.end_with?("_versions")
+      if table_name.end_with?("__history")
         if time
           where!("#{table_name}.validity @> ?::timestamptz", time)
         else

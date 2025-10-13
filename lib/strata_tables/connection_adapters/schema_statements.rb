@@ -8,7 +8,7 @@ module StrataTables
           except.include?(column.name.to_sym)
         end
 
-        history_table = "#{source_table}_versions"
+        history_table = "#{source_table}__history"
 
         create_table history_table, primary_key: :version_id do |t|
           source_columns.each do |column|
@@ -34,7 +34,7 @@ module StrataTables
       end
 
       def drop_history_table(source_table, **options)
-        history_table = "#{source_table}_versions"
+        history_table = "#{source_table}__history"
 
         drop_table history_table
 
@@ -44,7 +44,7 @@ module StrataTables
       def create_history_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        history_table = "#{source_table}_versions"
+        history_table = "#{source_table}__history"
         column_names = columns(source_table).map(&:name)
 
         trigger_set = StrataTriggerSetDefinition.new(source_table, history_table, column_names)
@@ -53,7 +53,7 @@ module StrataTables
       end
 
       def drop_history_triggers(source_table)
-        history_table = "#{source_table}_versions"
+        history_table = "#{source_table}__history"
 
         execute "DROP FUNCTION #{history_table}_insert() CASCADE"
         execute "DROP FUNCTION #{history_table}_update() CASCADE"

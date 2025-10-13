@@ -16,7 +16,7 @@ module StrataTables
       end
 
       def version_table_backing?
-        table_name.end_with?("_versions")
+        table_name.end_with?("__history")
       end
 
       def polymorphic_class_for(name)
@@ -51,7 +51,7 @@ module StrataTables
 
     def versionfiy_table_name(klass, base)
       if version_table_exists?(base)
-        klass.table_name = "#{base.table_name}_versions"
+        klass.table_name = "#{base.table_name}__history"
       end
     end
 
@@ -115,7 +115,7 @@ module StrataTables
     end
 
     def version_table_exists?(base)
-      base.connection.table_exists?("#{base.table_name}_versions")
+      base.connection.table_exists?("#{base.table_name}__history")
     end
   end
 end

@@ -10,7 +10,7 @@ RSpec::Matchers.define :have_history_table do
   private
 
   def correct_columns(table)
-    history_table = "#{table}_versions"
+    history_table = "#{table}__history"
 
     have_column(:id, :integer).matches?(history_table) &&
       have_column(:validity, :tstzrange, null: false).matches?(history_table)
@@ -23,7 +23,7 @@ RSpec::Matchers.define :have_history_table do
   end
 
   def correct_functions(table)
-    history_table = "#{table}_versions"
+    history_table = "#{table}__history"
 
     have_function("#{history_table}_insert").matches?(conn) &&
       have_function("#{history_table}_update").matches?(conn) &&

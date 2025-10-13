@@ -60,9 +60,9 @@ RSpec.describe "model" do
     conn.truncate(:authors)
     conn.truncate(:books)
 
-    conn.truncate(:countries_versions)
-    conn.truncate(:authors_versions)
-    conn.truncate(:books_versions)
+    conn.truncate(:countries__history)
+    conn.truncate(:authors__history)
+    conn.truncate(:books__history)
   end
 
   let(:author_bob) { Author.find_by!(name: "Bob 2") }
@@ -105,7 +105,7 @@ RSpec.describe "model" do
   end
 
   it "version class is versionified" do
-    expect(Author.version.table_name).to eq("authors_versions")
+    expect(Author.version.table_name).to eq("authors__history")
     expect(Author.version.reflect_on_all_associations)
       .to all(have_attrs(klass: be_an_instance_of(Class)))
   end

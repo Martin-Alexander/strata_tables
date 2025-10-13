@@ -24,19 +24,19 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     conn.drop_table(:authors) if conn.table_exists?(:authors)
     conn.drop_table(:teddies) if conn.table_exists?(:teddies)
 
-    conn.drop_table(:books_versions) if conn.table_exists?(:books_versions)
-    conn.drop_table(:authors_versions) if conn.table_exists?(:authors_versions)
+    conn.drop_table(:books__history) if conn.table_exists?(:books__history)
+    conn.drop_table(:authors__history) if conn.table_exists?(:authors__history)
   end
 
   describe "#create_history_table" do
     it "creates a history table" do
       conn.create_history_table(:books)
 
-      expect(conn).to have_table(:books_versions)
+      expect(conn).to have_table(:books__history)
 
       expect(:books).to have_history_table
 
-      expect(:books_versions)
+      expect(:books__history)
         .to have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
         .and have_column(:price, :decimal, precision: 10, scale: 2)
@@ -52,11 +52,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       it "omits columns from the history table" do
         conn.create_history_table(:books, except: [:title, :price, :summary])
 
-        expect(conn).to have_table(:books_versions)
+        expect(conn).to have_table(:books__history)
 
         expect(:books).to have_history_table
 
-        expect(:books_versions)
+        expect(:books__history)
           .to not_have_column(:title)
           .and(not_have_column(:price))
           .and(not_have_column(:summary))
@@ -111,7 +111,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       expect(conn).to have_table(:books)
 
-      expect(conn).not_to have_table(:books_versions)
+      expect(conn).not_to have_table(:books__history)
 
       expect(:books)
         .to not_have_trigger(:on_insert_strata_trigger)
@@ -119,9 +119,9 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and not_have_trigger(:on_delete_strata_trigger)
 
       expect(conn)
-        .to not_have_function(:books_versions_insert)
-        .and not_have_function(:books_versions_update)
-        .and not_have_function(:books_versions_delete)
+        .to not_have_function(:books_history_insert)
+        .and not_have_function(:books_history_update)
+        .and not_have_function(:books_history_delete)
     end
   end
 end

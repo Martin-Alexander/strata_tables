@@ -99,6 +99,11 @@ RSpec.describe "model" do
     expect(author_bill.as_of(t_3)).to eq(author_bill_v1)
   end
 
+  it "#versions returns all versions of that record" do
+    expect(author_bob.versions).to contain_exactly(author_bob_v1, author_bob_v2)
+    expect(author_bill.versions).to contain_exactly(author_bill_v1)
+  end
+
   it "version class is versionified" do
     expect(Author.version.table_name).to eq("authors_versions")
     expect(Author.version.reflect_on_all_associations)

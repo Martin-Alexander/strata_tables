@@ -25,5 +25,9 @@ module StrataTables
     def as_of(time)
       self.class.version.as_of(time).find_by(id: id)
     end
+
+    def versions
+      self.class.version.where(id: id)
+    end
   end
 end

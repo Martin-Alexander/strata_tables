@@ -85,11 +85,11 @@ CREATE FUNCTION products__history_update() RETURNS trigger LANGUAGE plpgsql AS $
   END;
 $$;
 
-CREATE TRIGGER on_delete AFTER DELETE ON products
+CREATE TRIGGER strata_trigger_on_delete AFTER DELETE ON products
   FOR EACH ROW EXECUTE FUNCTION products__history_delete();
-CREATE TRIGGER on_insert AFTER INSERT ON products
+CREATE TRIGGER strata_trigger_on_insert AFTER INSERT ON products
   FOR EACH ROW EXECUTE FUNCTION products__history_insert();
-CREATE TRIGGER on_update AFTER UPDATE ON products
+CREATE TRIGGER strata_trigger_on_update AFTER UPDATE ON products
   FOR EACH ROW EXECUTE FUNCTION products__history_update();
 ```
 

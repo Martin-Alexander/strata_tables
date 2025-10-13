@@ -1,44 +1,6 @@
 require "spec_helper"
 
 RSpec.describe StrataTables::Model do
-  shared_context "has_many instance-dependent association scope" do
-    before do
-      Author.has_many(
-        :self_titled_books,
-        ->(o) { where(name: o.name) },
-        class_name: "Book"
-      )
-      Author::Version.reversionify
-
-      Book.create(author: @author, name: "Bob")
-      Book.create(author: @author, name: "Bob 2")
-    end
-  end
-
-  shared_context "belongs_to association scope" do
-    before do
-      Book.belongs_to(
-        :bob_author,
-        -> { where(name: "Bob") },
-        class_name:  "Author",
-        foreign_key: :author_id
-      )
-      Book::Version.reversionify
-    end
-  end
-  
-  shared_context "belongs_to instance-dependent association scope" do
-    before do
-      Book.belongs_to(
-        :self_titled_author,
-        ->(o) { where(name: o.name) },
-        class_name:  "Author",
-        foreign_key: :author_id
-      )
-      Book::Version.reversionify
-    end
-  end
-
   before do
     conn.create_table(:libraries) do |t|
       t.string :name
@@ -132,58 +94,6 @@ RSpec.describe StrataTables::Model do
     end
   end
 
-  # describe "#as_of" do
-  #   let(:author_v1) { Author::Version.find_by(name: "Bob") }
-  #   let(:author_v2) { Author::Version.find_by(name: "Bob 2") }
-
-  #   context "when table is temporal" do
-  #     it "returns #validity_end when unset" do
-  #       author = Author.create(name: "Bob")
-
-  #       expect(author_v1.as_of_value).to eq(author_v1.validity_end)
-
-  #       author.update(name: "Bob 2")
-
-  #       expect(author_v1.reload.as_of_value).to eq(author_v1.validity_end)
-  #       expect(author_v2.as_of_value).to eq(author_v2.validity_end)
-  #     end
-
-  #     it "returns as-of time if set" do
-  #       author = Author.create(name: "Bob")
-  #       author.update(name: "Bob 2")
-
-  #       expect(author_v1.as_of_value).to eq(author_v1.validity_end)
-
-  #       t = Time.now
-
-  #       expect(author_v1.as_of(t).as_of_value).to eq(t)
-  #       expect(author_v1.as_of(nil).as_of_value).to eq(nil)
-  #     end
-  #   end
-
-  #   context "when table is non-temporal" do
-  #     let(:skip_authors_temporal_table) { true }
-
-  #     it "returns #validity_end when unset" do
-  #       author = Author.create(name: "Bob")
-
-  #       expect(author_v1.as_of_value).to eq(author_v1.validity_end)
-
-  #       author.update(name: "Bob 2")
-
-  #       expect(author_v1.reload.as_of_value).to eq(author_v1.validity_end)
-  #     end
-
-  #     it "returns as-of time if set" do
-  #       author = Author.create(name: "Bob")
-
-  #       t = Time.now
-
-  #       expect(author_v1.as_of(t).as_of_value).to eq(t)
-  #     end
-  #   end
-  # end
-
   describe "has_many associations" do
     before do
       @author = Author.create(name: "Bob")
@@ -196,10 +106,10 @@ RSpec.describe StrataTables::Model do
       @t4 = Time.current
     end
 
-    def author_v1 = Author::Version.find_by(name: "Bob")
-    def author_v2 = Author::Version.find_by(name: "Bob 2")
-    def book_v1 = Book::Version.find_by(name: "Calliou")
-    def book_v2 = Book::Version.find_by(name: "Calliou 2")
+    let(:author_v1) { Author::Version.find_by(name: "Bob") }
+    let(:author_v2) { Author::Version.find_by(name: "Bob 2") }
+    let(:book_v1) { Book::Version.find_by(name: "Calliou") }
+    let(:book_v2) { Book::Version.find_by(name: "Calliou 2") }
 
     it "target is instances of version class" do
       expect(author_v2.books).to all(be_an_instance_of(Book::Version))
@@ -250,90 +160,55 @@ RSpec.describe StrataTables::Model do
       end
     end
 
+    def default_scoping(query_method)
+      authors = Author::Version.send(query_method, :books).to_a
+
+      expect(authors.size).to eq(2)
+
+      expect(authors.first.books.size).to eq(1)
+      expect(authors.first.books.sole)
+        .to have_attributes(name: "Calliou", as_of_value: nil)
+
+      expect(authors.last.books.size).to eq(1)
+      expect(authors.last.books.sole)
+        .to have_attributes(name: "Calliou 2", as_of_value: nil)
+    end
+
+    def as_of_scoping(query_method)
+      authors = Author::Version.send(query_method, :books).as_of(@t1).to_a
+
+      expect(authors.sole.name).to eq("Bob")
+      expect(authors.sole.books.size).to eq(0)
+
+      authors = Author::Version.preload(:books).as_of(@t2).to_a
+
+      expect(authors.sole.name).to eq("Bob")
+      expect(authors.sole.books.size).to eq(1)
+      expect(authors.sole.books.sole.name).to eq("Calliou")
+    end
+
+    def as_of_tagging(query_method)
+      authors = Author::Version.send(query_method, :books).as_of(@t2).to_a
+
+      expect(authors.sole.as_of_value).to eq(@t2)
+      expect(authors.sole.books.sole.as_of_value).to eq(@t2)
+    end
+
     describe "preloading" do
-      it "scopes associations to base records' validity end" do
-        authors = Author::Version.preload(:books).to_a
-
-        expect(authors.size).to eq(2)
-
-        expect(authors.first.books.size).to eq(1)
-        expect(authors.first.books.sole)
-          .to have_attributes(name: "Calliou", as_of_value: nil)
-
-        expect(authors.last.books.size).to eq(1)
-        expect(authors.last.books.sole)
-          .to have_attributes(name: "Calliou 2", as_of_value: nil)
-      end
-
-      it "scopes records to as-of" do
-        authors = Author::Version.preload(:books).as_of(@t1).to_a
-
-        expect(authors.size).to eq(1)
-        expect(authors.sole.name).to eq("Bob")
-
-        expect(authors.sole.books.size).to eq(0)
-
-        authors = Author::Version.preload(:books).as_of(@t2).to_a
-
-        expect(authors.size).to eq(1)
-        expect(authors.sole.name).to eq("Bob")
-
-        expect(authors.sole.books.size).to eq(1)
-        expect(authors.sole.books.sole.name).to eq("Calliou")
-      end
-
-      it "sets as-of on records and their associations" do
-        authors = Author::Version.preload(:books).as_of(@t2).to_a
-
-        expect(authors.sole.as_of_value).to eq(@t2)
-        expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-      end
+      it("scopes associations by validity") { default_scoping(:preload) }
+      it("scope query by as-of") { as_of_scoping(:preload) }
+      it("tags results with as-of value") { as_of_tagging(:preload) }
     end
 
     describe "eager loading" do
-      it "scopes associations to base records' validity end" do
-        authors = Author::Version.eager_load(:books).to_a
-
-        expect(authors.size).to eq(2)
-
-        expect(authors.first.books.size).to eq(1)
-        expect(authors.first.books.sole)
-          .to have_attributes(name: "Calliou", as_of_value: nil)
-
-        expect(authors.last.books.size).to eq(1)
-        expect(authors.last.books.sole)
-          .to have_attributes(name: "Calliou 2", as_of_value: nil)
-      end
-
-      it "scopes records to as-of" do
-        authors = Author::Version.eager_load(:books).as_of(@t1).to_a
-
-        expect(authors.size).to eq(1)
-        expect(authors.sole.name).to eq("Bob")
-
-        expect(authors.sole.books.size).to eq(0)
-
-        authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-        expect(authors.size).to eq(1)
-        expect(authors.sole.name).to eq("Bob")
-
-        expect(authors.sole.books.size).to eq(1)
-        expect(authors.sole.books.sole.name).to eq("Calliou")
-      end
-
-      it "sets as-of on records and their associations" do
-        authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-        expect(authors.sole.as_of_value).to eq(@t2)
-        expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-      end
+      it("scopes associations by validity") { default_scoping(:eager_load) }
+      it("scope query by as-of") { as_of_scoping(:eager_load) }
+      it("tags results with as-of value") { as_of_tagging(:eager_load) }
     end
 
     context "when the target table is non-temporal" do
       let(:skip_books_temporal_table) { true }
-
-      def book_v = Book::Version.sole
+      let(:book_v) { Book::Version.sole }
 
       it "does not scope target if owner's as-of value is absent" do
         expect(author_v1.books.sole).to eq(book_v)
@@ -357,93 +232,57 @@ RSpec.describe StrataTables::Model do
         expect(author_v2.as_of(@t4).books.sole.as_of_value).to eq(@t4)
       end
 
+      def default_scoping(query_method)
+        authors = Author::Version.send(query_method, :books).to_a
+
+        expect(authors.size).to eq(2)
+
+        expect(authors.first.books.size).to eq(1)
+        expect(authors.first.books.sole)
+          .to have_attributes(name: "Calliou 2", as_of_value: nil)
+
+        expect(authors.last.books.size).to eq(1)
+        expect(authors.last.books.sole)
+          .to have_attributes(name: "Calliou 2", as_of_value: nil)
+      end
+
+      def as_of_scoping(query_method)
+        authors = Author::Version.send(query_method, :books).as_of(@t1).to_a
+
+        expect(authors.sole.name).to eq("Bob")
+        expect(authors.sole.books.size).to eq(1)
+        expect(authors.sole.books.sole.name).to eq("Calliou 2")
+
+        authors = Author::Version.send(query_method, :books).as_of(@t2).to_a
+
+        expect(authors.sole.name).to eq("Bob")
+        expect(authors.sole.books.size).to eq(1)
+        expect(authors.sole.books.sole.name).to eq("Calliou 2")
+      end
+
+      def as_of_tagging(query_method)
+        authors = Author::Version.send(query_method, :books).as_of(@t2).to_a
+
+        expect(authors.sole.as_of_value).to eq(@t2)
+        expect(authors.sole.books.sole.as_of_value).to eq(@t2)
+      end
+
       describe "preloading" do
-        it "scopes associations to base records' validity end" do
-          authors = Author::Version.preload(:books).to_a
-
-          expect(authors.size).to eq(2)
-
-          expect(authors.first.books.size).to eq(1)
-          expect(authors.first.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-
-          expect(authors.last.books.size).to eq(1)
-          expect(authors.last.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        end
-
-        it "scopes records to as-of" do
-          authors = Author::Version.preload(:books).as_of(@t1).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou 2")
-
-          authors = Author::Version.preload(:books).as_of(@t2).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou 2")
-        end
-
-        it "sets as-of on records and their associations" do
-          authors = Author::Version.preload(:books).as_of(@t2).to_a
-
-          expect(authors.sole.as_of_value).to eq(@t2)
-          expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-        end
+        it("scopes associations by validity") { default_scoping(:preload) }
+        it("scope query by as-of") { as_of_scoping(:preload) }
+        it("tags results with as-of value") { as_of_tagging(:preload) }
       end
 
       describe "eager loading" do
-        it "scopes associations to base records' validity end" do
-          authors = Author::Version.eager_load(:books).to_a
-
-          expect(authors.size).to eq(2)
-
-          expect(authors.first.books.size).to eq(1)
-          expect(authors.first.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-
-          expect(authors.last.books.size).to eq(1)
-          expect(authors.last.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        end
-
-        it "scopes records to as-of" do
-          authors = Author::Version.eager_load(:books).as_of(@t1).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou 2")
-
-          authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou 2")
-        end
-
-        it "sets as-of on records and their associations" do
-          authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-          expect(authors.sole.as_of_value).to eq(@t2)
-          expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-        end
+        it("scopes associations by validity") { default_scoping(:eager_load) }
+        it("scope query by as-of") { as_of_scoping(:eager_load) }
+        it("tags results with as-of value") { as_of_tagging(:eager_load) }
       end
     end
 
     context "when owner table is non-temporal" do
       let(:skip_authors_temporal_table) { true }
-
-      def author_v = Author::Version.sole
+      let(:author_v) { Author::Version.sole }
 
       it "scopes target to present if owner's as-of value is absent" do
         expect(author_v.books.sole).to eq(book_v2)
@@ -465,80 +304,46 @@ RSpec.describe StrataTables::Model do
         expect(author_v.as_of(@t4).books.sole.as_of_value).to eq(@t4)
       end
 
+      def default_scoping(query_method)
+        authors = Author::Version.send(query_method, :books).to_a
+
+        expect(authors.sole)
+          .to have_attributes(name: "Bob 2", as_of_value: nil)
+        expect(authors.first.books.size).to eq(1)
+        expect(authors.first.books.sole)
+          .to have_attributes(name: "Calliou 2", as_of_value: nil)
+      end
+
+      def as_of_scoping(query_method)
+        authors = Author::Version.send(query_method, :books).as_of(@t1).to_a
+
+        expect(authors.sole.name).to eq("Bob 2")
+        expect(authors.sole.books.size).to eq(0)
+
+        authors = Author::Version.send(query_method, :books).as_of(@t2).to_a
+
+        expect(authors.sole.name).to eq("Bob 2")
+        expect(authors.sole.books.size).to eq(1)
+        expect(authors.sole.books.sole.name).to eq("Calliou")
+      end
+
+      def as_of_tagging(query_method)
+        authors = Author::Version.send(query_method, :books).as_of(@t2).to_a
+
+        expect(authors.sole.as_of_value).to eq(@t2)
+        expect(authors.sole.books.sole.as_of_value).to eq(@t2)
+      end
+
       describe "preloading" do
-        it "scopes associations to base records' validity end" do
-          authors = Author::Version.preload(:books).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole)
-            .to have_attributes(name: "Bob 2", as_of_value: nil)
-
-          expect(authors.first.books.size).to eq(1)
-          expect(authors.first.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        end
-
-        it "scopes records to as-of" do
-          authors = Author::Version.preload(:books).as_of(@t1).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob 2")
-
-          expect(authors.sole.books.size).to eq(0)
-
-          authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob 2")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou")
-        end
-
-        it "sets as-of on records and their associations" do
-          authors = Author::Version.preload(:books).as_of(@t2).to_a
-
-          expect(authors.sole.as_of_value).to eq(@t2)
-          expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-        end
+        it("scopes associations by validity") { default_scoping(:preload) }
+        it("scope query by as-of") { as_of_scoping(:preload) }
+        it("tags results with as-of value") { as_of_tagging(:preload) }
       end
 
       describe "eager loading" do
-        it "scopes associations to base records' validity end" do
-          authors = Author::Version.eager_load(:books).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole)
-            .to have_attributes(name: "Bob 2", as_of_value: nil)
-
-          expect(authors.first.books.size).to eq(1)
-          expect(authors.first.books.sole)
-            .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        end
-
-        it "scopes records to as-of" do
-          authors = Author::Version.eager_load(:books).as_of(@t1).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob 2")
-
-          expect(authors.sole.books.size).to eq(0)
-
-          authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-          expect(authors.size).to eq(1)
-          expect(authors.sole.name).to eq("Bob 2")
-
-          expect(authors.sole.books.size).to eq(1)
-          expect(authors.sole.books.sole.name).to eq("Calliou")
-        end
-
-        it "sets as-of on records and their associations" do
-          authors = Author::Version.eager_load(:books).as_of(@t2).to_a
-
-          expect(authors.sole.as_of_value).to eq(@t2)
-          expect(authors.sole.books.sole.as_of_value).to eq(@t2)
-        end
+        it("scopes associations by validity") { default_scoping(:eager_load) }
+        it("scope query by as-of") { as_of_scoping(:eager_load) }
+        it("tags results with as-of value") { as_of_tagging(:eager_load) }
       end
     end
   end
@@ -561,12 +366,12 @@ RSpec.describe StrataTables::Model do
       @t7 = Time.current
     end
 
-    def author_v1 = Author::Version.find_by(name: "Bob")
-    def author_v2 = Author::Version.find_by(name: "Bob 2")
-    def book_v1 = Book::Version.find_by(name: "Calliou")
-    def book_v2 = Book::Version.find_by(name: "Calliou 2")
-    def library_v1 = Library::Version.find_by(name: "Biblio")
-    def library_v2 = Library::Version.find_by(name: "Biblio 2")
+    let(:author_v1) { Author::Version.find_by(name: "Bob") }
+    let(:author_v2) { Author::Version.find_by(name: "Bob 2") }
+    let(:book_v1) { Book::Version.find_by(name: "Calliou") }
+    let(:book_v2) { Book::Version.find_by(name: "Calliou 2") }
+    let(:library_v1) { Library::Version.find_by(name: "Biblio") }
+    let(:library_v2) { Library::Version.find_by(name: "Biblio 2") }
 
     it "scopes target to owner's validity end if as-of value is absent" do
       expect(author_v1.libraries.sole).to eq(library_v1)
@@ -590,151 +395,80 @@ RSpec.describe StrataTables::Model do
       expect(author_v2.as_of(@t7).libraries.sole.as_of_value).to eq(@t7)
     end
 
+    def default_scoping(query_method)
+      authors = Author::Version.send(query_method, :libraries).to_a
+
+      expect(authors.size).to eq(2)
+
+      expect(authors.first.name).to eq("Bob")
+      expect(authors.first.books.size).to eq(1)
+      expect(authors.first.books.sole)
+        .to have_attributes(name: "Calliou", as_of_value: nil)
+      expect(authors.first.libraries.size).to eq(1)
+      expect(authors.first.libraries.sole)
+        .to have_attributes(name: "Biblio", as_of_value: nil)
+
+      expect(authors.last.name).to eq("Bob 2")
+      expect(authors.last.books.size).to eq(1)
+      expect(authors.last.books.sole)
+        .to have_attributes(name: "Calliou 2", as_of_value: nil)
+      expect(authors.last.libraries.size).to eq(1)
+      expect(authors.last.libraries.sole)
+        .to have_attributes(name: "Biblio 2", as_of_value: nil)
+    end
+
+    def as_of_scoping(query_method)
+      authors = Author::Version.send(query_method, :libraries).as_of(@t1).to_a
+      author = authors.sole
+
+      expect(author.name).to eq("Bob")
+      expect(author.books.size).to eq(0)
+      expect(author.libraries.size).to eq(0)
+
+      authors = Author::Version.send(query_method, :libraries).as_of(@t2).to_a
+      author = authors.sole
+
+      expect(author.name).to eq("Bob")
+      expect(author.books.size).to eq(1)
+      expect(author.books.first.name).to eq("Calliou")
+      expect(author.libraries.size).to eq(0)
+
+      authors = Author::Version.send(query_method, :libraries).as_of(@t4).to_a
+      author = authors.sole
+
+      expect(author.name).to eq("Bob")
+      expect(author.books.size).to eq(1)
+      expect(author.books.sole.name).to eq("Calliou")
+      expect(author.libraries.size).to eq(1)
+      expect(author.libraries.sole.name).to eq("Biblio")
+    end
+
+    def as_of_tagging(query_method)
+      authors = Author::Version.send(query_method, :libraries).as_of(@t4).to_a
+
+      expect(authors.sole.as_of_value).to eq(@t4)
+      expect(authors.sole.books.sole.as_of_value).to eq(@t4)
+      expect(authors.sole.libraries.sole.as_of_value).to eq(@t4)
+    end
+
     describe "preloading" do
-      it "scopes associations to base records' validity end" do
-        authors = Author::Version.preload(:libraries).to_a
-
-        expect(authors.size).to eq(2)
-
-        expect(authors.first.name).to eq("Bob")
-        expect(authors.first.books.size).to eq(1)
-        expect(authors.first.books.sole)
-          .to have_attributes(name: "Calliou", as_of_value: nil)
-        expect(authors.first.libraries.size).to eq(1)
-        expect(authors.first.libraries.sole)
-          .to have_attributes(name: "Biblio", as_of_value: nil)
-
-        expect(authors.last.name).to eq("Bob 2")
-        expect(authors.last.books.size).to eq(1)
-        expect(authors.last.books.sole)
-          .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        expect(authors.last.libraries.size).to eq(1)
-        expect(authors.last.libraries.sole)
-          .to have_attributes(name: "Biblio 2", as_of_value: nil)
-      end
-
-      it "scopes records to as-of" do
-        authors = Author::Version.preload(:libraries).as_of(@t1).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-        expect(author.books.size).to eq(0)
-        expect(author.libraries.size).to eq(0)
-
-        authors = Author::Version.preload(:libraries).as_of(@t2).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-        expect(author.books.size).to eq(1)
-        expect(author.books.first.name).to eq("Calliou")
-        expect(author.libraries.size).to eq(0)
-
-        authors = Author::Version.preload(:libraries).as_of(@t4).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-
-        expect(author.books.size).to eq(1)
-        expect(author.books.sole.name).to eq("Calliou")
-
-        expect(author.libraries.size).to eq(1)
-        expect(author.libraries.sole.name).to eq("Biblio")
-      end
-
-      it "sets as-of on records and their associations" do
-        authors = Author::Version.preload(:libraries).as_of(@t4).to_a
-
-        expect(authors.sole.as_of_value).to eq(@t4)
-        expect(authors.sole.books.sole.as_of_value).to eq(@t4)
-        expect(authors.sole.libraries.sole.as_of_value).to eq(@t4)
-      end
+      it("scopes associations by validity") { default_scoping(:preload) }
+      it("scope query by as-of") { as_of_scoping(:preload) }
+      it("tags results with as-of value") { as_of_tagging(:preload) }
     end
 
     describe "eager loading" do
-      it "scopes associations to base records' validity end" do
-        authors = Author::Version.eager_load(:libraries).to_a
-
-        expect(authors.size).to eq(2)
-
-        expect(authors.first.name).to eq("Bob")
-        expect(authors.first.books.size).to eq(1)
-        expect(authors.first.books.sole)
-          .to have_attributes(name: "Calliou", as_of_value: nil)
-        expect(authors.first.libraries.size).to eq(1)
-        expect(authors.first.libraries.sole)
-          .to have_attributes(name: "Biblio", as_of_value: nil)
-
-        expect(authors.last.name).to eq("Bob 2")
-        expect(authors.last.books.size).to eq(1)
-        expect(authors.last.books.sole)
-          .to have_attributes(name: "Calliou 2", as_of_value: nil)
-        expect(authors.last.libraries.size).to eq(1)
-        expect(authors.last.libraries.sole)
-          .to have_attributes(name: "Biblio 2", as_of_value: nil)
-      end
-
-      it "scopes records to as-of" do
-        authors = Author::Version.eager_load(:libraries).as_of(@t1).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-        expect(author.books.size).to eq(0)
-        expect(author.libraries.size).to eq(0)
-
-        authors = Author::Version.eager_load(:libraries).as_of(@t2).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-        expect(author.books.size).to eq(1)
-        expect(author.books.first.name).to eq("Calliou")
-        expect(author.libraries.size).to eq(0)
-
-        authors = Author::Version.eager_load(:libraries).as_of(@t4).to_a
-
-        expect(authors.size).to eq(1)
-
-        author = authors.sole
-
-        expect(author.name).to eq("Bob")
-
-        expect(author.books.size).to eq(1)
-        expect(author.books.sole.name).to eq("Calliou")
-
-        expect(author.libraries.size).to eq(1)
-        expect(author.libraries.sole.name).to eq("Biblio")
-      end
-
-      it "sets as-of on records and their associations" do
-        authors = Author::Version.eager_load(:libraries).as_of(@t4).to_a
-
-        expect(authors.sole.as_of_value).to eq(@t4)
-        expect(authors.sole.books.sole.as_of_value).to eq(@t4)
-        expect(authors.sole.libraries.sole.as_of_value).to eq(@t4)
-      end
+      it("scopes associations by validity") { default_scoping(:eager_load) }
+      it("scope query by as-of") { as_of_scoping(:eager_load) }
+      it("tags results with as-of value") { as_of_tagging(:eager_load) }
     end
 
     describe "nested associations" do
       describe "preloading" do
-        it "scopes associations to base records' validity end" do
-          authors = Author::Version.preload(books: :library).to_a
+        it "scopes associations by validity" do
+          authors = Author::Version.preload(books: :library)
 
           expect(authors.size).to eq(2)
-
           expect(authors.first.libraries.size).to eq(1)
           expect(authors.first.libraries.sole)
             .to have_attributes(name: "Biblio", as_of_value: nil)
@@ -744,24 +478,20 @@ RSpec.describe StrataTables::Model do
             .to have_attributes(name: "Biblio 2", as_of_value: nil)
         end
 
-        it "scopes records to as-of" do
+        it "scope query by as-of" do
           authors = Author::Version.preload(books: :library).as_of(@t1).to_a
 
-          expect(authors.size).to eq(1)
           expect(authors.sole.name).to eq("Bob")
-
           expect(authors.sole.libraries.size).to eq(0)
 
           authors = Author::Version.preload(books: :library).as_of(@t4).to_a
 
-          expect(authors.size).to eq(1)
           expect(authors.sole.name).to eq("Bob")
-
           expect(authors.sole.libraries.size).to eq(1)
           expect(authors.sole.libraries.sole.name).to eq("Biblio")
         end
 
-        it "sets as-of on records and their associations" do
+        it "tags results with as-of value" do
           authors = Author::Version.preload(books: :library).as_of(@t4).to_a
 
           expect(authors.sole.as_of_value).to eq(@t4)
@@ -770,203 +500,4 @@ RSpec.describe StrataTables::Model do
       end
     end
   end
-
-  # describe "has_many :though associations" do
-  #   before do
-  #     @author = Author.create(name: "Bob")
-  #     @author.update(name: "Bob 2")
-  #     library = Library.create(name: "Biblio")
-  #     book = Book.create(author: @author, library: library)
-  #     library.update(name: "Library")
-  #   end
-
-  #   def author_v1 = Author::Version.find_by(name: "Bob")
-  #   def author_v2 = Author::Version.find_by(name: "Bob 2")
-
-  #   it "target is instances of version classc" do
-  #     expect(author_v2.libraries).to all(be_an_instance_of(Library::Version))
-  #   end
-
-  #   it "scopes target to owner's validity" do
-  #     expect(author_v1.libraries.size).to eq(0)
-  #     expect(author_v2.libraries.size).to eq(2)
-  #   end
-
-  #   it "can be preloaded" do
-  #     authors = Author::Version.preload(:libraries)
-
-  #     # expect(authors.size).to eq(2)
-  #     # expect(authors.first.libraries.size).to eq(0)
-  #     expect(authors.last.libraries.size).to eq(2)
-  #   end
-
-  #   it "can be eager loadeded" do
-  #     pending
-
-  #     authors = Author::Version.eager_load(:libraries)
-
-  #     expect(authors.size).to eq(2)
-  #     expect(authors.first.libraries.size).to eq(0)
-  #     expect(authors.last.libraries.size).to eq(2)
-  #   end
-
-  #   context "when the target table is non-temporal" do
-  #     let(:skip_libraries_temporal_table) { true }
-
-  #     it "does not scopes target validity" do
-  #       expect(author_v1.libraries.size).to eq(0)
-  #       expect(author_v2.libraries.size).to eq(1)
-  #     end
-
-  #     it "can be preloaded" do
-  #       authors = Author::Version.preload(:libraries)
-
-  #       expect(authors.size).to eq(2)
-  #       expect(authors.first.libraries.size).to eq(0)
-  #       expect(authors.last.libraries.size).to eq(1)
-  #     end
-
-  #     it "can be eager loadeded" do
-  #       authors = Author::Version.eager_load(:libraries)
-
-  #       expect(authors.size).to eq(2)
-  #       expect(authors.first.libraries.size).to eq(0)
-  #       expect(authors.last.libraries.size).to eq(1)
-  #     end
-  #   end
-
-  #   context "when owner table is non-temporal" do
-  #     let(:skip_authors_temporal_table) { true }
-
-  #     def author_v = Author::Version.sole
-
-  #     it "does not scope target validity" do
-  #       expect(author_v.libraries.size).to eq(2)
-  #     end
-
-  #     it "can be preloaded" do
-  #       authors = Author::Version.preload(:libraries)
-
-  #       expect(authors.sole.libraries.size).to eq(2)
-  #     end
-
-  #     it "can be eager loadeded" do
-  #       authors = Author::Version.eager_load(:libraries)
-
-  #       expect(authors.sole.libraries.size).to eq(2)
-  #     end
-  #   end
-  # end
-
-  # describe "belongs_to associations" do
-  #   before do
-  #     @author = Author.create(name: "Bob")
-  #     book = Book.create(author: @author, name: "Calliou")
-  #     @author.update(name: "Bob 2")
-  #     book.update(name: "Calliou 2")
-  #   end
-
-  #   def book_v1 = Book::Version.find_by(name: "Calliou")
-  #   def book_v2 = Book::Version.find_by(name: "Calliou 2")
-
-  #   it "target is instance of version class" do
-  #     expect(book_v1.author).to be_an_instance_of(Author::Version)
-  #   end
-
-  #   it "scopes target to owner's validity and returns earliest version" do
-  #     expect(book_v1.author.name).to eq("Bob")
-  #     expect(book_v2.author.name).to eq("Bob 2")
-  #   end
-
-  #   context "when the base assocation has a scope" do
-  #     include_context "belongs_to association scope"
-
-  #     it "scopes target to owner's validity without overriding" do
-  #       expect(book_v1.bob_author.name).to eq("Bob")
-  #       expect(book_v2.bob_author).to be_nil
-  #     end
-  #   end
-
-  #   context "when the base assocation has an instance dependent scope" do
-  #     include_context "belongs_to instance-dependent association scope"
-
-  #     it "scopes target to owner's validity without overriding" do
-  #       expect(book_v1.self_titled_author).to be_nil
-  #       expect(book_v2.self_titled_author).to be_nil
-
-  #       @author.update(name: "Calliou")
-
-  #       expect(book_v1.self_titled_author).to be_nil
-  #       expect(book_v2.self_titled_author).to be_nil
-
-  #       @author.update(name: "Calliou 2")
-
-  #       expect(book_v1.self_titled_author).to be_nil
-  #       expect(book_v2.self_titled_author.name).to eq("Calliou 2")
-  #     end
-  #   end
-
-  #   it "can be preloaded" do
-  #     books = Book::Version.preload(:author)
-
-  #     expect(books.size).to eq(2)
-  #     expect(books.first.author.name).to eq("Bob")
-  #     expect(books.last.author.name).to eq("Bob 2")
-  #   end
-
-  #   it "can be eager loadeded" do
-  #     books = Book::Version.eager_load(:author)
-
-  #     expect(books.size).to eq(2)
-  #     expect(books.first.author.name).to eq("Bob")
-  #     expect(books.last.author.name).to eq("Bob 2")
-  #   end
-
-  #   context "when the target table is non-temporal" do
-  #     let(:skip_authors_temporal_table) { true }
-
-  #     it "does not scope target validity" do
-  #       expect(book_v1.author.name).to eq("Bob 2")
-  #       expect(book_v2.author.name).to eq("Bob 2")
-  #     end
-
-  #     it "can be preloaded" do
-  #       books = Book::Version.preload(:author)
-
-  #       expect(books.size).to eq(2)
-  #       expect(books.first.author.name).to eq("Bob 2")
-  #       expect(books.last.author.name).to eq("Bob 2")
-  #     end
-
-  #     it "can be eager loadeded" do
-  #       books = Book::Version.eager_load(:author)
-
-  #       expect(books.size).to eq(2)
-  #       expect(books.first.author.name).to eq("Bob 2")
-  #       expect(books.last.author.name).to eq("Bob 2")
-  #     end
-  #   end
-
-  #   context "when the owner table is non-temporal" do
-  #     let(:skip_books_temporal_table) { true }
-
-  #     def book_v = Book::Version.sole
-
-  #     it "returns earliest version" do
-  #       expect(book_v.author.name).to eq("Bob")
-  #     end
-
-  #     it "can be preloaded" do
-  #       books = Book::Version.preload(:author)
-
-  #       expect(books.sole.author.name).to eq("Bob")
-  #     end
-
-  #     it "can be eager loadeded" do
-  #       books = Book::Version.eager_load(:author)
-
-  #       expect(books.sole.author.name).to eq("Bob")
-  #     end
-  #   end
-  # end
 end

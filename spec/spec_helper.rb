@@ -34,6 +34,8 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
+  RSpec::Matchers.alias_matcher :have_attrs, :have_attributes
+
   def conn
     ActiveRecord::Base.connection
   end

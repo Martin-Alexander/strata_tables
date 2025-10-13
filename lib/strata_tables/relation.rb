@@ -13,6 +13,15 @@ module StrataTables
       self
     end
 
+    def _as_of(time)
+      spawn._as_of!(time)
+    end
+
+    def _as_of!(time)
+      self.as_of_value = time
+      self
+    end
+
     def as_of_value
       @values.fetch(:as_of, nil)
     end
@@ -33,7 +42,8 @@ module StrataTables
     def instantiate_records(*, **, &block)
       super.tap do |records|
         records.each do |record|
-          record.as_of(as_of_value)
+          record.as_of_value = as_of_value if record.respond_to?(:as_of_value=)
+
           walk_associations(record, includes_values | eager_load_values) do |record, assoc_name|
             reflection = record.class.reflect_on_association(assoc_name)
             next unless reflection

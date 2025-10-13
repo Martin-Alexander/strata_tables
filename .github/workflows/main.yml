@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }} - ${{ matrix.appraisal }}
+    name: ${{ matrix.appraisal }}
     strategy:
       matrix:
         ruby:
@@ -50,5 +50,5 @@ jobs:
           bundler-cache: true
       - name: Recreate database
         run: bundle exec rake db:drop db:create
-      - name: Run the default task
+      - name: Run tests
         run: bundle exec rake

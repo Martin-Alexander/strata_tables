@@ -39,7 +39,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           CREATE OR REPLACE FUNCTION books_versions_insert() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO "books_versions" (id, title, pages, published_at, validity)
-              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(timezone('UTC', now()), NULL));
+              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
             END;
@@ -65,13 +65,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
               END IF;
 
               UPDATE "books_versions"
-              SET validity = tstzrange(lower(validity), timezone('UTC', now()))
+              SET validity = tstzrange(lower(validity), now())
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
               INSERT INTO "books_versions" (id, title, pages, published_at, validity)
-              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(timezone('UTC', now()), NULL));
+              VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
             END;
@@ -93,7 +93,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           CREATE OR REPLACE FUNCTION books_versions_delete() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE "books_versions"
-              SET validity = tstzrange(lower(validity), timezone('UTC', now()))
+              SET validity = tstzrange(lower(validity), now())
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);

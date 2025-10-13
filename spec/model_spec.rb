@@ -65,8 +65,8 @@ RSpec.describe "model" do
     conn.truncate(:books_versions)
   end
 
-  let(:author_bob) { Author.find_by!(name: "Bob 2")}
-  let(:author_bill) { Author.find_by!(name: "Bill")}
+  let(:author_bob) { Author.find_by!(name: "Bob 2") }
+  let(:author_bill) { Author.find_by!(name: "Bill") }
 
   let(:author_bob_v1) { Author::Version.find_by!(name: "Bob") }
   let(:author_bill_v1) { Author::Version.find_by!(name: "Bill") }
@@ -84,7 +84,7 @@ RSpec.describe "model" do
     expect(Author.as_of(t_0)).to be_empty
     expect(Author.as_of(t_1)).to contain_exactly(author_bob_v1)
     expect(Author.as_of(t_2)).to contain_exactly(author_bob_v1, author_bill_v1)
-    expect(Author.as_of(t_3)).to contain_exactly( author_bill_v1, author_bob_v2)
+    expect(Author.as_of(t_3)).to contain_exactly(author_bill_v1, author_bob_v2)
   end
 
   it "#as_of returns the latest version of the record" do

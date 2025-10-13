@@ -3,7 +3,7 @@ module TransactionHelper
     connection.transaction do
       yield
 
-      connection.execute("select timezone('UTC', now()) as time").first["time"]
+      connection.execute("select now() as time").first["time"]
     end
   end
 end

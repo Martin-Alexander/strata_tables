@@ -67,7 +67,7 @@ module StrataTables
 
         execute(<<~SQL.squish)
           INSERT INTO #{quote_table_name(history_table)} (#{fields}, validity)
-          SELECT #{fields}, tstzrange(timezone('UTC', now()), NULL)
+          SELECT #{fields}, tstzrange(now(), NULL)
           FROM #{quote_table_name(source_table)};
         SQL
       end

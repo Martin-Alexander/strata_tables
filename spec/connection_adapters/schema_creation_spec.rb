@@ -36,7 +36,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION books__history_insert() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION strata_cb_3c9e7bcd97() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO "books__history" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
@@ -46,7 +46,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE books__history_insert();
+            FOR EACH ROW EXECUTE PROCEDURE strata_cb_3c9e7bcd97();
         SQL
       end
     end
@@ -58,7 +58,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION books__history_update() RETURNS trigger AS $$
+          CREATE OR REPLACE FUNCTION strata_cb_a0409343fa() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
@@ -78,7 +78,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE books__history_update();
+            FOR EACH ROW EXECUTE PROCEDURE strata_cb_a0409343fa();
         SQL
       end
     end
@@ -90,7 +90,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION books__history_delete() RETURNS TRIGGER AS $$
+          CREATE OR REPLACE FUNCTION strata_cb_1bf6acb0c3() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE "books__history"
               SET validity = tstzrange(lower(validity), now())
@@ -103,7 +103,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           $$ LANGUAGE plpgsql;
 
           CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE books__history_delete();
+            FOR EACH ROW EXECUTE PROCEDURE strata_cb_1bf6acb0c3();
         SQL
       end
     end

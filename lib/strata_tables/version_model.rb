@@ -15,7 +15,7 @@ module StrataTables
         StrataTables::VersionModel.versionify(self, base || superclass)
       end
 
-      def version_table_backing?
+      def history_table?
         table_name.end_with?("__history")
       end
 
@@ -92,19 +92,14 @@ module StrataTables
           ->(owner = nil) do
             scope = reflection.scope ? instance_exec(owner, &reflection.scope) : all
 
-            if !reflection.klass.version.version_table_backing?
+            if !reflection.klass.version.history_table?
               return scope.as_of(owner&.as_of_value)
             end
 
             if owner
               scope.as_of(owner.as_of_value)
             else
-              node = Arel::Nodes::NamedFunction.new(
-                "upper_inf",
-                [reflection.klass.version.arel_table[:validity]]
-              )
-
-              node.define_singleton_method(:strata_tag) { true }
+              node = ArelNodes::Extant.new(reflection.klass.version.arel_table[:validity])
 
               scope.where(node)
             end

@@ -5,13 +5,7 @@ module StrataTables
     end
 
     def as_of!(time)
-      if table_name.end_with?("__history")
-        if time
-          where!("#{table_name}.validity @> ?::timestamptz", time)
-        else
-          where!("upper_inf(#{table_name}.validity)")
-        end
-      end
+      scope_by_time!(time) if model.history_table?
 
       self.as_of_value = time
       self
@@ -22,19 +16,30 @@ module StrataTables
     end
 
     def as_of_value=(value)
-      # assert_modifiable!
+      # TODO: add tests for: assert_modifiable!
+
       @values[:as_of] = value
     end
 
-    def build_joins(*, **, &block)
-      join_sources = super
+    private
 
-      add_validity_constraint(join_sources) if as_of_value
+    def scope_by_time!(time)
+      node = if time
+        ArelNodes::ExistedAt.new(arel_table[:validity], time)
+      else
+        ArelNodes::Extant.new(arel_table[:validity])
+      end
 
-      join_sources
+      where!(node)
     end
 
-    def instantiate_records(*, **, &block)
+    def build_joins(join_sources, aliases = nil)
+      super.tap do |joins|
+        add_validity_constraint(joins) if as_of_value
+      end
+    end
+
+    def instantiate_records(rows, &block)
       super.tap do |records|
         records.each do |record|
           record.as_of_value = as_of_value if record.respond_to?(:as_of_value=)
@@ -58,27 +63,22 @@ module StrataTables
       end
     end
 
-    private
-
     def add_validity_constraint(joins)
-      timestamp = Arel::Nodes::NamedFunction.new(
-        "CAST",
-        [Arel::Nodes::As.new(
-          Arel::Nodes::Quoted.new(as_of_value),
-          Arel::Nodes::SqlLiteral.new("timestamptz")
-        )]
-      )
-
       joins.each do |join|
-        on_expr = join.right.expr
+        walk_arel_nodes(join.right.expr) do |node, parent, relationship|
+          next unless node.is_a?(ArelNodes::Extant)
 
-        if on_expr.is_a?(Arel::Nodes::Nary)
-          on_expr.children.map! do |child|
-            if child.respond_to?(:strata_tag)
-              join.left[:validity].contains(timestamp)
-            else
-              child
-            end
+          new_node = ArelNodes::ExistedAt.new(join.left[:validity], as_of_value)
+
+          case relationship
+          when :left
+            parent.left = new_node
+          when :right
+            parent.right = new_node
+          when Integer
+            parent.children[relationship] = new_node
+          when :value
+            parent.value = new_node
           end
         end
       end
@@ -91,12 +91,36 @@ module StrataTables
       when Array
         node.each { |child| walk_associations(record, child, &block) }
       when Hash
+        # TODO: Write tests
+
         node.each do |parent, child|
           block.call(record, parent)
 
           walk_associations(record, child, &block)
         end
       end
+    end
+
+    def walk_arel_nodes(node, parent = nil, relationship = nil, &block)
+      case node
+      when Arel::Nodes::Unary
+        # TODO: Write tests
+
+        walk_arel_nodes(node.value, node, :value & block)
+      when Arel::Nodes::Binary
+        # TODO: Write tests
+
+        walk_arel_nodes(node.left, node, :left, &block)
+        walk_arel_nodes(node.right, node, :right, &block)
+      when Arel::Nodes::Nary
+        node.children.each_with_index do |child, index|
+          walk_arel_nodes(child, node, index, &block)
+        end
+      else
+        block.call(node, parent, relationship)
+      end
+
+      false
     end
   end
 end

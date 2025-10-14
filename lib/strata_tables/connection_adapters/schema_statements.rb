@@ -40,7 +40,7 @@ module StrataTables
       def drop_history_table(source_table, **options)
         history_table = "#{source_table}__history"
 
-        drop_table history_table
+        drop_table(history_table)
 
         drop_history_triggers(source_table)
       end
@@ -57,11 +57,18 @@ module StrataTables
       end
 
       def drop_history_triggers(source_table)
-        history_table = "#{source_table}__history"
+        %i[insert update delete].each do |verb|
+          function_name = history_callback_function_name(source_table, verb)
 
-        execute "DROP FUNCTION #{history_table}_insert() CASCADE"
-        execute "DROP FUNCTION #{history_table}_update() CASCADE"
-        execute "DROP FUNCTION #{history_table}_delete() CASCADE"
+          execute "DROP FUNCTION #{function_name}() CASCADE"
+        end
+      end
+
+      def history_callback_function_name(source_table, verb)
+        identifier = "#{source_table}_#{verb}"
+        hashed_identifier = Digest::SHA256.hexdigest(identifier).first(10)
+
+        "strata_cb_#{hashed_identifier}"
       end
 
       private

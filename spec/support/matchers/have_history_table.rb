@@ -2,31 +2,19 @@ require "rspec/expectations"
 
 RSpec::Matchers.define :have_history_table do
   match do |table|
-    correct_columns(table) &&
-      correct_triggers(table) &&
-      correct_functions(table)
-  end
-
-  private
-
-  def correct_columns(table)
     history_table = "#{table}__history"
 
-    have_column(:id, :integer).matches?(history_table) &&
-      have_column(:validity, :tstzrange, null: false).matches?(history_table)
-  end
+    expect(history_table).to have_column(:id, :integer)
+      .and(have_column(:validity, :tstzrange, null: false))
 
-  def correct_triggers(table)
-    have_trigger(:on_insert_strata_trigger).matches?(table) &&
-      have_trigger(:on_update_strata_trigger).matches?(table) &&
-      have_trigger(:on_delete_strata_trigger).matches?(table)
-  end
+    expect(table)
+      .to have_trigger(:on_insert_strata_trigger)
+      .and(have_trigger(:on_update_strata_trigger))
+      .and(have_trigger(:on_delete_strata_trigger))
 
-  def correct_functions(table)
-    history_table = "#{table}__history"
-
-    have_function("#{history_table}_insert").matches?(conn) &&
-      have_function("#{history_table}_update").matches?(conn) &&
-      have_function("#{history_table}_delete").matches?(conn)
+    expect(conn)
+      .to have_history_callback_function(table, :insert)
+      .and(have_history_callback_function(table, :update))
+      .and(have_history_callback_function(table, :delete))
   end
 end

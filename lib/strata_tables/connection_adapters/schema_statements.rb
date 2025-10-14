@@ -34,7 +34,14 @@ module StrataTables
 
         create_history_triggers(source_table)
 
-        copy_data(source_table, history_table, source_columns) if options[:copy_data]
+        if options[:copy_data]
+          copy_data(
+            source_table,
+            history_table,
+            source_columns,
+            options[:copy_data]
+          )
+        end
       end
 
       def drop_history_table(source_table, **options)
@@ -73,12 +80,18 @@ module StrataTables
 
       private
 
-      def copy_data(source_table, history_table, columns)
+      def copy_data(source_table, history_table, columns, options)
         fields = columns.map(&:name).join(", ")
+
+        validity_start = if options.is_a?(Hash) && options[:epoch_time]
+          "'#{options[:epoch_time].utc.iso8601}'"
+        else
+          "NULL"
+        end
 
         execute(<<~SQL.squish)
           INSERT INTO #{quote_table_name(history_table)} (#{fields}, validity)
-          SELECT #{fields}, tstzrange(now(), NULL)
+          SELECT #{fields}, tstzrange(#{validity_start}, NULL)
           FROM #{quote_table_name(source_table)};
         SQL
       end

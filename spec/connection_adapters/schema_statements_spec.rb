@@ -90,7 +90,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     end
 
     context "with 'copy_data'" do
-      it "inserts data from current table into history table" do
+      before do
         stub_const("ApplicationRecord", Class.new(ActiveRecord::Base) do
           self.abstract_class = true
           include StrataTables::Model
@@ -103,17 +103,36 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         Book.create!(title: "Calliou", price: 1000, pages: 10, author_id: bob.id)
         Book.create!(title: "Calliou 2", price: 500, pages: 10, author_id: bob.id)
 
-        @t0 = Time.current
+        t_0
+      end
+
+      it "copies data" do
+        conn.enable_extension(:btree_gist)
 
         conn.create_history_table(:authors)
         conn.create_history_table(:books, copy_data: true)
 
-        @t1 = Time.current
-
         expect(Author.version.count).to eq(0)
         expect(Book.version.count).to eq(2)
-        expect(Book.version.all.as_of(@t0).count).to eq(0)
-        expect(Book.version.all.as_of(@t1).count).to eq(2)
+        expect(Book.version.all.as_of(t_0).count).to eq(2)
+        expect(Book.version.all.as_of(now).count).to eq(2)
+      end
+
+      context "with epoch year" do
+        it "start validity ranges at epoch year" do
+          epoch_time = Time.parse("1999-01-01")
+
+          conn.enable_extension(:btree_gist)
+
+          conn.create_history_table(:authors)
+          conn.create_history_table(:books, copy_data: {epoch_time: epoch_time})
+
+          expect(Author.version.count).to eq(0)
+          expect(Book.version.count).to eq(2)
+          expect(Book.version.all.as_of(t_1).count).to eq(2)
+          expect(Book.version.all.as_of(now).count).to eq(2)
+          expect(Book.version.all.as_of(epoch_time - 1.day).count).to eq(0)
+        end
       end
     end
 

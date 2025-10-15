@@ -82,12 +82,8 @@ RSpec.describe "model" do
     expect(Author.version.name).to eq("Author::Version")
   end
 
-  it "::versions returns the model's version class" do
-    expect(Author.table_name).to eq("authors")
-    expect(Author.versions).to be_an_instance_of(Class)
-    expect(Author.versions).to be < Author
-    expect(Author.versions).to be_include(StrataTables::VersionModel)
-    expect(Author.versions.name).to eq("Author::Version")
+  it "::versions queries the model's version class" do
+    expect(Author.versions).to contain_exactly(author_bob_v1, author_bob_v2, author_bill_v1)
   end
 
   it "::as_of is delegated to ::version" do

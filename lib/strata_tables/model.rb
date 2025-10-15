@@ -10,7 +10,7 @@ module StrataTables
       end
 
       def versions
-        version
+        version.all
       end
 
       def const_missing(name)

@@ -1200,13 +1200,13 @@ RSpec.describe "associations" do
     before(:context) do
       conn.add_reference(:authors, :coauthor, foreign_key: {to_table: :authors})
       conn.add_reference(:authors_history, :coauthor)
-      conn.create_history_triggers(:authors)
+      conn.recreate_history_triggers(:authors)
     end
 
     after(:context) do
       conn.remove_reference(:authors, :coauthor)
       conn.remove_reference(:authors_history, :coauthor)
-      conn.create_history_triggers(:authors)
+      conn.recreate_history_triggers(:authors)
     end
 
     before do

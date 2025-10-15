@@ -32,7 +32,7 @@ module StrataTables
           add_exclusion_constraint(history_table, "id WITH =, sys_period WITH &&", using: :gist)
         end
 
-        create_history_triggers(source_table)
+        recreate_history_triggers(source_table)
 
         if options[:copy_data]
           copy_data(
@@ -52,7 +52,7 @@ module StrataTables
         drop_history_triggers(source_table)
       end
 
-      def create_history_triggers(source_table)
+      def recreate_history_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
         history_table = "#{source_table}_history"

@@ -18,7 +18,7 @@ RSpec.describe "update triggers" do
     conn.drop_history_table(:books)
   end
 
-  it "sets current history record's upper bound validity to the current time and creates a new history record" do
+  it "sets current history record's upper bound sys_period to the current time and creates a new history record" do
     insert_time = transaction_with_time(conn) do
       Book.create!(title: "The Great Gatsby", pages: 180)
     end
@@ -29,9 +29,9 @@ RSpec.describe "update triggers" do
 
     expect(Book::Version.count).to eq(2)
     expect(Book::Version.find_by(title: "The Great Gatsby"))
-      .to have_attributes(pages: 180, validity: insert_time...update_time)
+      .to have_attributes(pages: 180, sys_period: insert_time...update_time)
     expect(Book::Version.find_by(title: "The Greatest Gatsby"))
-      .to have_attributes(pages: 180, validity: update_time...)
+      .to have_attributes(pages: 180, sys_period: update_time...)
   end
 
   context "when the update doesn't change the record" do
@@ -46,13 +46,13 @@ RSpec.describe "update triggers" do
       expect(Book::Version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
-        validity: insert_time...
+        sys_period: insert_time...
       )
     end
   end
 
   context "when two updates are made in a single transaction" do
-    it "creates two history records with the first having an empty validity range" do
+    it "creates two history records with the first having an empty sys_period range" do
       insert_time = transaction_with_time(conn) do
         Book.create!(title: "The Great Gatsby", pages: 180)
       end
@@ -67,19 +67,19 @@ RSpec.describe "update triggers" do
         .to have_attributes(
           title: "The Great Gatsby",
           pages: 180,
-          validity: insert_time...update_time
+          sys_period: insert_time...update_time
         )
       expect(Book::Version.find_by(title: "The Greatest Gatsby"))
         .to have_attributes(
           title: "The Greatest Gatsby",
           pages: 180,
-          validity: nil
+          sys_period: nil
         )
       expect(Book::Version.find_by(title: "The Absolutely Greatest Gatsby"))
         .to have_attributes(
           title: "The Absolutely Greatest Gatsby",
           pages: 180,
-          validity: update_time...
+          sys_period: update_time...
         )
     end
   end

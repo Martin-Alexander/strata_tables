@@ -25,9 +25,9 @@ module StrataTables
 
     def scope_by_time!(time)
       node = if time
-        ArelNodes::ExistedAt.new(arel_table[:validity], time)
+        ArelNodes::ExistedAt.new(arel_table[:sys_period], time)
       else
-        ArelNodes::Extant.new(arel_table[:validity])
+        ArelNodes::Extant.new(arel_table[:sys_period])
       end
 
       where!(node)
@@ -35,7 +35,7 @@ module StrataTables
 
     def build_joins(join_sources, aliases = nil)
       super.tap do |joins|
-        add_validity_constraint(joins) if as_of_value
+        add_sys_period_constraint(joins) if as_of_value
       end
     end
 
@@ -63,12 +63,12 @@ module StrataTables
       end
     end
 
-    def add_validity_constraint(joins)
+    def add_sys_period_constraint(joins)
       joins.each do |join|
         walk_arel_nodes(join.right.expr) do |node, parent, relationship|
           next unless node.is_a?(ArelNodes::Extant)
 
-          new_node = ArelNodes::ExistedAt.new(join.left[:validity], as_of_value)
+          new_node = ArelNodes::ExistedAt.new(join.left[:sys_period], as_of_value)
 
           case relationship
           when :left

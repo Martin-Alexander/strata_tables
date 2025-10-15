@@ -28,7 +28,7 @@ RSpec.describe "insert triggers" do
     expect(Book::Version.first).to have_attributes(
       title: "The Great Gatsby",
       pages: 180,
-      validity: insert_time...
+      sys_period: insert_time...
     )
   end
 end

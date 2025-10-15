@@ -21,7 +21,7 @@ RSpec.describe "delete triggers" do
     conn.drop_history_table(:books)
   end
 
-  it "sets current history record's upper bound validity to the current time" do
+  it "sets current history record's upper bound sys_period to the current time" do
     insert_time = transaction_with_time(conn) do
       Book.create!(title: "The Great Gatsby", pages: 180)
     end
@@ -34,12 +34,12 @@ RSpec.describe "delete triggers" do
     expect(Book::Version.first).to have_attributes(
       title: "The Great Gatsby",
       pages: 180,
-      validity: insert_time...delete_time
+      sys_period: insert_time...delete_time
     )
   end
 
   context "when inserting and deleting in a single transaction" do
-    it "creates a history record with an empty validity range" do
+    it "creates a history record with an empty sys_period range" do
       conn.transaction do
         Book.create!(title: "The Great Gatsby", pages: 180)
         Book.first.destroy!
@@ -49,7 +49,7 @@ RSpec.describe "delete triggers" do
       expect(Book::Version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
-        validity: nil
+        sys_period: nil
       )
     end
   end

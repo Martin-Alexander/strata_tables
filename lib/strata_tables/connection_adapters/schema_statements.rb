@@ -25,11 +25,11 @@ module StrataTables
             )
           end
 
-          t.tstzrange :validity, null: false
+          t.tstzrange :sys_period, null: false
         end
 
         if extension_enabled?(:btree_gist)
-          add_exclusion_constraint(history_table, "id WITH =, validity WITH &&", using: :gist)
+          add_exclusion_constraint(history_table, "id WITH =, sys_period WITH &&", using: :gist)
         end
 
         create_history_triggers(source_table)
@@ -83,15 +83,15 @@ module StrataTables
       def copy_data(source_table, history_table, columns, options)
         fields = columns.map(&:name).join(", ")
 
-        validity_start = if options.is_a?(Hash) && options[:epoch_time]
+        sys_period_start = if options.is_a?(Hash) && options[:epoch_time]
           "'#{options[:epoch_time].utc.iso8601}'"
         else
           "NULL"
         end
 
         execute(<<~SQL.squish)
-          INSERT INTO #{quote_table_name(history_table)} (#{fields}, validity)
-          SELECT #{fields}, tstzrange(#{validity_start}, NULL)
+          INSERT INTO #{quote_table_name(history_table)} (#{fields}, sys_period)
+          SELECT #{fields}, tstzrange(#{sys_period_start}, NULL)
           FROM #{quote_table_name(source_table)};
         SQL
       end

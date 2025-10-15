@@ -50,7 +50,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and have_column(:author_id, :integer)
 
       expect(:books_history).to have_exclusion_constraint(
-        "id WITH =, validity WITH &&",
+        "id WITH =, sys_period WITH &&",
         {using: :gist}
       )
     end
@@ -64,7 +64,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         expect(:books).to have_history_table
 
         expect(:books_history).to_not have_exclusion_constraint(
-          "id WITH =, validity WITH &&",
+          "id WITH =, sys_period WITH &&",
           {using: :gist}
         )
       end
@@ -119,7 +119,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       end
 
       context "with epoch year" do
-        it "start validity ranges at epoch year" do
+        it "start sys_period ranges at epoch year" do
           epoch_time = Time.parse("1999-01-01")
 
           conn.enable_extension(:btree_gist)

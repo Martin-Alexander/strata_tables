@@ -88,7 +88,7 @@ module StrataTables
               if owner
                 scope.as_of(owner.as_of_value)
               else
-                node = ArelNodes::Extant.new(target_model_version.arel_table[:validity])
+                node = ArelNodes::Extant.new(target_model_version.arel_table[:sys_period])
 
                 scope.where(node)
               end

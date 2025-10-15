@@ -38,7 +38,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION strata_cb_3c9e7bcd97() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO "books_history" (id, title, pages, published_at, validity)
+              INSERT INTO "books_history" (id, title, pages, published_at, sys_period)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
@@ -65,12 +65,12 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
               END IF;
 
               UPDATE "books_history"
-              SET validity = tstzrange(lower(validity), now())
+              SET sys_period = tstzrange(lower(sys_period), now())
               WHERE
                 id = OLD.id AND
-                upper_inf(validity);
+                upper_inf(sys_period);
 
-              INSERT INTO "books_history" (id, title, pages, published_at, validity)
+              INSERT INTO "books_history" (id, title, pages, published_at, sys_period)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
@@ -93,10 +93,10 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
           CREATE OR REPLACE FUNCTION strata_cb_1bf6acb0c3() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE "books_history"
-              SET validity = tstzrange(lower(validity), now())
+              SET sys_period = tstzrange(lower(sys_period), now())
               WHERE
                 id = OLD.id AND
-                upper_inf(validity);
+                upper_inf(sys_period);
 
               RETURN NULL;
             END;

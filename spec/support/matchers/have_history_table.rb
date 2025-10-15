@@ -5,7 +5,7 @@ RSpec::Matchers.define :have_history_table do
     history_table = "#{table}_history"
 
     expect(history_table).to have_column(:id, :integer)
-      .and(have_column(:validity, :tstzrange, null: false))
+      .and(have_column(:sys_period, :tstzrange, null: false))
 
     expect(table)
       .to have_trigger(:on_insert_strata_trigger)

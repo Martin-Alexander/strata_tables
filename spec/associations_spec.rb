@@ -1192,4 +1192,57 @@ RSpec.describe "associations" do
       end
     end
   end
+
+  describe "belongs_to :coauthor, class_name: \"Author\"" do
+    include_context "db"
+    include_context "scenario"
+
+    before(:context) do
+      conn.add_reference(:authors, :coauthor, foreign_key: {to_table: :authors})
+      conn.add_reference(:authors__history, :coauthor)
+      conn.create_history_triggers(:authors)
+    end
+
+    after(:context) do
+      conn.remove_reference(:authors, :coauthor)
+      conn.remove_reference(:authors__history, :coauthor)
+      conn.create_history_triggers(:authors)
+    end
+
+    before do
+      stub_const("Author", Class.new(ApplicationRecord) do
+        has_many :books
+        has_many :libraries, through: :books
+        belongs_to :coauthor, class_name: "Author"
+      end)
+
+      Author::Version.reversionify
+
+      Author.create!(name: "Jane", coauthor: author_1)
+      t_7
+      author_1.update(name: "Bob 3")
+      t_8
+    end
+
+    let(:author_1) { Author.first }
+    let(:author_2_v1) { Author::Version.find_by(name: "Jane") }
+    let(:author_1_v3) { Author::Version.find_by(name: "Bob 3") }
+
+    after do
+      conn.truncate(:authors)
+    end
+
+    context "without as-of" do
+      it "scopes coauthor by extant" do
+        expect(author_2_v1.coauthor).to eq(author_1_v3)
+      end
+    end
+
+    context "#as_of" do
+      it "scopes coauthor by time" do
+        expect(author_2_v1.as_of(t_7).coauthor).to eq(author_v2)
+        expect(author_2_v1.as_of(t_8).coauthor).to eq(author_1_v3)
+      end
+    end
+  end
 end

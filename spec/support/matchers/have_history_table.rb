@@ -2,7 +2,7 @@ require "rspec/expectations"
 
 RSpec::Matchers.define :have_history_table do
   match do |table|
-    history_table = "#{table}__history"
+    history_table = "#{table}_history"
 
     expect(history_table).to have_column(:id, :integer)
       .and(have_column(:validity, :tstzrange, null: false))

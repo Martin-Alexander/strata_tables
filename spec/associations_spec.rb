@@ -46,9 +46,9 @@ RSpec.describe "associations" do
       conn.truncate(:books)
       conn.truncate(:libraries)
 
-      conn.truncate(:authors__history) if conn.table_exists?(:authors__history)
-      conn.truncate(:books__history) if conn.table_exists?(:books__history)
-      conn.truncate(:libraries__history) if conn.table_exists?(:libraries__history)
+      conn.truncate(:authors_history) if conn.table_exists?(:authors_history)
+      conn.truncate(:books_history) if conn.table_exists?(:books_history)
+      conn.truncate(:libraries_history) if conn.table_exists?(:libraries_history)
     end
   end
 
@@ -75,9 +75,9 @@ RSpec.describe "associations" do
     end
 
     after(:context) do
-      conn.drop_history_table(:books) if conn.table_exists?(:books__history)
-      conn.drop_history_table(:authors) if conn.table_exists?(:authors__history)
-      conn.drop_history_table(:libraries) if conn.table_exists?(:libraries__history)
+      conn.drop_history_table(:books) if conn.table_exists?(:books_history)
+      conn.drop_history_table(:authors) if conn.table_exists?(:authors_history)
+      conn.drop_history_table(:libraries) if conn.table_exists?(:libraries_history)
 
       conn.drop_table(:books)
       conn.drop_table(:authors)
@@ -606,7 +606,7 @@ RSpec.describe "associations" do
     end
 
     after(:context) do
-      conn.drop_history_table(:employees) if conn.table_exists?(:employees__history)
+      conn.drop_history_table(:employees) if conn.table_exists?(:employees_history)
 
       conn.drop_table(:employees)
     end
@@ -649,7 +649,7 @@ RSpec.describe "associations" do
     after do
       conn.truncate(:employees)
 
-      conn.truncate(:employees__history) if conn.table_exists?(:employees__history)
+      conn.truncate(:employees_history) if conn.table_exists?(:employees_history)
     end
 
     context "without as-of" do
@@ -987,7 +987,7 @@ RSpec.describe "associations" do
     end
 
     after(:context) do
-      conn.drop_history_table(:pictures) if conn.table_exists?(:pictures__history)
+      conn.drop_history_table(:pictures) if conn.table_exists?(:pictures_history)
 
       conn.drop_table(:pictures)
     end
@@ -1017,7 +1017,7 @@ RSpec.describe "associations" do
     after do
       conn.truncate(:pictures)
 
-      conn.truncate(:pictures__history) if conn.table_exists?(:pictures__history)
+      conn.truncate(:pictures_history) if conn.table_exists?(:pictures_history)
     end
 
     let(:picture_v1) { Picture::Version.first }
@@ -1199,13 +1199,13 @@ RSpec.describe "associations" do
 
     before(:context) do
       conn.add_reference(:authors, :coauthor, foreign_key: {to_table: :authors})
-      conn.add_reference(:authors__history, :coauthor)
+      conn.add_reference(:authors_history, :coauthor)
       conn.create_history_triggers(:authors)
     end
 
     after(:context) do
       conn.remove_reference(:authors, :coauthor)
-      conn.remove_reference(:authors__history, :coauthor)
+      conn.remove_reference(:authors_history, :coauthor)
       conn.create_history_triggers(:authors)
     end
 

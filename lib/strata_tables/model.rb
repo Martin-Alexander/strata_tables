@@ -9,6 +9,10 @@ module StrataTables
         "#{name}::Version".constantize
       end
 
+      def versions
+        version
+      end
+
       def const_missing(name)
         if name.to_s == "Version"
           klass = Class.new(self)

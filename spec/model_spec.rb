@@ -62,9 +62,9 @@ RSpec.describe "model" do
     conn.truncate(:authors)
     conn.truncate(:books)
 
-    conn.truncate(:countries__history)
-    conn.truncate(:authors__history)
-    conn.truncate(:books__history)
+    conn.truncate(:countries_history)
+    conn.truncate(:authors_history)
+    conn.truncate(:books_history)
   end
 
   let(:author_bob) { Author.find_by!(name: "Bob 2") }
@@ -80,6 +80,14 @@ RSpec.describe "model" do
     expect(Author.version).to be < Author
     expect(Author.version).to be_include(StrataTables::VersionModel)
     expect(Author.version.name).to eq("Author::Version")
+  end
+
+  it "::versions returns the model's version class" do
+    expect(Author.table_name).to eq("authors")
+    expect(Author.versions).to be_an_instance_of(Class)
+    expect(Author.versions).to be < Author
+    expect(Author.versions).to be_include(StrataTables::VersionModel)
+    expect(Author.versions.name).to eq("Author::Version")
   end
 
   it "::as_of is delegated to ::version" do
@@ -107,7 +115,7 @@ RSpec.describe "model" do
   end
 
   it "version class is versionified" do
-    expect(Author.version.table_name).to eq("authors__history")
+    expect(Author.version.table_name).to eq("authors_history")
     expect(Author.version.reflect_on_all_associations)
       .to all(have_attrs(klass: be_an_instance_of(Class)))
   end

@@ -1,6 +1,6 @@
 # Strata Tables
 
-Temporal tables for Active Record. This gem automatically maintains a companion `*__history` table for a source table and keeps it up to date via database triggers. It also provides convenient model helpers for querying historical data and "as of" time-travel reads.
+Temporal tables for Active Record. This gem automatically maintains a companion `*_history` table for a source table and keeps it up to date via database triggers. It also provides convenient model helpers for querying historical data and "as of" time-travel reads.
 
 See also:
 - https://en.wikipedia.org/wiki/Temporal_database
@@ -37,7 +37,7 @@ New history tables will have the same columns as their source table in addition 
 For an existing `products` tables, the SQL produced will be roughly equivalent to:
 
 ```sql
-CREATE TABLE products__history (
+CREATE TABLE products_history (
     version_id bigint NOT NULL,
     id bigint NOT NULL,
     name character varying,
@@ -46,39 +46,39 @@ CREATE TABLE products__history (
     sys_period tstzrange NOT NULL
 );
 
-ALTER TABLE ONLY products__history ADD CONSTRAINT excl_rails_42e30d1c5d EXCLUDE
+ALTER TABLE ONLY products_history ADD CONSTRAINT excl_rails_42e30d1c5d EXCLUDE
   USING gist (id WITH =, sys_period WITH &&);
-ALTER TABLE ONLY products__history ADD CONSTRAINT products__history_pkey
+ALTER TABLE ONLY products_history ADD CONSTRAINT products_history_pkey
   PRIMARY KEY (version_id);
 
-CREATE FUNCTION products__history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION products_history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
-    UPDATE "products__history" SET sys_period = tstzrange(lower(sys_period), now())
+    UPDATE "products_history" SET sys_period = tstzrange(lower(sys_period), now())
     WHERE id = OLD.id AND upper_inf(sys_period);
 
     RETURN NULL;
   END;
 $$;
 
-CREATE FUNCTION products__history_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION products_history_insert() RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
-    INSERT INTO "products__history" (id, name, price, category_id, sys_period)
+    INSERT INTO "products_history" (id, name, price, category_id, sys_period)
     VALUES (NEW.id, NEW.name, NEW.price, NEW.category_id, tstzrange(now(), NULL));
 
     RETURN NULL;
   END;
 $$;
 
-CREATE FUNCTION products__history_update() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION products_history_update() RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
     IF OLD IS NOT DISTINCT FROM NEW THEN
       RETURN NULL;
     END IF;
 
-    UPDATE "products__history" SET sys_period = tstzrange(lower(sys_period), now())
+    UPDATE "products_history" SET sys_period = tstzrange(lower(sys_period), now())
     WHERE id = OLD.id AND upper_inf(sys_period);
 
-    INSERT INTO "products__history" (id, name, price, category_id, sys_period)
+    INSERT INTO "products_history" (id, name, price, category_id, sys_period)
     VALUES (NEW.id, NEW.name, NEW.price, NEW.category_id, tstzrange(now(), NULL));
 
     RETURN NULL;
@@ -86,11 +86,11 @@ CREATE FUNCTION products__history_update() RETURNS trigger LANGUAGE plpgsql AS $
 $$;
 
 CREATE TRIGGER strata_trigger_on_delete AFTER DELETE ON products
-  FOR EACH ROW EXECUTE FUNCTION products__history_delete();
+  FOR EACH ROW EXECUTE FUNCTION products_history_delete();
 CREATE TRIGGER strata_trigger_on_insert AFTER INSERT ON products
-  FOR EACH ROW EXECUTE FUNCTION products__history_insert();
+  FOR EACH ROW EXECUTE FUNCTION products_history_insert();
 CREATE TRIGGER strata_trigger_on_update AFTER UPDATE ON products
-  FOR EACH ROW EXECUTE FUNCTION products__history_update();
+  FOR EACH ROW EXECUTE FUNCTION products_history_update();
 ```
 
 Include `StrataTables::Model` to enable models to be used in historical querying. Models without a history table can also be used, buy they'll be treated as though all their records have always existed.
@@ -108,7 +108,7 @@ time = 1.day.ago
 # => 2025-10-13 19:00:00 UTC
 
 product = Product.as_of(time).where("price > 100").first
-# Product::Version Load (1.2ms)  SELECT "products__history".* FROM "products__history" WHERE ("products__history"."sys_period" @> $1::timestamptz) AND (price > 100) ORDER BY "products__history"."version_id" ASC LIMIT $2  [[nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
+# Product::Version Load (1.2ms)  SELECT "products_history".* FROM "products_history" WHERE ("products_history"."sys_period" @> $1::timestamptz) AND (price > 100) ORDER BY "products_history"."version_id" ASC LIMIT $2  [[nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
 # => #<Product::Version
 #  version_id: 3,
 #  id: 3,
@@ -118,7 +118,7 @@ product = Product.as_of(time).where("price > 100").first
 #  sys_period: 2025-10-13 18:24:39.807499 UTC...>
 
 product.category
-# Category::Version Load (0.5ms)  SELECT "categories__history".* FROM "categories__history" WHERE "categories__history"."id" = $1 AND ("categories__history"."sys_period" @> $2::timestamptz) LIMIT $3  [["id", 2], [nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
+# Category::Version Load (0.5ms)  SELECT "categories_history".* FROM "categories_history" WHERE "categories_history"."id" = $1 AND ("categories_history"."sys_period" @> $2::timestamptz) LIMIT $3  [["id", 2], [nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
 # => #<Category::Version
 #  version_id: 2,
 #  id: 2,

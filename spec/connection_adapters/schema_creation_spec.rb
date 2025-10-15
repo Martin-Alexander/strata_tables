@@ -9,7 +9,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
     let(:insert_trigger_definition) do
       StrataTables::ConnectionAdapters::InsertStrataTriggerDefinition.new(
         :books,
-        :books__history,
+        :books_history,
         [:id, :title, :pages, :published_at]
       )
     end
@@ -17,7 +17,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
     let(:update_trigger_definition) do
       StrataTables::ConnectionAdapters::UpdateStrataTriggerDefinition.new(
         :books,
-        :books__history,
+        :books_history,
         [:id, :title, :pages, :published_at]
       )
     end
@@ -25,7 +25,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
     let(:delete_trigger_definition) do
       StrataTables::ConnectionAdapters::DeleteStrataTriggerDefinition.new(
         :books,
-        :books__history
+        :books_history
       )
     end
 
@@ -38,7 +38,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION strata_cb_3c9e7bcd97() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO "books__history" (id, title, pages, published_at, validity)
+              INSERT INTO "books_history" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
@@ -64,13 +64,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
                 RETURN NULL;
               END IF;
 
-              UPDATE "books__history"
+              UPDATE "books_history"
               SET validity = tstzrange(lower(validity), now())
               WHERE
                 id = OLD.id AND
                 upper_inf(validity);
 
-              INSERT INTO "books__history" (id, title, pages, published_at, validity)
+              INSERT INTO "books_history" (id, title, pages, published_at, validity)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(now(), NULL));
 
               RETURN NULL;
@@ -92,7 +92,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
         expect(sql.squish).to eq(<<~SQL.squish)
           CREATE OR REPLACE FUNCTION strata_cb_1bf6acb0c3() RETURNS TRIGGER AS $$
             BEGIN
-              UPDATE "books__history"
+              UPDATE "books_history"
               SET validity = tstzrange(lower(validity), now())
               WHERE
                 id = OLD.id AND
@@ -112,7 +112,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
       let(:object) do
         StrataTables::ConnectionAdapters::StrataTriggerSetDefinition.new(
           :books,
-          :books__history,
+          :books_history,
           [:id, :title, :pages, :published_at]
         )
       end

@@ -24,8 +24,8 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
     conn.drop_table(:authors) if conn.table_exists?(:authors)
     conn.drop_table(:teddies) if conn.table_exists?(:teddies)
 
-    conn.drop_table(:books__history) if conn.table_exists?(:books__history)
-    conn.drop_table(:authors__history) if conn.table_exists?(:authors__history)
+    conn.drop_table(:books_history) if conn.table_exists?(:books_history)
+    conn.drop_table(:authors_history) if conn.table_exists?(:authors_history)
   end
 
   describe "#create_history_table" do
@@ -34,11 +34,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       conn.create_history_table(:books)
 
-      expect(conn).to have_table(:books__history)
+      expect(conn).to have_table(:books_history)
 
       expect(:books).to have_history_table
 
-      expect(:books__history)
+      expect(:books_history)
         .to have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
         .and have_column(:price, :decimal, precision: 10, scale: 2)
@@ -49,7 +49,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and have_column(:published_at, :date)
         .and have_column(:author_id, :integer)
 
-      expect(:books__history).to have_exclusion_constraint(
+      expect(:books_history).to have_exclusion_constraint(
         "id WITH =, validity WITH &&",
         {using: :gist}
       )
@@ -63,7 +63,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
         expect(:books).to have_history_table
 
-        expect(:books__history).to_not have_exclusion_constraint(
+        expect(:books_history).to_not have_exclusion_constraint(
           "id WITH =, validity WITH &&",
           {using: :gist}
         )
@@ -74,11 +74,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       it "omits columns from the history table" do
         conn.create_history_table(:books, except: [:title, :price, :summary])
 
-        expect(conn).to have_table(:books__history)
+        expect(conn).to have_table(:books_history)
 
         expect(:books).to have_history_table
 
-        expect(:books__history)
+        expect(:books_history)
           .to not_have_column(:title)
           .and(not_have_column(:price))
           .and(not_have_column(:summary))
@@ -152,7 +152,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       expect(conn).to have_table(:books)
 
-      expect(conn).not_to have_table(:books__history)
+      expect(conn).not_to have_table(:books_history)
 
       expect(:books)
         .to not_have_trigger(:on_insert_strata_trigger)

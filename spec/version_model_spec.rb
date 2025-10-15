@@ -26,7 +26,7 @@ RSpec.describe "version model" do
 
   after do
     conn.truncate(:authors)
-    conn.truncate(:authors__history)
+    conn.truncate(:authors_history)
   end
 
   it "::as_of is delegated to ::all" do
@@ -99,9 +99,9 @@ RSpec.describe "version model" do
 
       expect(Book::Version.as_of(t_2).joins(:author)).to be_empty
       expect(Book::Version.as_of(t_3).joins(:author)
-        .where(authors__history: {name: "Bob"})).to contain_exactly(book_v2)
+        .where(authors_history: {name: "Bob"})).to contain_exactly(book_v2)
 
-      rel = Author::Version.joins(:books).where("My Books__history" => {name: "Calliou"})
+      rel = Author::Version.joins(:books).where("My Books_history" => {name: "Calliou"})
 
       expect(rel.as_of(t_0)).to be_empty
       expect(rel.as_of(t_1)).to be_empty

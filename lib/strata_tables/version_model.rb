@@ -16,7 +16,7 @@ module StrataTables
       end
 
       def history_table?
-        table_name.end_with?("__history")
+        table_name.end_with?("_history")
       end
 
       def polymorphic_class_for(name)
@@ -39,78 +39,72 @@ module StrataTables
 
     module_function
 
-    def versionify(klass, base)
-      versionfiy_table_name(klass, base)
-      versionfiy_associations(klass, base)
-      versionify_primary_key(klass, base)
+    def versionify(version_model, base)
+      versionfiy_table_name(version_model, base)
+      versionfiy_associations(version_model, base)
+      versionify_primary_key(version_model, base)
 
       base.define_singleton_method(:version) do
-        klass
+        version_model
       end
     end
 
-    def versionfiy_table_name(klass, base)
+    def versionfiy_table_name(version_model, base)
       if version_table_exists?(base)
-        klass.table_name = "#{base.table_name}__history"
+        version_model.table_name = "#{base.table_name}_history"
       end
     end
 
-    def versionify_primary_key(klass, base)
+    def versionify_primary_key(version_model, base)
       if version_table_exists?(base)
-        klass.primary_key = :version_id
+        version_model.primary_key = :version_id
       end
     end
 
-    def versionfiy_associations(klass, base)
+    def versionfiy_associations(version_model, base)
       base.reflect_on_all_associations.each do |reflection|
         if reflection.polymorphic?
-          options = {
-            primary_key: reflection.options[:primary_key] || :id
-          }
+          version_model.send(
+            reflection.macro,
+            reflection.name,
+            ->(owner = nil) { as_of(owner.as_of_value) },
+            **reflection.options.merge(
+              primary_key: reflection.options[:primary_key] || :id
+            )
+          )
+        else
+          target_model_version = reflection.klass.version
 
-          klass.send(
+          version_model.send(
             reflection.macro,
             reflection.name,
             ->(owner = nil) do
-              as_of(owner.as_of_value)
+              scope = reflection.scope ? instance_exec(owner, &reflection.scope) : all
+
+              if !target_model_version.history_table?
+                return scope.as_of(owner&.as_of_value)
+              end
+
+              if owner
+                scope.as_of(owner.as_of_value)
+              else
+                node = ArelNodes::Extant.new(target_model_version.arel_table[:validity])
+
+                scope.where(node)
+              end
             end,
-            **reflection.options.merge(options)
+            **reflection.options.merge(
+              primary_key: reflection.klass.primary_key,
+              foreign_key: reflection.foreign_key,
+              class_name: reflection.klass.version.name
+            )
           )
-
-          next
         end
-
-        options = {
-          primary_key: reflection.klass.primary_key,
-          foreign_key: reflection.foreign_key,
-          class_name: reflection.klass.version.name
-        }
-
-        klass.send(
-          reflection.macro,
-          reflection.name,
-          ->(owner = nil) do
-            scope = reflection.scope ? instance_exec(owner, &reflection.scope) : all
-
-            if !reflection.klass.version.history_table?
-              return scope.as_of(owner&.as_of_value)
-            end
-
-            if owner
-              scope.as_of(owner.as_of_value)
-            else
-              node = ArelNodes::Extant.new(reflection.klass.version.arel_table[:validity])
-
-              scope.where(node)
-            end
-          end,
-          **reflection.options.merge(options)
-        )
       end
     end
 
     def version_table_exists?(base)
-      base.connection.table_exists?("#{base.table_name}__history")
+      base.connection.table_exists?("#{base.table_name}_history")
     end
   end
 end

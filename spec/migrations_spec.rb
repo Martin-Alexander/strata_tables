@@ -20,7 +20,7 @@ RSpec.describe "migrations for history triggers" do
 
   after do
     conn.drop_table(:books) if conn.table_exists?(:books)
-    conn.drop_table(:books__history) if conn.table_exists?(:books__history)
+    conn.drop_table(:books_history) if conn.table_exists?(:books_history)
   end
 
   let(:migration) do
@@ -40,7 +40,7 @@ RSpec.describe "migrations for history triggers" do
       it "creates history table" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:books__history)
+        expect(conn).to have_table(:books_history)
 
         expect(:books).to have_history_table
       end
@@ -52,7 +52,7 @@ RSpec.describe "migrations for history triggers" do
       it "drops history table" do
         migration.migrate(:down)
 
-        expect(conn).not_to have_table(:books__history)
+        expect(conn).not_to have_table(:books_history)
 
         expect(conn)
           .to not_have_function(:strata_books_insert)
@@ -71,11 +71,11 @@ RSpec.describe "migrations for history triggers" do
       it "creates history table" do
         migration.migrate(:up)
 
-        expect(conn).to have_table(:books__history)
+        expect(conn).to have_table(:books_history)
 
         expect(:books).to have_history_table
 
-        expect(:books__history).to(have_column(:title)
+        expect(:books_history).to(have_column(:title)
           .and(not_have_column(:author_name)))
       end
     end
@@ -86,7 +86,7 @@ RSpec.describe "migrations for history triggers" do
       it "drops history table" do
         migration.migrate(:down)
 
-        expect(conn).not_to have_table(:books__history)
+        expect(conn).not_to have_table(:books_history)
       end
     end
   end
@@ -102,7 +102,7 @@ RSpec.describe "migrations for history triggers" do
       it "drops history table" do
         migration.migrate(:up)
 
-        expect(conn).not_to have_table(:books__history)
+        expect(conn).not_to have_table(:books_history)
       end
     end
 
@@ -110,7 +110,7 @@ RSpec.describe "migrations for history triggers" do
       it "creates history table" do
         migration.migrate(:down)
 
-        expect(conn).to have_table(:books__history)
+        expect(conn).to have_table(:books_history)
 
         expect(:books).to have_history_table
       end

@@ -7,9 +7,8 @@ RSpec.describe "update triggers" do
       t.integer :pages
     end
     conn.create_history_table(:books)
-    stub_const("Book", Class.new(ActiveRecord::Base))
-    stub_const("Book::Version", Class.new(Book) do
-      include StrataTables::VersionModel
+    stub_const("Book", Class.new(ActiveRecord::Base) do
+      include StrataTables::Model
     end)
   end
 
@@ -27,10 +26,10 @@ RSpec.describe "update triggers" do
       Book.first.update!(title: "The Greatest Gatsby")
     end
 
-    expect(Book::Version.count).to eq(2)
-    expect(Book::Version.find_by(title: "The Great Gatsby"))
+    expect(Book.version.count).to eq(2)
+    expect(Book.version.find_by(title: "The Great Gatsby"))
       .to have_attributes(pages: 180, sys_period: insert_time...update_time)
-    expect(Book::Version.find_by(title: "The Greatest Gatsby"))
+    expect(Book.version.find_by(title: "The Greatest Gatsby"))
       .to have_attributes(pages: 180, sys_period: update_time...)
   end
 
@@ -42,8 +41,8 @@ RSpec.describe "update triggers" do
 
       Book.first.update!(title: "The Great Gatsby")
 
-      expect(Book::Version.count).to eq(1)
-      expect(Book::Version.first).to have_attributes(
+      expect(Book.version.count).to eq(1)
+      expect(Book.version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
         sys_period: insert_time...
@@ -62,20 +61,20 @@ RSpec.describe "update triggers" do
         Book.first.update!(title: "The Absolutely Greatest Gatsby")
       end
 
-      expect(Book::Version.count).to eq(3)
-      expect(Book::Version.find_by(title: "The Great Gatsby"))
+      expect(Book.version.count).to eq(3)
+      expect(Book.version.find_by(title: "The Great Gatsby"))
         .to have_attributes(
           title: "The Great Gatsby",
           pages: 180,
           sys_period: insert_time...update_time
         )
-      expect(Book::Version.find_by(title: "The Greatest Gatsby"))
+      expect(Book.version.find_by(title: "The Greatest Gatsby"))
         .to have_attributes(
           title: "The Greatest Gatsby",
           pages: 180,
           sys_period: nil
         )
-      expect(Book::Version.find_by(title: "The Absolutely Greatest Gatsby"))
+      expect(Book.version.find_by(title: "The Absolutely Greatest Gatsby"))
         .to have_attributes(
           title: "The Absolutely Greatest Gatsby",
           pages: 180,

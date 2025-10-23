@@ -2,18 +2,18 @@ require "spec_helper"
 
 RSpec.describe "associations" do
   shared_context "scenario" do
-    let(:author_v1) { Author::Version.first }
-    let(:author_v2) { Author::Version.second }
-    let(:author_v) { Author::Version.sole }
+    let(:author_v1) { Author.version.first }
+    let(:author_v2) { Author.version.second }
+    let(:author_v) { Author.version.sole }
 
-    let(:book_v1) { Book::Version.first }
-    let(:book_v2) { Book::Version.second }
-    let(:book_v3) { Book::Version.third }
-    let(:book_v) { Book::Version.sole }
+    let(:book_v1) { Book.version.first }
+    let(:book_v2) { Book.version.second }
+    let(:book_v3) { Book.version.third }
+    let(:book_v) { Book.version.sole }
 
-    let(:library_v1) { Library::Version.first }
-    let(:library_v2) { Library::Version.second }
-    let(:library_v) { Library::Version.sole }
+    let(:library_v1) { Library.version.first }
+    let(:library_v2) { Library.version.second }
+    let(:library_v) { Library.version.sole }
 
     before do
       # t0
@@ -102,6 +102,12 @@ RSpec.describe "associations" do
         belongs_to :library
       end)
     end
+
+    after do
+      hide_const("LibraryVersion")
+      hide_const("AuthoryVersion")
+      hide_const("BookVersion")
+    end
   end
 
   describe "has_many :books" do
@@ -144,7 +150,7 @@ RSpec.describe "associations" do
     describe "existing scopes" do
       it "both are applied" do
         Author.has_many :calliou_books, -> { where("name ILIKE '%Calliou%'") }, class_name: "Book"
-        Author::Version.reversionify
+        Author.version.reversionify
 
         Book.create(author: Author.sole, name: "I Love Dogs")
 
@@ -162,13 +168,13 @@ RSpec.describe "associations" do
     describe "existing instance-dependent scopes" do
       it "both are applied" do
         Author.has_many :self_titled_books, ->(o) { where(name: o.name) }, class_name: "Book"
-        Author::Version.reversionify
+        Author.version.reversionify
 
         new_book_1 = Book.create(author: Author.sole, name: "Bob")
         new_book_2 = Book.create(author: Author.sole, name: "Bob 2")
 
-        new_book_1_v1 = Book::Version.where(id: new_book_1).sole
-        new_book_2_v1 = Book::Version.where(id: new_book_2).sole
+        new_book_1_v1 = Book.version.where(id: new_book_1).sole
+        new_book_2_v1 = Book.version.where(id: new_book_2).sole
 
         expect(author_v1.self_titled_books).to contain_exactly(new_book_1_v1)
         expect(author_v2.self_titled_books).to contain_exactly(new_book_2_v1)
@@ -215,13 +221,13 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:authors) { Author::Version.preload(:books) }
+      let(:authors) { Author.version.preload(:books) }
 
       include_examples "eager loading books"
     end
 
     describe "::eager_load" do
-      let(:authors) { Author::Version.eager_load(:books) }
+      let(:authors) { Author.version.eager_load(:books) }
 
       include_examples "eager loading books"
     end
@@ -289,13 +295,13 @@ RSpec.describe "associations" do
       end
 
       describe "::preload" do
-        let(:authors) { Author::Version.preload(:books) }
+        let(:authors) { Author.version.preload(:books) }
 
         include_examples "eager loading books"
       end
 
       describe "::eager_load" do
-        let(:authors) { Author::Version.eager_load(:books) }
+        let(:authors) { Author.version.eager_load(:books) }
 
         include_examples "eager loading books"
       end
@@ -388,13 +394,13 @@ RSpec.describe "associations" do
       end
 
       describe "::preload" do
-        let(:authors) { Author::Version.preload(:books) }
+        let(:authors) { Author.version.preload(:books) }
 
         include_examples "eager loading books"
       end
 
       describe "::eager_load" do
-        let(:authors) { Author::Version.eager_load(:books) }
+        let(:authors) { Author.version.eager_load(:books) }
 
         include_examples "eager loading books"
       end
@@ -477,13 +483,13 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:authors) { Author::Version.preload(:libraries) }
+      let(:authors) { Author.version.preload(:libraries) }
 
       include_examples "eager loading libraries"
     end
 
     describe "::eager_load" do
-      let(:authors) { Author::Version.eager_load(:libraries) }
+      let(:authors) { Author.version.eager_load(:libraries) }
 
       include_examples "eager loading libraries"
     end
@@ -577,13 +583,13 @@ RSpec.describe "associations" do
       end
 
       describe "::preload" do
-        let(:authors) { Author::Version.preload(:libraries) }
+        let(:authors) { Author.version.preload(:libraries) }
 
         include_examples "eager loading libraries"
       end
 
       describe "::eager_load" do
-        let(:authors) { Author::Version.eager_load(:libraries) }
+        let(:authors) { Author.version.eager_load(:libraries) }
 
         include_examples "eager loading libraries"
       end
@@ -643,10 +649,12 @@ RSpec.describe "associations" do
       t_9
     end
 
-    let(:employee_v1) { Employee::Version.first }
-    let(:employee_v2) { Employee::Version.second }
+    let(:employee_v1) { Employee.version.first }
+    let(:employee_v2) { Employee.version.second }
 
     after do
+      hide_const("Employee")
+
       conn.truncate(:employees)
 
       conn.truncate(:employees_history) if conn.table_exists?(:employees_history)
@@ -710,13 +718,13 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:authors) { Author::Version.preload(:employees) }
+      let(:authors) { Author.version.preload(:employees) }
 
       include_examples "eager loading employees"
     end
 
     describe "::eager_load" do
-      let(:authors) { Author::Version.eager_load(:employees) }
+      let(:authors) { Author.version.eager_load(:employees) }
 
       include_examples "eager loading employees"
     end
@@ -784,13 +792,13 @@ RSpec.describe "associations" do
       end
 
       describe "::preload" do
-        let(:authors) { Author::Version.preload(:employees) }
+        let(:authors) { Author.version.preload(:employees) }
 
         include_examples "eager loading employees"
       end
 
       describe "::eager_load" do
-        let(:authors) { Author::Version.eager_load(:employees) }
+        let(:authors) { Author.version.eager_load(:employees) }
 
         include_examples "eager loading employees"
       end
@@ -867,13 +875,13 @@ RSpec.describe "associations" do
       end
 
       describe "::preload" do
-        let(:authors) { Author::Version.preload(:employees) }
+        let(:authors) { Author.version.preload(:employees) }
 
         include_examples "eager loading employees"
       end
 
       describe "::eager_load" do
-        let(:authors) { Author::Version.eager_load(:employees) }
+        let(:authors) { Author.version.eager_load(:employees) }
 
         include_examples "eager loading employees"
       end
@@ -959,13 +967,13 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:books) { Book::Version.preload(:author) }
+      let(:books) { Book.version.preload(:author) }
 
       include_examples "eager loading author"
     end
 
     describe "::eager_load" do
-      let(:books) { Book::Version.eager_load(:author) }
+      let(:books) { Book.version.eager_load(:author) }
 
       include_examples "eager loading author"
     end
@@ -1004,8 +1012,8 @@ RSpec.describe "associations" do
       Author.has_many :pictures, as: :imageable
       Book.has_many :pictures, as: :imageable
 
-      Author::Version.reversionify
-      Book::Version.reversionify
+      Author.version.reversionify
+      Book.version.reversionify
 
       t_7
       picture = Picture.create!(name: "Author Pic", imageable: Author.sole)
@@ -1015,13 +1023,15 @@ RSpec.describe "associations" do
     end
 
     after do
+      hide_const("PictureVersion")
+
       conn.truncate(:pictures)
 
       conn.truncate(:pictures_history) if conn.table_exists?(:pictures_history)
     end
 
-    let(:picture_v1) { Picture::Version.first }
-    let(:picture_v2) { Picture::Version.second }
+    let(:picture_v1) { Picture.version.first }
+    let(:picture_v2) { Picture.version.second }
   end
 
   describe "has_many :pictures, as: :imageable" do
@@ -1107,13 +1117,13 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:authors) { Author::Version.preload(:pictures) }
+      let(:authors) { Author.version.preload(:pictures) }
 
       include_examples "eager loading books"
     end
 
     describe "::eager_load" do
-      let(:authors) { Author::Version.eager_load(:pictures) }
+      let(:authors) { Author.version.eager_load(:pictures) }
 
       include_examples "eager loading books"
     end
@@ -1148,7 +1158,7 @@ RSpec.describe "associations" do
     end
 
     describe "::preload" do
-      let(:pictures) { Picture::Version.preload(:imageable) }
+      let(:pictures) { Picture.version.preload(:imageable) }
 
       context "without as-of" do
         it "scopes by extant" do
@@ -1185,7 +1195,7 @@ RSpec.describe "associations" do
     end
 
     describe "::eager_load" do
-      let(:picture) { Picture::Version.eager_load(:imageable) }
+      let(:picture) { Picture.version.eager_load(:imageable) }
 
       it "raise ActiveRecord::EagerLoadPolymorphicError" do
         expect { picture.load }.to raise_error(ActiveRecord::EagerLoadPolymorphicError)
@@ -1216,7 +1226,7 @@ RSpec.describe "associations" do
         belongs_to :coauthor, class_name: "Author"
       end)
 
-      Author::Version.reversionify
+      Author.version.reversionify
 
       Author.create!(name: "Jane", coauthor: author_1)
       t_7
@@ -1225,8 +1235,8 @@ RSpec.describe "associations" do
     end
 
     let(:author_1) { Author.first }
-    let(:author_2_v1) { Author::Version.find_by(name: "Jane") }
-    let(:author_1_v3) { Author::Version.find_by(name: "Bob 3") }
+    let(:author_2_v1) { Author.version.find_by(name: "Jane") }
+    let(:author_1_v3) { Author.version.find_by(name: "Bob 3") }
 
     after do
       conn.truncate(:authors)

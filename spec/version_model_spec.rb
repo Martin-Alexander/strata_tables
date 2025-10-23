@@ -40,17 +40,22 @@ RSpec.describe "version model" do
 
     expect(Author.as_of(t_0)).to be_empty
     expect(Author.as_of(t_1)).to contain_exactly(
-      Author::Version.find_by!(name: "Bob")
+      Author.version.find_by!(name: "Bob")
     )
     expect(Author.as_of(t_2)).to contain_exactly(
-      Author::Version.find_by!(name: "Bob"),
-      Author::Version.find_by!(name: "Bill")
+      Author.version.find_by!(name: "Bob"),
+      Author.version.find_by!(name: "Bill")
     )
     expect(Author.as_of(t_3)).to contain_exactly(
-      Author::Version.find_by!(name: "Bill"),
-      Author::Version.find_by!(name: "Bob 2")
+      Author.version.find_by!(name: "Bill"),
+      Author.version.find_by!(name: "Bob 2")
     )
   end
+
+  # it "::version_of returns the source class" do
+  #   expect(Author.version.version_of).to eq(Author)
+  #   expect(Author.version.version_of.name).to eq("Author")
+  # end
 
   context "when the table name has spaces" do
     before do
@@ -71,7 +76,7 @@ RSpec.describe "version model" do
         has_many :books
       end)
 
-      Author::Version.reversionify
+      Author.version.reversionify
     end
 
     after do
@@ -88,20 +93,20 @@ RSpec.describe "version model" do
       book.update(author: author)
       t_3
 
-      book_v1 = Book::Version.find_by(author_id: nil)
-      book_v2 = Book::Version.where.not(author_id: nil).sole
-      author_v1 = Author::Version.sole
+      book_v1 = Book.version.find_by(author_id: nil)
+      book_v2 = Book.version.where.not(author_id: nil).sole
+      author_v1 = Author.version.sole
 
-      expect(Book::Version.as_of(t_0)).to be_empty
-      expect(Book::Version.as_of(t_1)).to be_empty
-      expect(Book::Version.as_of(t_2)).to contain_exactly(book_v1)
-      expect(Book::Version.as_of(t_3)).to contain_exactly(book_v2)
+      expect(Book.version.as_of(t_0)).to be_empty
+      expect(Book.version.as_of(t_1)).to be_empty
+      expect(Book.version.as_of(t_2)).to contain_exactly(book_v1)
+      expect(Book.version.as_of(t_3)).to contain_exactly(book_v2)
 
-      expect(Book::Version.as_of(t_2).joins(:author)).to be_empty
-      expect(Book::Version.as_of(t_3).joins(:author)
+      expect(Book.version.as_of(t_2).joins(:author)).to be_empty
+      expect(Book.version.as_of(t_3).joins(:author)
         .where(authors_history: {name: "Bob"})).to contain_exactly(book_v2)
 
-      rel = Author::Version.joins(:books).where("My Books_history" => {name: "Calliou"})
+      rel = Author.version.joins(:books).where("My Books_history" => {name: "Calliou"})
 
       expect(rel.as_of(t_0)).to be_empty
       expect(rel.as_of(t_1)).to be_empty

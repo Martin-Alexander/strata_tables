@@ -6,23 +6,21 @@ module StrataTables
       delegate :as_of, to: :version
 
       def version
-        "#{name}::Version".constantize
+        if const_defined?("Version", false)
+          const_get("Version")
+        else
+          klass = Class.new(self)
+
+          const_set(:Version, klass)
+
+          klass.include(StrataTables::VersionModel)
+
+          klass
+        end
       end
 
       def versions
         version.all
-      end
-
-      def const_missing(name)
-        if name.to_s == "Version"
-          klass = Class.new(self)
-
-          const_set(name, klass)
-
-          klass.include(StrataTables::VersionModel)
-        else
-          super
-        end
       end
     end
 

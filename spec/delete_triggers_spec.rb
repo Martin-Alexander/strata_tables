@@ -10,9 +10,8 @@ RSpec.describe "delete triggers" do
 
     randomize_sequences!(:id, :version_id)
 
-    stub_const("Book", Class.new(ActiveRecord::Base))
-    stub_const("Book::Version", Class.new(Book) do
-      include StrataTables::VersionModel
+    stub_const("Book", Class.new(ActiveRecord::Base) do
+      include StrataTables::Model
     end)
   end
 
@@ -30,8 +29,8 @@ RSpec.describe "delete triggers" do
       Book.first.destroy!
     end
 
-    expect(Book::Version.count).to eq(1)
-    expect(Book::Version.first).to have_attributes(
+    expect(Book.version.count).to eq(1)
+    expect(Book.version.first).to have_attributes(
       title: "The Great Gatsby",
       pages: 180,
       sys_period: insert_time...delete_time
@@ -45,8 +44,8 @@ RSpec.describe "delete triggers" do
         Book.first.destroy!
       end
 
-      expect(Book::Version.count).to eq(1)
-      expect(Book::Version.first).to have_attributes(
+      expect(Book.version.count).to eq(1)
+      expect(Book.version.first).to have_attributes(
         title: "The Great Gatsby",
         pages: 180,
         sys_period: nil

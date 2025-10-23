@@ -70,9 +70,9 @@ RSpec.describe "model" do
   let(:author_bob) { Author.find_by!(name: "Bob 2") }
   let(:author_bill) { Author.find_by!(name: "Bill") }
 
-  let(:author_bob_v1) { Author::Version.find_by!(name: "Bob") }
-  let(:author_bill_v1) { Author::Version.find_by!(name: "Bill") }
-  let(:author_bob_v2) { Author::Version.find_by!(name: "Bob 2") }
+  let(:author_bob_v1) { Author.version.find_by!(name: "Bob") }
+  let(:author_bill_v1) { Author.version.find_by!(name: "Bill") }
+  let(:author_bob_v2) { Author.version.find_by!(name: "Bob 2") }
 
   it "::version returns the model's version class" do
     expect(Author.table_name).to eq("authors")

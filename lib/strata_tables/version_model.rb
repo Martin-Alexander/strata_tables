@@ -23,8 +23,20 @@ module StrataTables
         super.version
       end
 
-      def sti_class_for(name)
-        super.version
+      # def sti_class_for(name)
+      #   super.version
+      # end
+
+      def sti_name
+        superclass.sti_name
+      end
+
+      def find_sti_class(type_name)
+        superclass.send(:find_sti_class, type_name).version
+      end
+
+      def finder_needs_type_condition?
+        superclass.finder_needs_type_condition?
       end
     end
 
@@ -43,10 +55,6 @@ module StrataTables
       versionfiy_table_name(version_model, base)
       versionfiy_associations(version_model, base)
       versionify_primary_key(version_model, base)
-
-      base.define_singleton_method(:version) do
-        version_model
-      end
     end
 
     def versionfiy_table_name(version_model, base)

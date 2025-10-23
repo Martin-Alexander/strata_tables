@@ -1,5 +1,6 @@
 require "active_record"
 require "debug"
+require "niceql"
 
 require "strata_tables"
 
@@ -70,5 +71,9 @@ RSpec.configure do |config|
     SQL
 
     rows.map { |row| PlPgsqlFunction.new(*row.values) }
+  end
+
+  def p_sql(string)
+    puts(Niceql::Prettifier.prettify_sql(string))
   end
 end

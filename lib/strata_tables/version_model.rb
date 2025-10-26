@@ -3,9 +3,27 @@ module StrataTables
     extend ActiveSupport::Concern
 
     included do
-      attr_accessor :as_of_value
+      extend AsOfConstraints
+
+      attr_accessor :sys_period_as_of
 
       reversionify
+
+      scope :as_of, ->(time) do
+        existed_at(time).as_of_timestamp(sys_period: time)
+      end
+
+      scope :existed_at, ->(time) do
+        return unless history_table?
+
+        where(existed_at_constraint(time, :sys_period))
+      end
+
+      scope :extant, -> do
+        return unless history_table?
+
+        where(extant_constraint(:sys_period))
+      end
     end
 
     class_methods do
@@ -22,10 +40,6 @@ module StrataTables
       def polymorphic_class_for(name)
         super.version
       end
-
-      # def sti_class_for(name)
-      #   super.version
-      # end
 
       def sti_name
         superclass.sti_name
@@ -45,7 +59,7 @@ module StrataTables
     end
 
     def as_of!(time)
-      self.as_of_value = time
+      self.sys_period_as_of = time
       self
     end
 
@@ -75,13 +89,15 @@ module StrataTables
           version_model.send(
             reflection.macro,
             reflection.name,
-            ->(owner = nil) { as_of(owner.as_of_value) },
+            ->(owner = nil) do
+              owner.sys_period_as_of ? as_of(owner.sys_period_as_of) : extant
+            end,
             **reflection.options.merge(
               primary_key: reflection.options[:primary_key] || :id
             )
           )
         else
-          target_model_version = reflection.klass.version
+          reflection.klass.version
 
           version_model.send(
             reflection.macro,
@@ -89,17 +105,10 @@ module StrataTables
             ->(owner = nil) do
               scope = reflection.scope ? instance_exec(owner, &reflection.scope) : all
 
-              if !target_model_version.history_table?
-                return scope.as_of(owner&.as_of_value)
-              end
+              as_of_time = owner&.sys_period_as_of
+              as_of_time ||= AsOfRegistry.timestamps[:sys_period]
 
-              if owner
-                scope.as_of(owner.as_of_value)
-              else
-                node = ArelNodes::Extant.new(target_model_version.arel_table[:sys_period])
-
-                scope.where(node)
-              end
+              as_of_time ? scope.as_of(as_of_time) : scope.extant
             end,
             **reflection.options.merge(
               primary_key: reflection.klass.primary_key,

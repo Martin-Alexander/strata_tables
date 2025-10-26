@@ -121,8 +121,8 @@ RSpec.describe "associations" do
       end
 
       it "does not tags books with as-of" do
-        expect(author_v1.books).to all(have_attrs(as_of_value: be_nil))
-        expect(author_v2.books).to all(have_attrs(as_of_value: be_nil))
+        expect(author_v1.books).to all(have_attrs(sys_period_as_of: be_nil))
+        expect(author_v2.books).to all(have_attrs(sys_period_as_of: be_nil))
       end
     end
 
@@ -138,12 +138,12 @@ RSpec.describe "associations" do
       end
 
       it "sets as-of value on books" do
-        expect(author_v1.as_of(t_2).books).to all(have_attrs(as_of_value: t_2))
-        expect(author_v1.as_of(t_3).books).to all(have_attrs(as_of_value: t_3))
-        expect(author_v1.as_of(t_4).books).to all(have_attrs(as_of_value: t_4))
-        expect(author_v2.as_of(t_5).books).to all(have_attrs(as_of_value: t_5))
-        expect(author_v2.as_of(t_6).books).to all(have_attrs(as_of_value: t_6))
-        expect(author_v2.as_of(t_7).books).to all(have_attrs(as_of_value: t_7))
+        expect(author_v1.as_of(t_2).books).to all(have_attrs(sys_period_as_of: t_2))
+        expect(author_v1.as_of(t_3).books).to all(have_attrs(sys_period_as_of: t_3))
+        expect(author_v1.as_of(t_4).books).to all(have_attrs(sys_period_as_of: t_4))
+        expect(author_v2.as_of(t_5).books).to all(have_attrs(sys_period_as_of: t_5))
+        expect(author_v2.as_of(t_6).books).to all(have_attrs(sys_period_as_of: t_6))
+        expect(author_v2.as_of(t_7).books).to all(have_attrs(sys_period_as_of: t_7))
       end
     end
 
@@ -211,11 +211,11 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(authors.as_of(t_1))
-            .to all(have_attrs(books: all(have_attrs(as_of_value: t_1))))
+            .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_1))))
           expect(authors.as_of(t_2))
-            .to all(have_attrs(books: all(have_attrs(as_of_value: t_2))))
+            .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_2))))
           expect(authors.as_of(t_6))
-            .to all(have_attrs(books: all(have_attrs(as_of_value: t_6))))
+            .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_6))))
         end
       end
     end
@@ -249,10 +249,10 @@ RSpec.describe "associations" do
           time = t(n)
 
           expect(author_v1.as_of(time).books).to contain_exactly(book_v)
-          expect(author_v1.as_of(time).books).to all(have_attrs(as_of_value: time))
+          expect(author_v1.as_of(time).books).to all(have_attrs(sys_period_as_of: time))
 
           expect(author_v2.as_of(time).books).to contain_exactly(book_v)
-          expect(author_v2.as_of(time).books).to all(have_attrs(as_of_value: time))
+          expect(author_v2.as_of(time).books).to all(have_attrs(sys_period_as_of: time))
         end
       end
 
@@ -285,11 +285,11 @@ RSpec.describe "associations" do
 
           it "sets as-of value" do
             expect(authors.as_of(t_1))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_1))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_1))))
             expect(authors.as_of(t_2))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_2))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_2))))
             expect(authors.as_of(t_6))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_6))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_6))))
           end
         end
       end
@@ -322,7 +322,7 @@ RSpec.describe "associations" do
         end
 
         it "does not tags books with as-of" do
-          expect(author_v.books).to all(have_attrs(as_of_value: be_nil))
+          expect(author_v.books).to all(have_attrs(sys_period_as_of: be_nil))
         end
       end
 
@@ -338,12 +338,12 @@ RSpec.describe "associations" do
         end
 
         it "sets as-of value on books" do
-          expect(author_v.as_of(t_2).books).to all(have_attrs(as_of_value: t_2))
-          expect(author_v.as_of(t_3).books).to all(have_attrs(as_of_value: t_3))
-          expect(author_v.as_of(t_4).books).to all(have_attrs(as_of_value: t_4))
-          expect(author_v.as_of(t_5).books).to all(have_attrs(as_of_value: t_5))
-          expect(author_v.as_of(t_6).books).to all(have_attrs(as_of_value: t_6))
-          expect(author_v.as_of(t_7).books).to all(have_attrs(as_of_value: t_7))
+          expect(author_v.as_of(t_2).books).to all(have_attrs(sys_period_as_of: t_2))
+          expect(author_v.as_of(t_3).books).to all(have_attrs(sys_period_as_of: t_3))
+          expect(author_v.as_of(t_4).books).to all(have_attrs(sys_period_as_of: t_4))
+          expect(author_v.as_of(t_5).books).to all(have_attrs(sys_period_as_of: t_5))
+          expect(author_v.as_of(t_6).books).to all(have_attrs(sys_period_as_of: t_6))
+          expect(author_v.as_of(t_7).books).to all(have_attrs(sys_period_as_of: t_7))
         end
       end
 
@@ -384,11 +384,11 @@ RSpec.describe "associations" do
 
           it "sets as-of value" do
             expect(authors.as_of(t_2))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_2))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_2))))
             expect(authors.as_of(t_4))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_4))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_4))))
             expect(authors.as_of(t_6))
-              .to all(have_attrs(books: all(have_attrs(as_of_value: t_6))))
+              .to all(have_attrs(books: all(have_attrs(sys_period_as_of: t_6))))
           end
         end
       end
@@ -418,8 +418,8 @@ RSpec.describe "associations" do
       end
 
       it "does not tags libraries with as-of" do
-        expect(author_v1.libraries).to all(have_attrs(as_of_value: be_nil))
-        expect(author_v2.libraries).to all(have_attrs(as_of_value: be_nil))
+        expect(author_v1.libraries).to all(have_attrs(sys_period_as_of: be_nil))
+        expect(author_v2.libraries).to all(have_attrs(sys_period_as_of: be_nil))
       end
     end
 
@@ -435,10 +435,10 @@ RSpec.describe "associations" do
       end
 
       it "sets as-of value on libraries" do
-        expect(author_v1.as_of(t_4).libraries).to all(have_attrs(as_of_value: t_4))
-        expect(author_v2.as_of(t_5).libraries).to all(have_attrs(as_of_value: t_5))
-        expect(author_v2.as_of(t_6).libraries).to all(have_attrs(as_of_value: t_6))
-        expect(author_v2.as_of(t_7).libraries).to all(have_attrs(as_of_value: t_7))
+        expect(author_v1.as_of(t_4).libraries).to all(have_attrs(sys_period_as_of: t_4))
+        expect(author_v2.as_of(t_5).libraries).to all(have_attrs(sys_period_as_of: t_5))
+        expect(author_v2.as_of(t_6).libraries).to all(have_attrs(sys_period_as_of: t_6))
+        expect(author_v2.as_of(t_7).libraries).to all(have_attrs(sys_period_as_of: t_7))
       end
     end
 
@@ -471,13 +471,13 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(authors.as_of(t_1))
-            .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_1))))
+            .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_1))))
           expect(authors.as_of(t_3))
-            .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_3))))
+            .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_3))))
           expect(authors.as_of(t_4))
-            .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_4))))
+            .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_4))))
           expect(authors.as_of(t_7))
-            .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_7))))
+            .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_7))))
         end
       end
     end
@@ -510,8 +510,8 @@ RSpec.describe "associations" do
         end
 
         it "does not tags libraries with as-of" do
-          expect(author_v1.libraries).to all(have_attrs(as_of_value: be_nil))
-          expect(author_v2.libraries).to all(have_attrs(as_of_value: be_nil))
+          expect(author_v1.libraries).to all(have_attrs(sys_period_as_of: be_nil))
+          expect(author_v2.libraries).to all(have_attrs(sys_period_as_of: be_nil))
         end
       end
 
@@ -536,11 +536,11 @@ RSpec.describe "associations" do
         end
 
         it "sets as-of value on libraries" do
-          expect(author_v1.as_of(t_3).libraries).to all(have_attrs(as_of_value: t_3))
-          expect(author_v1.as_of(t_4).libraries).to all(have_attrs(as_of_value: t_4))
-          expect(author_v2.as_of(t_5).libraries).to all(have_attrs(as_of_value: t_5))
-          expect(author_v2.as_of(t_6).libraries).to all(have_attrs(as_of_value: t_6))
-          expect(author_v2.as_of(t_7).libraries).to all(have_attrs(as_of_value: t_7))
+          expect(author_v1.as_of(t_3).libraries).to all(have_attrs(sys_period_as_of: t_3))
+          expect(author_v1.as_of(t_4).libraries).to all(have_attrs(sys_period_as_of: t_4))
+          expect(author_v2.as_of(t_5).libraries).to all(have_attrs(sys_period_as_of: t_5))
+          expect(author_v2.as_of(t_6).libraries).to all(have_attrs(sys_period_as_of: t_6))
+          expect(author_v2.as_of(t_7).libraries).to all(have_attrs(sys_period_as_of: t_7))
         end
       end
 
@@ -573,11 +573,11 @@ RSpec.describe "associations" do
 
           it "sets as-of value" do
             expect(authors.as_of(t_1))
-              .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_1))))
+              .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_1))))
             expect(authors.as_of(t_3))
-              .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_3))))
+              .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_3))))
             expect(authors.as_of(t_4))
-              .to all(have_attrs(libraries: all(have_attrs(as_of_value: t_4))))
+              .to all(have_attrs(libraries: all(have_attrs(sys_period_as_of: t_4))))
           end
         end
       end
@@ -667,8 +667,8 @@ RSpec.describe "associations" do
       end
 
       it "does not tags libraries with as-of" do
-        expect(author_v1.libraries).to all(have_attrs(as_of_value: be_nil))
-        expect(author_v2.libraries).to all(have_attrs(as_of_value: be_nil))
+        expect(author_v1.libraries).to all(have_attrs(sys_period_as_of: be_nil))
+        expect(author_v2.libraries).to all(have_attrs(sys_period_as_of: be_nil))
       end
     end
 
@@ -704,15 +704,15 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(authors.as_of(t_4))
-            .to all(have_attrs(employees: all(have_attrs(as_of_value: t_4))))
+            .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_4))))
           expect(authors.as_of(t_5))
-            .to all(have_attrs(employees: all(have_attrs(as_of_value: t_5))))
+            .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_5))))
           expect(authors.as_of(t_7))
-            .to all(have_attrs(employees: all(have_attrs(as_of_value: t_7))))
+            .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_7))))
           expect(authors.as_of(t_8))
-            .to all(have_attrs(employees: all(have_attrs(as_of_value: t_8))))
+            .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_8))))
           expect(authors.as_of(t_9))
-            .to all(have_attrs(employees: all(have_attrs(as_of_value: t_9))))
+            .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_9))))
         end
       end
     end
@@ -782,11 +782,11 @@ RSpec.describe "associations" do
 
           it "sets as-of value" do
             expect(authors.as_of(t_4))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_4))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_4))))
             expect(authors.as_of(t_8))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_8))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_8))))
             expect(authors.as_of(t_9))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_9))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_9))))
           end
         end
       end
@@ -863,13 +863,13 @@ RSpec.describe "associations" do
 
           it "sets as-of value" do
             expect(authors.as_of(t_1))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_1))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_1))))
             expect(authors.as_of(t_3))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_3))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_3))))
             expect(authors.as_of(t_4))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_4))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_4))))
             expect(authors.as_of(t_8))
-              .to all(have_attrs(employees: all(have_attrs(as_of_value: t_8))))
+              .to all(have_attrs(employees: all(have_attrs(sys_period_as_of: t_8))))
           end
         end
       end
@@ -900,7 +900,7 @@ RSpec.describe "associations" do
       end
 
       it "does not tags books with as-of" do
-        expect(book_v1.author.as_of_value).to be_nil
+        expect(book_v1.author.sys_period_as_of).to be_nil
       end
     end
 
@@ -913,10 +913,10 @@ RSpec.describe "associations" do
       end
 
       it "sets as-of value on author" do
-        expect(book_v2.as_of(t_3).author.as_of_value).to eq(t_3)
-        expect(book_v2.as_of(t_4).author.as_of_value).to eq(t_4)
-        expect(book_v2.as_of(t_5).author.as_of_value).to eq(t_5)
-        expect(book_v3.as_of(t_6).author.as_of_value).to eq(t_6)
+        expect(book_v2.as_of(t_3).author.sys_period_as_of).to eq(t_3)
+        expect(book_v2.as_of(t_4).author.sys_period_as_of).to eq(t_4)
+        expect(book_v2.as_of(t_5).author.sys_period_as_of).to eq(t_5)
+        expect(book_v3.as_of(t_6).author.sys_period_as_of).to eq(t_6)
       end
     end
 
@@ -955,13 +955,13 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(books.as_of(t_3))
-            .to all(have_attrs(author: have_attrs(as_of_value: t_3)))
+            .to all(have_attrs(author: have_attrs(sys_period_as_of: t_3)))
           expect(books.as_of(t_4))
-            .to all(have_attrs(author: have_attrs(as_of_value: t_4)))
+            .to all(have_attrs(author: have_attrs(sys_period_as_of: t_4)))
           expect(books.as_of(t_5))
-            .to all(have_attrs(author: have_attrs(as_of_value: t_5)))
+            .to all(have_attrs(author: have_attrs(sys_period_as_of: t_5)))
           expect(books.as_of(t_6))
-            .to all(have_attrs(author: have_attrs(as_of_value: t_6)))
+            .to all(have_attrs(author: have_attrs(sys_period_as_of: t_6)))
         end
       end
     end
@@ -1047,7 +1047,7 @@ RSpec.describe "associations" do
       end
 
       it "does not tags pictures with as-of" do
-        expect(book_v1.pictures).to all(have_attrs(as_of_value: be_nil))
+        expect(book_v1.pictures).to all(have_attrs(sys_period_as_of: be_nil))
       end
     end
 
@@ -1062,8 +1062,8 @@ RSpec.describe "associations" do
       end
 
       it "sets as-of value on pictures" do
-        expect(author_v2.as_of(t_8).pictures).to all(have_attrs(as_of_value: t_8))
-        expect(book_v3.as_of(t_9).pictures).to all(have_attrs(as_of_value: t_9))
+        expect(author_v2.as_of(t_8).pictures).to all(have_attrs(sys_period_as_of: t_8))
+        expect(book_v3.as_of(t_9).pictures).to all(have_attrs(sys_period_as_of: t_9))
       end
     end
 
@@ -1107,11 +1107,11 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(authors.as_of(t_7))
-            .to all(have_attrs(pictures: all(have_attrs(as_of_value: t_7))))
+            .to all(have_attrs(pictures: all(have_attrs(sys_period_as_of: t_7))))
           expect(authors.as_of(t_8))
-            .to all(have_attrs(pictures: all(have_attrs(as_of_value: t_8))))
+            .to all(have_attrs(pictures: all(have_attrs(sys_period_as_of: t_8))))
           expect(authors.as_of(t_9))
-            .to all(have_attrs(pictures: all(have_attrs(as_of_value: t_9))))
+            .to all(have_attrs(pictures: all(have_attrs(sys_period_as_of: t_9))))
         end
       end
     end
@@ -1140,8 +1140,8 @@ RSpec.describe "associations" do
       end
 
       it "does not tags imageable with as-of" do
-        expect(picture_v1.imageable.as_of_value).to be_nil
-        expect(picture_v2.imageable.as_of_value).to be_nil
+        expect(picture_v1.imageable.sys_period_as_of).to be_nil
+        expect(picture_v2.imageable.sys_period_as_of).to be_nil
       end
     end
 
@@ -1152,8 +1152,8 @@ RSpec.describe "associations" do
       end
 
       it "sets as-of value on imageable" do
-        expect(picture_v1.as_of(t_8).imageable.as_of_value).to eq(t_8)
-        expect(picture_v2.as_of(t_9).imageable.as_of_value).to eq(t_9)
+        expect(picture_v1.as_of(t_8).imageable.sys_period_as_of).to eq(t_8)
+        expect(picture_v2.as_of(t_9).imageable.sys_period_as_of).to eq(t_9)
       end
     end
 
@@ -1185,11 +1185,11 @@ RSpec.describe "associations" do
 
         it "sets as-of value" do
           expect(pictures.as_of(t_7))
-            .to all(have_attrs(imageable: have_attrs(as_of_value: be_nil)))
+            .to all(have_attrs(imageable: have_attrs(sys_period_as_of: be_nil)))
           expect(pictures.as_of(t_8))
-            .to all(have_attrs(imageable: have_attrs(as_of_value: t_8).or(have_attrs(as_of_value: be_nil))))
+            .to all(have_attrs(imageable: have_attrs(sys_period_as_of: t_8).or(have_attrs(sys_period_as_of: be_nil))))
           expect(pictures.as_of(t_9))
-            .to all(have_attrs(imageable: have_attrs(as_of_value: t_9).or(have_attrs(as_of_value: be_nil))))
+            .to all(have_attrs(imageable: have_attrs(sys_period_as_of: t_9).or(have_attrs(sys_period_as_of: be_nil))))
         end
       end
     end

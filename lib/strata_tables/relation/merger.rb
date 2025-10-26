@@ -4,7 +4,7 @@ module StrataTables
       def merge
         super
 
-        relation.as_of_value = values[:as_of]
+        relation.as_of_timestamp!(values[:as_of_timestamp] || {})
 
         relation
       end

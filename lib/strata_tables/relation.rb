@@ -1,48 +1,55 @@
 module StrataTables
   module Relation
-    def as_of(time)
-      spawn.as_of!(time)
+    def as_of_timestamp(timestamp)
+      spawn.as_of_timestamp!(timestamp)
     end
 
-    def as_of!(time)
-      scope_by_time!(time) if model.history_table?
-
-      self.as_of_value = time
+    def as_of_timestamp!(timestamp)
+      self.as_of_timestamp_values = as_of_timestamp_values.merge(timestamp)
       self
     end
 
-    def as_of_value
-      @values.fetch(:as_of, nil)
+    def as_of_timestamp_values
+      @values.fetch(:as_of_timestamp, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
     end
 
-    def as_of_value=(value)
+    def as_of_timestamp_values=(timestamp)
       # TODO: add tests for: assert_modifiable!
-
-      @values[:as_of] = value
+      @values[:as_of_timestamp] = timestamp
     end
 
     private
 
-    def scope_by_time!(time)
-      node = if time
-        ArelNodes::ExistedAt.new(arel_table[:sys_period], time)
-      else
-        ArelNodes::Extant.new(arel_table[:sys_period])
+    if ActiveRecord.version > Gem::Version.new("8.0.3")
+      def build_arel(connection)
+        ensure_as_of_timestamp_registry { super }
       end
-
-      where!(node)
+    else
+      def build_arel(connection, aliases = nil)
+        ensure_as_of_timestamp_registry { super }
+      end
     end
 
-    def build_joins(join_sources, aliases = nil)
-      super.tap do |joins|
-        add_sys_period_constraint(joins) if as_of_value
+    def ensure_as_of_timestamp_registry
+      set_as_of_registry_values = AsOfRegistry.timestamps.empty? && as_of_timestamp_values.any?
+
+      return yield unless set_as_of_registry_values
+
+      begin
+        as_of_timestamp_values.each do |attribute, value|
+          AsOfRegistry.timestamps[attribute] = value
+        end
+
+        yield
+      ensure
+        AsOfRegistry.clear
       end
     end
 
     def instantiate_records(rows, &block)
       super.tap do |records|
         records.each do |record|
-          record.as_of_value = as_of_value if record.respond_to?(:as_of_value=)
+          initialize_as_of_timestamps(record)
 
           walk_associations(record, includes_values | eager_load_values) do |record, assoc_name|
             reflection = record.class.reflect_on_association(assoc_name)
@@ -53,32 +60,11 @@ module StrataTables
 
             if target.is_a?(Array)
               target.each do |t|
-                t.respond_to?(:as_of_value=) && t.as_of_value = as_of_value
+                initialize_as_of_timestamps(t)
               end
             else
-              target.respond_to?(:as_of_value=) && target.as_of_value = as_of_value
+              initialize_as_of_timestamps(target)
             end
-          end
-        end
-      end
-    end
-
-    def add_sys_period_constraint(joins)
-      joins.each do |join|
-        walk_arel_nodes(join.right.expr) do |node, parent, relationship|
-          next unless node.is_a?(ArelNodes::Extant)
-
-          new_node = ArelNodes::ExistedAt.new(join.left[:sys_period], as_of_value)
-
-          case relationship
-          when :left
-            parent.left = new_node
-          when :right
-            parent.right = new_node
-          when Integer
-            parent.children[relationship] = new_node
-          when :value
-            parent.value = new_node
           end
         end
       end
@@ -101,26 +87,12 @@ module StrataTables
       end
     end
 
-    def walk_arel_nodes(node, parent = nil, relationship = nil, &block)
-      case node
-      when Arel::Nodes::Unary
-        # TODO: Write tests
+    def initialize_as_of_timestamps(record)
+      as_of_timestamp_values.each do |attribute, value|
+        method_name = "#{attribute}_as_of="
 
-        walk_arel_nodes(node.value, node, :value & block)
-      when Arel::Nodes::Binary
-        # TODO: Write tests
-
-        walk_arel_nodes(node.left, node, :left, &block)
-        walk_arel_nodes(node.right, node, :right, &block)
-      when Arel::Nodes::Nary
-        node.children.each_with_index do |child, index|
-          walk_arel_nodes(child, node, index, &block)
-        end
-      else
-        block.call(node, parent, relationship)
+        record.send(method_name, value) if record.respond_to?(method_name)
       end
-
-      false
     end
   end
 end

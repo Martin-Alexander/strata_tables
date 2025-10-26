@@ -1,5 +1,7 @@
-require_relative "strata_tables/arel_nodes/existed_at"
-require_relative "strata_tables/arel_nodes/extant"
+require "active_support"
+
+require_relative "strata_tables/as_of_constraints"
+require_relative "strata_tables/as_of_registry"
 require_relative "strata_tables/associations/preloader/through_association"
 require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"

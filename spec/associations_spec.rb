@@ -42,13 +42,7 @@ RSpec.describe "associations" do
     end
 
     after do
-      conn.truncate(:authors)
-      conn.truncate(:books)
-      conn.truncate(:libraries)
-
-      conn.truncate(:authors_history) if conn.table_exists?(:authors_history)
-      conn.truncate(:books_history) if conn.table_exists?(:books_history)
-      conn.truncate(:libraries_history) if conn.table_exists?(:libraries_history)
+      truncate_all_tables(except: [:strata_metadata])
     end
   end
 
@@ -67,21 +61,16 @@ RSpec.describe "associations" do
         t.references :library
       end
 
-      conn.create_history_table(:books)
-      conn.create_history_table(:authors)
-      conn.create_history_table(:libraries)
+      conn.create_strata_metadata_table
+      conn.create_history_table_for(:books)
+      conn.create_history_table_for(:authors)
+      conn.create_history_table_for(:libraries)
 
       randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do
-      conn.drop_history_table(:books) if conn.table_exists?(:books_history)
-      conn.drop_history_table(:authors) if conn.table_exists?(:authors_history)
-      conn.drop_history_table(:libraries) if conn.table_exists?(:libraries_history)
-
-      conn.drop_table(:books)
-      conn.drop_table(:authors)
-      conn.drop_table(:libraries)
+      drop_all_tables
     end
 
     before do
@@ -234,11 +223,11 @@ RSpec.describe "associations" do
 
     context "without books history table" do
       before(:context) do
-        conn.drop_history_table(:books)
+        conn.drop_history_table_for(:books)
       end
 
       after(:context) do
-        conn.create_history_table(:books)
+        conn.create_history_table_for(:books)
       end
 
       it "all author versions have the same books" do
@@ -309,11 +298,11 @@ RSpec.describe "associations" do
 
     context "without authors history table" do
       before(:context) do
-        conn.drop_history_table(:authors)
+        conn.drop_history_table_for(:authors)
       end
 
       after(:context) do
-        conn.create_history_table(:authors)
+        conn.create_history_table_for(:authors)
       end
 
       context "without as-of" do
@@ -496,11 +485,11 @@ RSpec.describe "associations" do
 
     context "without books history table" do
       before(:context) do
-        conn.drop_history_table(:books)
+        conn.drop_history_table_for(:books)
       end
 
       after(:context) do
-        conn.create_history_table(:books)
+        conn.create_history_table_for(:books)
       end
 
       context "without as-of" do
@@ -606,13 +595,13 @@ RSpec.describe "associations" do
         t.references :library
       end
 
-      conn.create_history_table(:employees)
+      conn.create_history_table_for(:employees)
 
       randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do
-      conn.drop_history_table(:employees) if conn.table_exists?(:employees_history)
+      conn.drop_history_table_for(:employees) if conn.table_exists?(:employees_history)
 
       conn.drop_table(:employees)
     end
@@ -731,11 +720,11 @@ RSpec.describe "associations" do
 
     context "without books history table" do
       before(:context) do
-        conn.drop_history_table(:books)
+        conn.drop_history_table_for(:books)
       end
 
       after(:context) do
-        conn.create_history_table(:books)
+        conn.create_history_table_for(:books)
       end
 
       # t0           <- book_v ->
@@ -806,11 +795,11 @@ RSpec.describe "associations" do
 
     context "without libraries history table" do
       before(:context) do
-        conn.drop_history_table(:libraries)
+        conn.drop_history_table_for(:libraries)
       end
 
       after(:context) do
-        conn.create_history_table(:libraries)
+        conn.create_history_table_for(:libraries)
       end
 
       # t0                         library_v
@@ -989,13 +978,13 @@ RSpec.describe "associations" do
         t.string :imageable_type
       end
 
-      conn.create_history_table(:pictures)
+      conn.create_history_table_for(:pictures)
 
       randomize_sequences!(:id, :version_id)
     end
 
     after(:context) do
-      conn.drop_history_table(:pictures) if conn.table_exists?(:pictures_history)
+      conn.drop_history_table_for(:pictures) if conn.table_exists?(:pictures_history)
 
       conn.drop_table(:pictures)
     end

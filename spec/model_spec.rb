@@ -14,21 +14,16 @@ RSpec.describe "model" do
       t.references :author
     end
 
-    conn.create_history_table(:countries)
-    conn.create_history_table(:authors)
-    conn.create_history_table(:books)
+    conn.create_strata_metadata_table
+    conn.create_history_table_for(:countries)
+    conn.create_history_table_for(:authors)
+    conn.create_history_table_for(:books)
 
     randomize_sequences!(:id, :version_id)
   end
 
   after(:context) do
-    conn.drop_table(:countries)
-    conn.drop_table(:authors)
-    conn.drop_table(:books)
-
-    conn.drop_history_table(:countries)
-    conn.drop_history_table(:authors)
-    conn.drop_history_table(:books)
+    drop_all_tables
   end
 
   before do
@@ -58,13 +53,7 @@ RSpec.describe "model" do
   end
 
   after do
-    conn.truncate(:countries)
-    conn.truncate(:authors)
-    conn.truncate(:books)
-
-    conn.truncate(:countries_history)
-    conn.truncate(:authors_history)
-    conn.truncate(:books_history)
+    truncate_all_tables(except: [:strata_metadata])
   end
 
   let(:author_bob) { Author.find_by!(name: "Bob 2") }

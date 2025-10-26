@@ -34,7 +34,7 @@ module StrataTables
       end
 
       def history_table?
-        table_name.end_with?("_history")
+        @history_table ||= connection.history_table?(table_name)
       end
 
       def polymorphic_class_for(name)
@@ -72,13 +72,13 @@ module StrataTables
     end
 
     def versionfiy_table_name(version_model, base)
-      if version_table_exists?(base)
-        version_model.table_name = "#{base.table_name}_history"
+      if base.version_table_for
+        version_model.table_name = base.version_table_for
       end
     end
 
     def versionify_primary_key(version_model, base)
-      if version_table_exists?(base)
+      if base.version_table_for
         version_model.primary_key = :version_id
       end
     end
@@ -118,10 +118,6 @@ module StrataTables
           )
         end
       end
-    end
-
-    def version_table_exists?(base)
-      base.connection.table_exists?("#{base.table_name}_history")
     end
   end
 end

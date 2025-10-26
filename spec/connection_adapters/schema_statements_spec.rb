@@ -1,10 +1,6 @@
 require "spec_helper"
 
 RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
-  shared_context "with a history table setup for books" do
-    before { conn.create_history_table(:books) }
-  end
-
   before do
     conn.create_table :authors do |t|
       t.string :name
@@ -17,79 +13,78 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       t.date :published_at, default: "2025-01-01"
       t.references :author, foreign_key: true, index: true
     end
+    conn.create_strata_metadata_table
   end
 
   after do
-    conn.drop_table(:books) if conn.table_exists?(:books)
-    conn.drop_table(:authors) if conn.table_exists?(:authors)
-    conn.drop_table(:teddies) if conn.table_exists?(:teddies)
-
-    conn.drop_table(:books_history) if conn.table_exists?(:books_history)
-    conn.drop_table(:authors_history) if conn.table_exists?(:authors_history)
+    conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
   end
 
-  describe "#create_history_table" do
-    it "creates a history table" do
+  describe "#create_strata_metadata_table" do
+    it do
+      expect(conn.table(:strata_metadata))
+        .to be_present
+        .and have_column(:history_table, :string)
+        .and have_column(:temporal_table, :string)
+        .and have_attrs(primary_key: "history_table")
+    end
+  end
+
+  describe "#create_history_table_for" do
+    it "creates a history table with a default name" do
       conn.enable_extension(:btree_gist)
 
-      conn.create_history_table(:books)
+      conn.create_history_table_for(:books)
 
       expect(conn).to have_table(:books_history)
-
-      expect(:books).to have_history_table
-
-      expect(:books_history)
-        .to have_column(:id, :integer)
+      expect(conn.table(:books_history))
+        .to be_history_table_for(:books)
+        .and have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
         .and have_column(:price, :decimal, precision: 10, scale: 2)
         .and have_column(:summary, :string, collation: "en_US")
         .and have_column(:pages, :integer, comment: "Number of pages")
-        # TODO: support old and new version of the `#column_exists?` method
-        # .and have_column(:published_at, :date, default: Date.new(2025, 1, 1))
         .and have_column(:published_at, :date)
         .and have_column(:author_id, :integer)
-
-      expect(:books_history).to have_exclusion_constraint(
-        "id WITH =, sys_period WITH &&",
-        {using: :gist}
-      )
+        .and have_exclusion_constraint("id WITH =, sys_period WITH &&", {using: :gist})
+      expect(conn.history_table_for(:books)).to eq("books_history")
     end
 
-    context "when btree_gist extension is not enabled" do
-      it "does not crate a temporal exclusion constraint" do
-        conn.disable_extension(:btree_gist)
+    it "creates a history table with a given name" do
+      conn.create_history_table_for(:books, :book_history)
 
-        conn.create_history_table(:books)
-
-        expect(:books).to have_history_table
-
-        expect(:books_history).to_not have_exclusion_constraint(
-          "id WITH =, sys_period WITH &&",
-          {using: :gist}
-        )
-      end
+      expect(conn.table(:book_history)).to be_history_table_for(:books)
+      expect(conn.history_table_for(:books)).to eq("book_history")
     end
 
-    context "with 'except'" do
-      it "omits columns from the history table" do
-        conn.create_history_table(:books, except: [:title, :price, :summary])
+    it "skips the exclusion constraint if btree_gist is not enabled" do
+      conn.create_history_table_for(:books)
 
-        expect(conn).to have_table(:books_history)
-
-        expect(:books).to have_history_table
-
-        expect(:books_history)
-          .to not_have_column(:title)
-          .and(not_have_column(:price))
-          .and(not_have_column(:summary))
-          .and(have_column(:id))
-          .and(have_column(:pages))
-          .and(have_column(:published_at))
-          .and(have_column(:author_id))
-      end
+      expect(conn.table(:books_history)).to_not have_exclusion_constraint
     end
 
-    context "with 'copy_data'" do
+    it "skips columns includedsx in 'except'" do
+      conn.create_history_table_for(:books, except: [:title, :price, :summary])
+
+      table = conn.table(:books_history)
+
+      expect(table).to be_history_table_for(:books)
+      expect(table)
+        .to not_have_column(:title)
+        .and not_have_column(:price)
+        .and not_have_column(:summary)
+        .and have_column(:id)
+        .and have_column(:pages)
+        .and have_column(:published_at)
+        .and have_column(:author_id)
+    end
+
+    it "raises an error when source table does not exist" do
+      expect { conn.create_history_table_for(:teddies) }
+        .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies" does not exist/)
+    end
+
+    describe "with copy_data option" do
       before do
         stub_const("ApplicationRecord", Class.new(ActiveRecord::Base) do
           self.abstract_class = true
@@ -109,8 +104,8 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
       it "copies data" do
         conn.enable_extension(:btree_gist)
 
-        conn.create_history_table(:authors)
-        conn.create_history_table(:books, copy_data: true)
+        conn.create_history_table_for(:authors)
+        conn.create_history_table_for(:books, copy_data: true)
 
         expect(Author.version.count).to eq(0)
         expect(Book.version.count).to eq(2)
@@ -118,43 +113,36 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         expect(Book.version.all.as_of(now).count).to eq(2)
       end
 
-      context "with epoch year" do
-        it "start sys_period ranges at epoch year" do
-          epoch_time = Time.parse("1999-01-01")
+      it "sets sys_period when epoch is provided" do
+        epoch_time = Time.parse("1999-01-01")
 
-          conn.enable_extension(:btree_gist)
+        conn.enable_extension(:btree_gist)
 
-          conn.create_history_table(:authors)
-          conn.create_history_table(:books, copy_data: {epoch_time: epoch_time})
+        conn.create_history_table_for(:authors)
+        conn.create_history_table_for(:books, copy_data: {epoch_time: epoch_time})
 
-          expect(Author.version.count).to eq(0)
-          expect(Book.version.count).to eq(2)
-          expect(Book.version.all.as_of(t_1).count).to eq(2)
-          expect(Book.version.all.as_of(now).count).to eq(2)
-          expect(Book.version.all.as_of(epoch_time - 1.day).count).to eq(0)
-        end
-      end
-    end
-
-    context "when source table does not exist" do
-      it "raises an error" do
-        expect { conn.create_history_table(:teddies) }
-          .to raise_error(ActiveRecord::StatementInvalid, /relation "teddies" does not exist/)
+        expect(Author.version.count).to eq(0)
+        expect(Book.version.count).to eq(2)
+        expect(Book.version.all.as_of(t_1).count).to eq(2)
+        expect(Book.version.all.as_of(now).count).to eq(2)
+        expect(Book.version.all.as_of(epoch_time - 1.day).count).to eq(0)
       end
     end
   end
 
-  describe "#drop_history_table" do
-    include_context "with a history table setup for books"
+  describe "#drop_history_table_for" do
+    it "drops the temporal table's history table" do
+      conn.create_history_table_for(:books)
 
-    it "drops a history table" do
-      conn.drop_history_table(:books)
+      conn.drop_history_table_for(:books)
 
-      expect(conn).to have_table(:books)
+      history_table = conn.table(:books_history)
+      original_table = conn.table(:books)
 
-      expect(conn).not_to have_table(:books_history)
+      expect(history_table).to be_nil
+      expect(original_table).to be_present
 
-      expect(:books)
+      expect(original_table)
         .to not_have_trigger(:on_insert_strata_trigger)
         .and not_have_trigger(:on_update_strata_trigger)
         .and not_have_trigger(:on_delete_strata_trigger)
@@ -163,6 +151,63 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .to not_have_function(:books_history_insert)
         .and not_have_function(:books_history_update)
         .and not_have_function(:books_history_delete)
+
+      expect(conn.history_table_for(:books)).to be_nil
+    end
+
+    it "drops the temporal table's history table with a given name" do
+      conn.create_history_table_for(:books, :book_history)
+
+      conn.drop_history_table_for(:books)
+
+      history_table = conn.table(:book_history)
+      original_table = conn.table(:books)
+
+      expect(history_table).to be_nil
+      expect(original_table).to be_present
+      expect(conn.history_table_for(:books)).to be_nil
+    end
+  end
+
+  describe "#history_table_for" do
+    it "returns the history table" do
+      conn.create_history_table_for(:authors)
+      conn.create_history_table_for(:books, :book_history)
+
+      expect(conn.history_table_for(:authors)).to eq("authors_history")
+      expect(conn.history_table_for(:books)).to eq("book_history")
+      expect(conn.history_table_for(:teddies)).to be_nil
+    end
+
+    it "returns the history table with spaces or schema qualified" do
+      skip
+
+      conn.create_history_table_for(:authors, "history.authors_history")
+      conn.create_history_table_for(:books, "Book History")
+
+      expect(conn.history_table_for(:authors)).to eq("history.authors_history")
+      expect(conn.history_table_for(:books)).to eq("History")
+    end
+  end
+
+  describe "#temporal_table_for" do
+    it "#returns the temporal table" do
+      conn.create_history_table_for(:authors)
+      conn.create_history_table_for(:books, :book_history)
+
+      expect(conn.temporal_table_for(:authors_history)).to eq("authors")
+      expect(conn.temporal_table_for(:book_history)).to eq("books")
+      expect(conn.temporal_table_for(:teddies_history)).to be_nil
+    end
+
+    it "returns the temporal table with spaces or schema qualified" do
+      skip
+
+      conn.create_history_table_for(:authors, "history.authors_history")
+      conn.create_history_table_for(:books, "Book History")
+
+      expect(conn.temporal_table_for("history.authors_history")).to eq("authors")
+      expect(conn.temporal_table_for("Book History")).to eq("books")
     end
   end
 end

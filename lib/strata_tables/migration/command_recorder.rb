@@ -2,7 +2,7 @@ module StrataTables
   module Migration
     module CommandRecorder
       {
-        create_history_table: :drop_history_table
+        create_history_table_for: :drop_history_table_for
       }.each do |method, inverse|
         [[method, inverse], [inverse, method]].each do |method, inverse|
           class_eval <<-EOV, __FILE__, __LINE__ + 1

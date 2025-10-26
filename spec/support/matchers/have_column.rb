@@ -2,7 +2,7 @@ require "rspec/expectations"
 
 RSpec::Matchers.define :have_column do |name, type, **options|
   match do |table|
-    conn.column_exists?(table, name, type, **options)
+    expect(table.column_exists?(name, type, **options)).to be(true)
   end
 end
 

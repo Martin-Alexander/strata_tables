@@ -2,19 +2,7 @@ require "rspec/expectations"
 
 RSpec::Matchers.define :have_function do |name|
   match do |conn|
-    expect(function_exists?(conn, name)).to be(true)
-  end
-
-  private
-
-  def function_exists?(connection, name)
-    result = connection.execute(<<~SQL)
-      SELECT 1 as exists
-      FROM pg_proc
-      WHERE proname = '#{name}'
-    SQL
-
-    result.count > 0
+    expect(conn.function_exists?(name)).to be(true)
   end
 end
 

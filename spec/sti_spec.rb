@@ -7,14 +7,14 @@ RSpec.describe "version model" do
       t.string :type, :string
     end
 
-    conn.create_history_table(:authors)
+    conn.create_strata_metadata_table
+    conn.create_history_table_for(:authors)
 
     randomize_sequences!(:id, :version_id)
   end
 
   after(:context) do
-    conn.drop_table(:authors)
-    conn.drop_history_table(:authors)
+    drop_all_tables
   end
 
   before do
@@ -29,8 +29,7 @@ RSpec.describe "version model" do
   end
 
   after do
-    conn.truncate(:authors)
-    conn.truncate(:authors_history)
+    truncate_all_tables(except: [:strata_metadata])
   end
 
   it "::instantiate returns version class for type" do

@@ -6,15 +6,17 @@ RSpec.describe "update triggers" do
       t.string :title
       t.integer :pages
     end
-    conn.create_history_table(:books)
+
+    conn.create_strata_metadata_table
+    conn.create_history_table_for(:books)
+
     stub_const("Book", Class.new(ActiveRecord::Base) do
       include StrataTables::Model
     end)
   end
 
   after do
-    conn.drop_table(:books)
-    conn.drop_history_table(:books)
+    drop_all_tables
   end
 
   it "sets current history record's upper bound sys_period to the current time and creates a new history record" do

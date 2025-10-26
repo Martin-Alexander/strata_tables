@@ -1,14 +1,14 @@
 require "spec_helper"
 
-RSpec.describe "migrations for history triggers" do
+RSpec.describe "migrations" do
   migration_version = "#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"
 
   around do |example|
-    og_verbose, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false
+    original, ActiveRecord::Migration.verbose = ActiveRecord::Migration.verbose, false
 
     example.run
 
-    ActiveRecord::Migration.verbose = og_verbose
+    ActiveRecord::Migration.verbose = original
   end
 
   before do
@@ -16,11 +16,11 @@ RSpec.describe "migrations for history triggers" do
       t.string :title
       t.string :author_name
     end
+    conn.create_strata_metadata_table
   end
 
   after do
-    conn.drop_table(:books) if conn.table_exists?(:books)
-    conn.drop_table(:books_history) if conn.table_exists?(:books_history)
+    conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
   end
 
   let(:migration) do
@@ -31,89 +31,165 @@ RSpec.describe "migrations for history triggers" do
     migration_klass.new
   end
 
-  describe "create_history_table :books" do
+  describe "create_history_table_for :books" do
     let(:migration_change) do
-      -> { create_history_table(:books) }
+      -> { create_history_table_for(:books) }
     end
 
-    describe "#up" do
-      it "creates history table" do
-        migration.migrate(:up)
+    it "'up' creates history table" do
+      migration.migrate(:up)
 
-        expect(conn).to have_table(:books_history)
+      books_history_table = conn.table(:books_history)
 
-        expect(:books).to have_history_table
-      end
+      expect(books_history_table).to be_present
+      expect(books_history_table).to be_history_table_for(:books)
     end
 
-    describe "#down" do
-      before { conn.create_history_table(:books) }
+    it "'down' drops history table" do
+      migration.migrate(:up)
+      migration.migrate(:down)
 
-      it "drops history table" do
-        migration.migrate(:down)
+      books_table = conn.table(:books)
+      books_history_table = conn.table(:books_history)
 
-        expect(conn).not_to have_table(:books_history)
-
-        expect(conn)
-          .to not_have_function(:strata_books_insert)
-          .and not_have_function(:strata_books_update)
-          .and not_have_function(:strata_books_delete)
-      end
+      expect(books_history_table).to be_nil
+      expect(books_table)
+        .to not_have_trigger(:on_insert_strata_trigger)
+        .and not_have_trigger(:on_update_strata_trigger)
+        .and not_have_trigger(:on_delete_strata_trigger)
+      expect(conn)
+        .to not_have_function(:books_history_insert)
+        .and not_have_function(:books_history_update)
+        .and not_have_function(:books_history_delete)
     end
   end
 
-  describe "create_history_table :books, except: [:author_name]" do
+  describe "create_history_table_for :books, except: [:author_name]" do
     let(:migration_change) do
-      -> { create_history_table(:books, except: [:author_name]) }
+      -> { create_history_table_for(:books, except: [:author_name]) }
     end
 
-    describe "#up" do
-      it "creates history table" do
-        migration.migrate(:up)
+    it "'up' creates history table" do
+      migration.migrate(:up)
 
-        expect(conn).to have_table(:books_history)
+      books_history_table = conn.table(:books_history)
 
-        expect(:books).to have_history_table
-
-        expect(:books_history).to(have_column(:title)
-          .and(not_have_column(:author_name)))
-      end
+      expect(books_history_table).to be_present
+      expect(books_history_table)
+        .to be_history_table_for(:books)
+        .and have_column(:title)
+        .and not_have_column(:author_name)
     end
 
-    describe "#down" do
-      before { conn.create_history_table(:books, except: [:author_name]) }
+    it "'down' drops history table" do
+      migration.migrate(:up)
+      migration.migrate(:down)
 
-      it "drops history table" do
-        migration.migrate(:down)
+      books_table = conn.table(:books)
+      books_history_table = conn.table(:books_history)
 
-        expect(conn).not_to have_table(:books_history)
-      end
+      expect(books_history_table).to be_nil
+      expect(books_table)
+        .to not_have_trigger(:on_insert_strata_trigger)
+        .and not_have_trigger(:on_update_strata_trigger)
+        .and not_have_trigger(:on_delete_strata_trigger)
+      expect(conn)
+        .to not_have_function(:books_history_insert)
+        .and not_have_function(:books_history_update)
+        .and not_have_function(:books_history_delete)
     end
   end
 
   describe "drop_history_table" do
+    before do
+      conn.create_history_table_for(:books)
+    end
+
     let(:migration_change) do
-      -> { drop_history_table(:books) }
+      -> { drop_history_table_for(:books) }
     end
 
-    describe "#up" do
-      before { conn.create_history_table(:books) }
+    it "'up' drops history table" do
+      migration.migrate(:up)
 
-      it "drops history table" do
-        migration.migrate(:up)
+      books_table = conn.table(:books)
+      books_history_table = conn.table(:books_history)
 
-        expect(conn).not_to have_table(:books_history)
-      end
+      expect(books_history_table).to be_nil
+      expect(books_table)
+        .to not_have_trigger(:on_insert_strata_trigger)
+        .and not_have_trigger(:on_update_strata_trigger)
+        .and not_have_trigger(:on_delete_strata_trigger)
+      expect(conn)
+        .to not_have_function(:books_history_insert)
+        .and not_have_function(:books_history_update)
+        .and not_have_function(:books_history_delete)
     end
 
-    describe "#down" do
-      it "creates history table" do
-        migration.migrate(:down)
+    it "'down' creates history table" do
+      migration.migrate(:up)
+      migration.migrate(:down)
 
-        expect(conn).to have_table(:books_history)
+      books_history_table = conn.table(:books_history)
 
-        expect(:books).to have_history_table
-      end
+      expect(books_history_table).to be_present
+      expect(books_history_table).to be_history_table_for(:books)
+    end
+  end
+
+  describe "drop_history_table_for :books, except: [:author_name]" do
+    before do
+      conn.create_history_table_for(:books, except: [:author_name])
+    end
+
+    let(:migration_change) do
+      -> { drop_history_table_for(:books, except: [:author_name]) }
+    end
+
+    it "'up' drops history table" do
+      migration.migrate(:up)
+
+      expect(conn.table(:books_history)).to be_nil
+    end
+
+    it "'down' creates history table" do
+      migration.migrate(:up)
+      migration.migrate(:down)
+
+      books_history_table = conn.table(:books_history)
+
+      expect(books_history_table).to be_present
+      expect(books_history_table).to be_history_table_for(:books)
+      expect(books_history_table)
+        .to be_history_table_for(:books)
+        .and have_column(:title)
+        .and not_have_column(:author_name)
+    end
+  end
+
+  describe "drop_history_table_for :books, :book_history" do
+    before do
+      conn.create_history_table_for(:books, :book_history)
+    end
+
+    let(:migration_change) do
+      -> { drop_history_table_for(:books, :book_history) }
+    end
+
+    it "'up' drops history table" do
+      migration.migrate(:up)
+
+      expect(conn.table(:book_history)).to be_nil
+    end
+
+    it "'down' creates history table" do
+      migration.migrate(:up)
+      migration.migrate(:down)
+
+      book_history_table = conn.table(:book_history)
+
+      expect(book_history_table).to be_present
+      expect(book_history_table).to be_history_table_for(:books)
     end
   end
 end

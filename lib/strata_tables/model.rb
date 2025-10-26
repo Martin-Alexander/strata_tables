@@ -22,6 +22,10 @@ module StrataTables
       def versions
         version.all
       end
+
+      def version_table_for
+        @history_table_for ||= connection.history_table_for(table_name)
+      end
     end
 
     def as_of(time)

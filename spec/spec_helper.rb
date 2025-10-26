@@ -4,11 +4,12 @@ require "niceql"
 
 require "strata_tables"
 
+require "support/connection_extensions"
 require "support/db_config"
+require "support/matchers/be_history_table_for"
 require "support/matchers/have_column"
 require "support/matchers/has_exclusion_constraint"
 require "support/matchers/have_function"
-require "support/matchers/have_history_table"
 require "support/matchers/have_history_callback_function"
 require "support/matchers/have_loaded"
 require "support/matchers/have_table"
@@ -18,8 +19,6 @@ require "support/transaction_helper"
 
 ActiveRecord::Base.establish_connection(DbConfig.get)
 ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
-
-PlPgsqlFunction = Struct.new(:name, :body)
 
 RSpec.configure do |config|
   config.include TransactionHelper
@@ -38,8 +37,26 @@ RSpec.configure do |config|
 
   RSpec::Matchers.alias_matcher :have_attrs, :have_attributes
 
+  def drop_all_tables
+    conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
+  end
+
+  def truncate_all_tables(except: [])
+    except.map!(&:to_s)
+
+    tables = conn.tables.reject { |t| except.include?(t) }
+
+    truncate_tables(tables)
+  end
+
+  def truncate_tables(tables)
+    conn.truncate_tables(*tables)
+  end
+
   def conn
-    ActiveRecord::Base.connection
+    ActiveRecord::Base.connection.tap do |connection|
+      connection.extend(StrataTables::ConnectionExtensions)
+    end
   end
 
   def randomize_sequences!(*columns)
@@ -58,19 +75,6 @@ RSpec.configure do |config|
       rescue ActiveRecord::StatementInvalid
       end
     end
-  end
-
-  def plpgsql_functions
-    rows = conn.execute(<<~SQL.squish)
-      SELECT p.proname AS function_name,
-        pg_get_functiondef(p.oid) AS function_definition
-      FROM pg_proc p
-      JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'plpgsql')
-          AND n.nspname NOT IN ('pg_catalog', 'information_schema');
-    SQL
-
-    rows.map { |row| PlPgsqlFunction.new(*row.values) }
   end
 
   def p_sql(string)

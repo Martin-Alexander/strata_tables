@@ -40,8 +40,8 @@ module StrataTables
           end
         end
 
-        recreate_history_triggers(source_table)
         register_history_table(history_table, source_table)
+        recreate_history_triggers(source_table)
 
         if options[:copy_data]
           copy_data(
@@ -64,7 +64,7 @@ module StrataTables
       def recreate_history_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        history_table = "#{source_table}_history"
+        history_table = history_table_for(source_table)
         column_names = columns(source_table).map(&:name)
 
         trigger_set = StrataTriggerSetDefinition.new(source_table, history_table, column_names)

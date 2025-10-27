@@ -52,11 +52,6 @@ RSpec.describe "version model" do
     )
   end
 
-  # it "::version_of returns the source class" do
-  #   expect(Author.version.version_of).to eq(Author)
-  #   expect(Author.version.version_of.name).to eq("Author")
-  # end
-
   context "when the table name has spaces" do
     before(:context) do
       conn.create_table("My Books") do |t|

@@ -29,29 +29,6 @@ RSpec.describe "version model" do
     truncate_all_tables(except: [:strata_metadata])
   end
 
-  it "::as_of is delegated to ::all" do
-    t_0
-    bob = Author.create!(name: "Bob")
-    t_1
-    Author.create!(name: "Bill")
-    t_2
-    bob.update(name: "Bob 2")
-    t_3
-
-    expect(Author.as_of(t_0)).to be_empty
-    expect(Author.as_of(t_1)).to contain_exactly(
-      Author.version.find_by!(name: "Bob")
-    )
-    expect(Author.as_of(t_2)).to contain_exactly(
-      Author.version.find_by!(name: "Bob"),
-      Author.version.find_by!(name: "Bill")
-    )
-    expect(Author.as_of(t_3)).to contain_exactly(
-      Author.version.find_by!(name: "Bill"),
-      Author.version.find_by!(name: "Bob 2")
-    )
-  end
-
   context "when the table name has spaces" do
     before(:context) do
       conn.create_table("My Books") do |t|

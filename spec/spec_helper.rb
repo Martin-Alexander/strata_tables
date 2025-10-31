@@ -4,6 +4,7 @@ require "niceql"
 
 require "strata_tables"
 
+require "support/associations"
 require "support/connection_extensions"
 require "support/db_config"
 require "support/matchers/be_history_table_for"
@@ -14,6 +15,8 @@ require "support/matchers/have_history_callback_function"
 require "support/matchers/have_loaded"
 require "support/matchers/have_table"
 require "support/matchers/have_trigger"
+require "support/model_factory"
+require "support/record_factory"
 require "support/timestamping_helper"
 require "support/transaction_helper"
 
@@ -23,6 +26,8 @@ ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
 RSpec.configure do |config|
   config.include TransactionHelper
   config.include TimestampingHelper
+  config.include ModelFactory
+  config.extend RecordFactory
   config.include StrataTables
 
   # Enable flags like --only-failures and --next-failure

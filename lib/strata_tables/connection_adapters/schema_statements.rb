@@ -121,22 +121,22 @@ module StrataTables
         results.first["temporal_table"]
       end
 
-      private
-
-      def register_history_table(history_table, temporal_table)
+      def register_history_table(history_table, temporal_table = nil)
         conn.execute(<<~SQL)
           INSERT INTO strata_metadata (history_table, temporal_table)
           VALUES ('#{history_table}', '#{temporal_table}')
         SQL
       end
 
-      def unregister_history_table(history_table, temporal_table)
+      def unregister_history_table(history_table, temporal_table = nil)
         conn.execute(<<~SQL)
           DELETE FROM strata_metadata
           WHERE history_table = '#{history_table}'
             AND temporal_table = '#{temporal_table}'
         SQL
       end
+
+      private
 
       def copy_data(source_table, history_table, columns, options)
         fields = columns.map(&:name).join(", ")

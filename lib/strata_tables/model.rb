@@ -1,10 +1,13 @@
 module StrataTables
   module Model
     extend ActiveSupport::Concern
+    include AsOf
+
+    included do
+      self.as_of_attribute = :sys_period
+    end
 
     class_methods do
-      delegate :as_of, to: :version
-
       def version
         if const_defined?("Version", false)
           const_get("Version")

@@ -75,13 +75,6 @@ RSpec.describe "model" do
     expect(Author.versions).to contain_exactly(author_bob_v1, author_bob_v2, author_bill_v1)
   end
 
-  it "::as_of is delegated to ::version" do
-    expect(Author.as_of(t_0)).to be_empty
-    expect(Author.as_of(t_1)).to contain_exactly(author_bob_v1)
-    expect(Author.as_of(t_2)).to contain_exactly(author_bob_v1, author_bill_v1)
-    expect(Author.as_of(t_3)).to contain_exactly(author_bill_v1, author_bob_v2)
-  end
-
   it "#as_of returns the latest version of the record" do
     expect(author_bob.as_of(t_0)).to be_nil
     expect(author_bob.as_of(t_1)).to eq(author_bob_v1)

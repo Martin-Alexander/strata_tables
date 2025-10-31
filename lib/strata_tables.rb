@@ -1,5 +1,6 @@
 require "active_support"
 
+require_relative "strata_tables/as_of"
 require_relative "strata_tables/as_of_constraints"
 require_relative "strata_tables/as_of_registry"
 require_relative "strata_tables/associations/preloader/through_association"

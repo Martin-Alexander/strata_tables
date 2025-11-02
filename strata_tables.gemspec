@@ -25,6 +25,6 @@ Gem::Specification.new do |s|
     "source_code_uri" => "https://github.com/Martin-Alexander/strata_tables"
   }
 
-  s.add_dependency "activerecord", ">= 7.0", "< 9.0"
+  s.add_dependency "activerecord", ">= 7.2", "<= 8.1.1"
   s.add_dependency "pg"
 end

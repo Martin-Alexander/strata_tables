@@ -21,18 +21,17 @@ module StrataTables
       end
 
       def extant_constraint(table, attribute)
-        Arel::Nodes::NamedFunction.new("upper_inf", [table[attribute]])
+        <<~SQL
+          upper("#{table.name}"."#{attribute}") = 'infinity' OR upper("#{table.name}"."#{attribute}") IS NULL
+        SQL
       end
 
       def existed_at_constraint(table, time, attribute)
-        time_as_tstz = Arel::Nodes::As.new(
-          Arel::Nodes::Quoted.new(time),
-          Arel::Nodes::SqlLiteral.new("timestamptz")
-        )
+        time_f = time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N")
 
-        time_casted = Arel::Nodes::NamedFunction.new("CAST", [time_as_tstz])
-
-        Arel::Nodes::Contains.new(table[attribute], time_casted)
+        <<~SQL
+          "#{table.name}"."#{attribute}" @> '#{time_f}'::timestamptz
+        SQL
       end
 
       def temporal_association_scope(&merge_scope)

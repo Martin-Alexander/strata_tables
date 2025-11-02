@@ -20,7 +20,7 @@ module StrataTables
 
     private
 
-    if ActiveRecord.version > Gem::Version.new("8.0.3")
+    if ActiveRecord.version > Gem::Version.new("8.0.4")
       def build_arel(connection)
         ensure_as_of_timestamp_registry { super }
       end

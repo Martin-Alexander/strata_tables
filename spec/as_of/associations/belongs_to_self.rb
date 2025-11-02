@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe "belongs to self" do
   before do
-    model "User" do
+    model "User", as_of: true do
       belongs_to :fav, temporal_association_scope, class_name: "User", primary_key: :b_id
     end
   end
@@ -13,9 +13,7 @@ RSpec.describe "belongs to self" do
 
   context "when the table has a period column" do
     before(:context) do
-      table :users do |t|
-        t.tstzrange :period, null: false
-      end
+      table :users, as_of: true
       conn.add_reference(:users, :fav)
     end
     after(:context) { drop_all_tables }

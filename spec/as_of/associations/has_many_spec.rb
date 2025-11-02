@@ -4,22 +4,19 @@ require "spec_helper"
 
 RSpec.describe "has many" do
   before do
-    model "Author" do
+    model "Author", as_of: true do
       has_many :books, temporal_association_scope, primary_key: :b_id
     end
-    model "Book"
+    model "Book", as_of: true
   end
 
   t = Time.parse("2000-01-01")
 
   context "when all tables have period columns" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
-      table :books do |t|
+      table :authors, as_of: true
+      table :books, as_of: true do |t|
         t.references :author
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }
@@ -97,9 +94,7 @@ RSpec.describe "has many" do
 
   context "when target table has no period column" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
+      table :authors, as_of: true
       table :books do |t|
         t.references :author
       end
@@ -152,9 +147,8 @@ RSpec.describe "has many" do
   context "when source table has no period column" do
     before(:context) do
       table :authors
-      table :books do |t|
+      table :books, as_of: true do |t|
         t.references :author
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }

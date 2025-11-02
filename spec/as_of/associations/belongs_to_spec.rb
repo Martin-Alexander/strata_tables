@@ -4,8 +4,8 @@ require "spec_helper"
 
 RSpec.describe "belongs to" do
   before do
-    model "Author"
-    model "Book" do
+    model "Author", as_of: true
+    model "Book", as_of: true do
       belongs_to :author, temporal_association_scope, primary_key: :b_id
     end
   end
@@ -14,12 +14,9 @@ RSpec.describe "belongs to" do
 
   context "when target and source tables both have period columns" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
-      table :books do |t|
+      table :authors, as_of: true
+      table :books, as_of: true do |t|
         t.references :author
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }
@@ -87,9 +84,8 @@ RSpec.describe "belongs to" do
   context "when target table has no period column" do
     before(:context) do
       table :authors
-      table :books do |t|
+      table :books, as_of: true do |t|
         t.references :author
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }
@@ -154,9 +150,7 @@ RSpec.describe "belongs to" do
 
   context "when source table has no period column" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
+      table :authors, as_of: true
       table :books do |t|
         t.references :author
       end

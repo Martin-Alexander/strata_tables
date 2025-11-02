@@ -4,33 +4,25 @@ require "spec_helper"
 
 RSpec.describe "has many through" do
   before do
-    model "Author" do
-      has_many :books, primary_key: :b_id
-      has_many :publishers, through: :books, primary_key: :b_id
+    model "Author", as_of: true do
       has_many :books, temporal_association_scope, primary_key: :b_id
       has_many :publishers, temporal_association_scope, through: :books, primary_key: :b_id
     end
-    model "Book" do
-      belongs_to :publisher, primary_key: :b_id
+    model "Book", as_of: true do
       belongs_to :publisher, temporal_association_scope, primary_key: :b_id
     end
-    model "Publisher"
+    model "Publisher", as_of: true
   end
 
   t = Time.parse("2000-01-01")
 
   context "when all tables have period columns" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
-      table :publishers do |t|
-        t.tstzrange :period, null: false
-      end
-      table :books do |t|
+      table :authors, as_of: true
+      table :publishers, as_of: true
+      table :books, as_of: true do |t|
         t.references :author
         t.references :publisher
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }
@@ -108,12 +100,8 @@ RSpec.describe "has many through" do
 
   context "when through table has no period column" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
-      table :publishers do |t|
-        t.tstzrange :period, null: false
-      end
+      table :authors, as_of: true
+      table :publishers, as_of: true
       table :books do |t|
         t.references :author
         t.references :publisher
@@ -165,14 +153,11 @@ RSpec.describe "has many through" do
 
   context "when target table has no period column" do
     before(:context) do
-      table :authors do |t|
-        t.tstzrange :period, null: false
-      end
+      table :authors, as_of: true
       table :publishers
-      table :books do |t|
+      table :books, as_of: true do |t|
         t.references :author
         t.references :publisher
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }
@@ -243,13 +228,10 @@ RSpec.describe "has many through" do
   context "when source table has no period column" do
     before(:context) do
       table :authors
-      table :publishers do |t|
-        t.tstzrange :period, null: false
-      end
-      table :books do |t|
+      table :publishers, as_of: true
+      table :books, as_of: true do |t|
         t.references :author
         t.references :publisher
-        t.tstzrange :period, null: false
       end
     end
     after(:context) { drop_all_tables }

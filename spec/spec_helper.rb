@@ -40,8 +40,6 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  RSpec::Matchers.alias_matcher :have_attrs, :have_attributes
-
   def drop_all_tables
     conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
   end

@@ -95,7 +95,7 @@ RSpec.describe "model" do
   it "version class is versionified" do
     expect(Author.version.table_name).to eq("authors_history")
     expect(Author.version.reflect_on_all_associations)
-      .to all(have_attrs(klass: be_an_instance_of(Class)))
+      .to all(have_attributes(klass: be_an_instance_of(Class)))
   end
 
   it "version module lockup can be overwritten" do

@@ -3,7 +3,7 @@ def build_matcher(node, &block)
   in [ActiveRecord::Base, Hash]
     build_matcher(node[0], &block).and(build_matcher(node[1], &block))
   in Hash
-    have_attrs(node.each do |key, value|
+    have_attributes(node.each do |key, value|
       [key, build_matcher(value, &block)]
     end.to_h)
   in Array
@@ -53,7 +53,7 @@ def test_eager_loading(n_steps:, &block)
         as_of_relation = time ? relation.as_of(time) : relation
 
         matcher = build_matcher(records) do |record|
-          have_attrs(period_as_of: time)
+          have_attributes(period_as_of: time)
         end
 
         expect(as_of_relation.load).to matcher
@@ -96,7 +96,7 @@ def test_association_reader(n_steps:, &block)
           ar_record = time ? ar_record.as_of(time) : ar_record
 
           matcher = build_matcher(expected) do |ar_record|
-            have_attrs(period_as_of: time)
+            have_attributes(period_as_of: time)
           end
 
           expect(ar_record).to matcher

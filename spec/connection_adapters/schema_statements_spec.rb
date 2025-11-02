@@ -26,7 +26,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .to be_present
         .and have_column(:history_table, :string)
         .and have_column(:temporal_table, :string)
-        .and have_attrs(primary_key: "history_table")
+        .and have_attributes(primary_key: "history_table")
     end
   end
 

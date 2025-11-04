@@ -44,7 +44,7 @@ module StrataTablesTest
       offset = Math.exp(2 + rand * (10 - 2)).to_i
 
       conn.execute(<<~SQL)
-        SELECT setval(pg_get_serial_sequence('#{table}', '#{column}'), #{offset})
+        SELECT setval(pg_get_serial_sequence('#{conn.quote_table_name(table)}', '#{column}'), #{offset})
       SQL
     end
   end

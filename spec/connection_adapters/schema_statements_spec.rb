@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe "schema statements" do
   before do
+    conn.create_schema("myschema", force: true)
     conn.create_table :authors do |t|
       t.string :name
     end
@@ -17,7 +18,8 @@ RSpec.describe "schema statements" do
   end
 
   after do
-    conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
+    drop_all_tables
+    conn.drop_schema("myschema", if_exists: true)
   end
 
   describe "#create_strata_metadata_table" do
@@ -191,13 +193,11 @@ RSpec.describe "schema statements" do
     end
 
     it "returns the history table with spaces or schema qualified" do
-      skip
-
-      conn.create_history_table_for(:authors, "history.authors_history")
+      conn.create_history_table_for(:authors, "myschema.authors_history")
       conn.create_history_table_for(:books, "Book History")
 
-      expect(conn.history_table_for(:authors)).to eq("history.authors_history")
-      expect(conn.history_table_for(:books)).to eq("History")
+      expect(conn.history_table_for(:authors)).to eq("myschema.authors_history")
+      expect(conn.history_table_for(:books)).to eq("Book History")
     end
   end
 
@@ -212,12 +212,10 @@ RSpec.describe "schema statements" do
     end
 
     it "returns the temporal table with spaces or schema qualified" do
-      skip
-
-      conn.create_history_table_for(:authors, "history.authors_history")
+      conn.create_history_table_for(:authors, "myschema.authors_history")
       conn.create_history_table_for(:books, "Book History")
 
-      expect(conn.temporal_table_for("history.authors_history")).to eq("authors")
+      expect(conn.temporal_table_for("myschema.authors_history")).to eq("authors")
       expect(conn.temporal_table_for("Book History")).to eq("books")
     end
   end

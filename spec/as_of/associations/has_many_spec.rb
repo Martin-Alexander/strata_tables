@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe "has many" do
   before do
     model "Author", as_of: true do
-      has_many :books, temporal_association_scope, primary_key: :b_id
+      has_many :books, temporal_association_scope
     end
     model "Book", as_of: true
   end
@@ -24,17 +24,17 @@ RSpec.describe "has many" do
     build_records do
       {
         "Author" => {
-          author_1_v1: {b_id: 1, period: t+1...t+3},
-          author_1_v2: {b_id: 1, period: t+3...t+5},
-          author_1_v3: {b_id: 1, period: t+5...nil},
-          author_2_v1: {b_id: 2, period: t+2...t+4},
-          author_2_v2: {b_id: 2, period: t+4...t+6},
-          author_2_v3: {b_id: 2, period: t+6...nil}
+          author_1_v1: {id: 1, period: t+1...t+3},
+          author_1_v2: {id: 1, period: t+3...t+5},
+          author_1_v3: {id: 1, period: t+5...nil},
+          author_2_v1: {id: 2, period: t+2...t+4},
+          author_2_v2: {id: 2, period: t+4...t+6},
+          author_2_v3: {id: 2, period: t+6...nil}
         },
         "Book" => {
-          book_v1: {b_id: 1, author_id: 1, period: t+2...t+4},
-          book_v2: {b_id: 1, author_id: 1, period: t+4...t+7},
-          book_v3: {b_id: 1, author_id: 2, period: t+7...nil}
+          book_v1: {id: 1, author_id: 1, period: t+2...t+4},
+          book_v2: {id: 1, author_id: 1, period: t+4...t+7},
+          book_v3: {id: 1, author_id: 2, period: t+7...nil}
         }
       }
     end
@@ -104,11 +104,11 @@ RSpec.describe "has many" do
     build_records do
       {
         "Author" => {
-          author_1_v1: {b_id: 1, period: t+1...t+3},
-          author_1_v2: {b_id: 1, period: t+3...nil}
+          author_1_v1: {id: 1, period: t+1...t+3},
+          author_1_v2: {id: 1, period: t+3...nil}
         },
         "Book" => {
-          foo: {b_id: 1, author_id: 1}
+          foo: {id: 1, author_id: 1}
         }
       }
     end
@@ -156,13 +156,13 @@ RSpec.describe "has many" do
     build_records do
       {
         "Author" => {
-          author_bob: {b_id: 1},
-          author_sam: {b_id: 2}
+          author_bob: {id: 1},
+          author_sam: {id: 2}
         },
         "Book" => {
-          book_v1: {b_id: 1, author_id: 1, period: t+1...t+2},
-          book_v2: {b_id: 1, author_id: 1, period: t+2...t+3},
-          book_v3: {b_id: 1, author_id: 2, period: t+3...nil}
+          book_v1: {id: 1, author_id: 1, period: t+1...t+2},
+          book_v2: {id: 1, author_id: 1, period: t+2...t+3},
+          book_v3: {id: 1, author_id: 2, period: t+3...nil}
         }
       }
     end

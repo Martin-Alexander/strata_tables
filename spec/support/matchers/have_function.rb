@@ -1,8 +1,8 @@
 require "rspec/expectations"
 
 RSpec::Matchers.define :have_function do |name|
-  match do |conn|
-    expect(conn.function_exists?(name)).to be(true)
+  match do |connection|
+    expect(connection.function_exists?(name)).to be(true)
   end
 end
 

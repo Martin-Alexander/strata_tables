@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
+RSpec.describe "schema statements" do
   before do
     conn.create_table :authors do |t|
       t.string :name
@@ -22,7 +22,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
   describe "#create_strata_metadata_table" do
     it do
-      expect(conn.table(:strata_metadata))
+      expect(spec_conn.table(:strata_metadata))
         .to be_present
         .and have_column(:history_table, :string)
         .and have_column(:temporal_table, :string)
@@ -36,8 +36,8 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       conn.create_history_table_for(:books)
 
-      expect(conn).to have_table(:books_history)
-      expect(conn.table(:books_history))
+      expect(spec_conn).to have_table(:books_history)
+      expect(spec_conn.table(:books_history))
         .to be_history_table_for(:books)
         .and have_column(:id, :integer)
         .and have_column(:title, :string, null: false, limit: 100)
@@ -46,27 +46,27 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and have_column(:pages, :integer, comment: "Number of pages")
         .and have_column(:published_at, :date)
         .and have_column(:author_id, :integer)
-        .and have_exclusion_constraint("id WITH =, sys_period WITH &&", {using: :gist})
-      expect(conn.history_table_for(:books)).to eq("books_history")
+        .and have_exclusion_constraint("id WITH =, system_period WITH &&", {using: :gist})
+      expect(spec_conn.history_table_for(:books)).to eq("books_history")
     end
 
     it "creates a history table with a given name" do
       conn.create_history_table_for(:books, :book_history)
 
-      expect(conn.table(:book_history)).to be_history_table_for(:books)
+      expect(spec_conn.table(:book_history)).to be_history_table_for(:books)
       expect(conn.history_table_for(:books)).to eq("book_history")
     end
 
     it "skips the exclusion constraint if btree_gist is not enabled" do
       conn.create_history_table_for(:books)
 
-      expect(conn.table(:books_history)).to_not have_exclusion_constraint
+      expect(spec_conn.table(:books_history)).to_not have_exclusion_constraint
     end
 
     it "skips columns includedsx in 'except'" do
       conn.create_history_table_for(:books, except: [:title, :price, :summary])
 
-      table = conn.table(:books_history)
+      table = spec_conn.table(:books_history)
 
       expect(table).to be_history_table_for(:books)
       expect(table)
@@ -86,19 +86,30 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
     describe "with copy_data option" do
       before do
-        stub_const("ApplicationRecord", Class.new(ActiveRecord::Base) do
-          self.abstract_class = true
-          include StrataTables::Model
+        stub_const("Version", Module.new do
+          include StrataTables::SystemVersioningNamespace
         end)
-        stub_const("Author", Class.new(ApplicationRecord))
-        stub_const("Book", Class.new(ApplicationRecord))
+
+        model "ApplicationRecord" do
+          self.abstract_class = true
+
+          include StrataTables::SystemVersioning
+
+          system_versioning
+        end
+        model "Author", ApplicationRecord
+        model "Book", ApplicationRecord
 
         bob = Author.create!(name: "Bob")
 
         Book.create!(title: "Calliou", price: 1000, pages: 10, author_id: bob.id)
         Book.create!(title: "Calliou 2", price: 500, pages: 10, author_id: bob.id)
 
-        t_0
+        after_create_time
+      end
+
+      let(:after_create_time) do
+        Time.current
       end
 
       it "copies data" do
@@ -107,13 +118,13 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         conn.create_history_table_for(:authors)
         conn.create_history_table_for(:books, copy_data: true)
 
-        expect(Author.version.count).to eq(0)
-        expect(Book.version.count).to eq(2)
-        expect(Book.version.all.as_of(t_0).count).to eq(2)
-        expect(Book.version.all.as_of(now).count).to eq(2)
+        expect(Version::Author.count).to eq(0)
+        expect(Version::Book.count).to eq(2)
+        expect(Version::Book.all.as_of(after_create_time).count).to eq(2)
+        expect(Version::Book.all.as_of(Time.current).count).to eq(2)
       end
 
-      it "sets sys_period when epoch is provided" do
+      it "sets system_period when epoch is provided" do
         epoch_time = Time.parse("1999-01-01")
 
         conn.enable_extension(:btree_gist)
@@ -121,11 +132,11 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         conn.create_history_table_for(:authors)
         conn.create_history_table_for(:books, copy_data: {epoch_time: epoch_time})
 
-        expect(Author.version.count).to eq(0)
-        expect(Book.version.count).to eq(2)
-        expect(Book.version.all.as_of(t_1).count).to eq(2)
-        expect(Book.version.all.as_of(now).count).to eq(2)
-        expect(Book.version.all.as_of(epoch_time - 1.day).count).to eq(0)
+        expect(Version::Author.count).to eq(0)
+        expect(Version::Book.count).to eq(2)
+        expect(Version::Book.all.as_of(after_create_time).count).to eq(2)
+        expect(Version::Book.all.as_of(Time.current).count).to eq(2)
+        expect(Version::Book.all.as_of(epoch_time - 1.day).count).to eq(0)
       end
     end
   end
@@ -136,8 +147,8 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       conn.drop_history_table_for(:books)
 
-      history_table = conn.table(:books_history)
-      original_table = conn.table(:books)
+      history_table = spec_conn.table(:books_history)
+      original_table = spec_conn.table(:books)
 
       expect(history_table).to be_nil
       expect(original_table).to be_present
@@ -147,12 +158,12 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
         .and not_have_trigger(:on_update_strata_trigger)
         .and not_have_trigger(:on_delete_strata_trigger)
 
-      expect(conn)
+      expect(spec_conn)
         .to not_have_function(:books_history_insert)
         .and not_have_function(:books_history_update)
         .and not_have_function(:books_history_delete)
 
-      expect(conn.history_table_for(:books)).to be_nil
+      expect(spec_conn.history_table_for(:books)).to be_nil
     end
 
     it "drops the temporal table's history table with a given name" do
@@ -160,12 +171,12 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
 
       conn.drop_history_table_for(:books)
 
-      history_table = conn.table(:book_history)
-      original_table = conn.table(:books)
+      history_table = spec_conn.table(:book_history)
+      original_table = spec_conn.table(:books)
 
       expect(history_table).to be_nil
       expect(original_table).to be_present
-      expect(conn.history_table_for(:books)).to be_nil
+      expect(spec_conn.history_table_for(:books)).to be_nil
     end
   end
 

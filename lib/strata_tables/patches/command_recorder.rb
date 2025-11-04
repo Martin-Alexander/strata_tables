@@ -1,5 +1,5 @@
 module StrataTables
-  module Migration
+  module Patches
     module CommandRecorder
       {
         create_history_table_for: :drop_history_table_for

@@ -1,35 +1,35 @@
-module StrataTables
-  PlPgsqlFunction = Struct.new(:name, :body)
+module StrataTablesTest
+  class SpecConnectionAdapter < ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
+    PlPgsqlFunction = Struct.new(:name, :body)
 
-  class TableWrapper
-    delegate :inspect, :to_s, to: :table_name
+    class TableWrapper
+      delegate :inspect, :to_s, to: :table_name
 
-    attr_reader :conn, :table_name
+      attr_reader :conn, :table_name
 
-    def initialize(conn, table_name)
-      @conn = conn
-      @table_name = table_name
+      def initialize(conn, table_name)
+        @conn = conn
+        @table_name = table_name
+      end
+
+      def respond_to_missing?(method_name, ...)
+        table_method?(method_name)
+      end
+
+      def method_missing(method_name, *args, **kwargs, &block)
+        super unless table_method?(method_name)
+
+        conn.send(method_name, *([table_name] + args), **kwargs, &block)
+      end
+
+      private
+
+      def table_method?(method_name)
+        conn.respond_to?(method_name) &&
+          conn.method(method_name).parameters.dig(0, 1) == :table_name
+      end
     end
 
-    def respond_to_missing?(method_name, ...)
-      table_method?(method_name)
-    end
-
-    def method_missing(method_name, *args, **kwargs, &block)
-      super unless table_method?(method_name)
-
-      conn.send(method_name, *([table_name] + args), **kwargs, &block)
-    end
-
-    private
-
-    def table_method?(method_name)
-      conn.respond_to?(method_name) &&
-        conn.method(method_name).parameters.dig(0, 1) == :table_name
-    end
-  end
-
-  module ConnectionExtensions
     def table(table_name)
       TableWrapper.new(self, table_name) if table_exists?(table_name)
     end

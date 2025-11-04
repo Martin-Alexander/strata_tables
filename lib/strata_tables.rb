@@ -2,29 +2,46 @@ require "active_support"
 
 require_relative "strata_tables/as_of"
 require_relative "strata_tables/as_of_registry"
-require_relative "strata_tables/associations/preloader/through_association"
 require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"
-require_relative "strata_tables/connection_adapters/schema_statements"
-require_relative "strata_tables/migration/command_recorder"
-require_relative "strata_tables/model"
-require_relative "strata_tables/reflection/association_reflection"
-require_relative "strata_tables/relation"
-require_relative "strata_tables/relation/merger"
-require_relative "strata_tables/version_model"
+require_relative "strata_tables/patches/association_reflection"
+require_relative "strata_tables/patches/command_recorder"
+require_relative "strata_tables/patches/join_dependency"
+require_relative "strata_tables/patches/merger"
+require_relative "strata_tables/patches/relation"
+require_relative "strata_tables/patches/schema_statements"
+require_relative "strata_tables/patches/through_association"
+require_relative "strata_tables/system_versioning"
 
 ActiveSupport.on_load(:active_record) do
-  begin
-    require "active_record/connection_adapters/postgresql_adapter"
-  rescue LoadError
-  end
-
-  if defined? ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
-    ActiveRecord::Associations::Preloader::ThroughAssociation.prepend StrataTables::Associations::Preloader::ThroughAssociation
-    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include StrataTables::ConnectionAdapters::SchemaStatements
-    ActiveRecord::Migration::CommandRecorder.include StrataTables::Migration::CommandRecorder
-    ActiveRecord::Reflection::AssociationReflection.prepend StrataTables::Reflection::AssociationReflection
-    ActiveRecord::Relation.prepend StrataTables::Relation
-    ActiveRecord::Relation::Merger.prepend StrataTables::Relation::Merger
-  end
+  [
+    [
+      ActiveRecord::Associations::Preloader::ThroughAssociation,
+      StrataTables::Patches::ThroughAssociation
+    ],
+    [
+      ActiveRecord::ConnectionAdapters::PostgreSQLAdapter,
+      StrataTables::Patches::SchemaStatements
+    ],
+    [
+      ActiveRecord::Migration::CommandRecorder,
+      StrataTables::Patches::CommandRecorder
+    ],
+    [
+      ActiveRecord::Reflection::AssociationReflection,
+      StrataTables::Patches::AssociationReflection
+    ],
+    [
+      ActiveRecord::Relation,
+      StrataTables::Patches::Relation
+    ],
+    [
+      ActiveRecord::Relation::Merger,
+      StrataTables::Patches::Merger
+    ],
+    [
+      ActiveRecord::Associations::JoinDependency,
+      StrataTables::Patches::JoinDependency
+    ]
+  ].each { |(base, patch)| base.prepend(patch) }
 end

@@ -1,5 +1,5 @@
 module StrataTables
-  module Relation
+  module Patches
     module Merger
       def merge
         super.tap do |relation|

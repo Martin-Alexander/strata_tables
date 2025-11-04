@@ -6,7 +6,7 @@ RSpec.describe "belongs to" do
   before do
     model "Author", as_of: true
     model "Book", as_of: true do
-      belongs_to :author, temporal_association_scope, primary_key: :b_id
+      belongs_to :author, temporal_association_scope
     end
   end
 
@@ -24,16 +24,16 @@ RSpec.describe "belongs to" do
     build_records do
       {
         "Book" => {
-          book_1_v1: {b_id: 100, author_id: nil, period: t+1...t+3},
-          book_1_v2: {b_id: 100, author_id: 100, period: t+3...t+5},
-          book_2_v1: {b_id: 200, author_id: 200, period: t+4...t+6},
-          book_2_v2: {b_id: 200, author_id: 200, period: t+6...nil}
+          book_1_v1: {id: 100, author_id: nil, period: t+1...t+3},
+          book_1_v2: {id: 100, author_id: 100, period: t+3...t+5},
+          book_2_v1: {id: 200, author_id: 200, period: t+4...t+6},
+          book_2_v2: {id: 200, author_id: 200, period: t+6...nil}
         },
         "Author" => {
-          author_1_v1: {b_id: 100, period: t+2...nil},
-          author_2_v1: {b_id: 200, period: t+2...t+4},
-          author_2_v2: {b_id: 200, period: t+4...t+6},
-          author_2_v3: {b_id: 200, period: t+6...nil}
+          author_1_v1: {id: 100, period: t+2...nil},
+          author_2_v1: {id: 200, period: t+2...t+4},
+          author_2_v2: {id: 200, period: t+4...t+6},
+          author_2_v3: {id: 200, period: t+6...nil}
         }
       }
     end
@@ -93,14 +93,14 @@ RSpec.describe "belongs to" do
     build_records do
       {
         "Book" => {
-          book_1_v1: {b_id: 100, author_id: nil, period: t+1...t+3},
-          book_1_v2: {b_id: 100, author_id: 100, period: t+3...t+5},
-          book_2_v1: {b_id: 200, author_id: 200, period: t+4...t+6},
-          book_2_v2: {b_id: 200, author_id: 200, period: t+6...nil}
+          book_1_v1: {id: 100, author_id: nil, period: t+1...t+3},
+          book_1_v2: {id: 100, author_id: 100, period: t+3...t+5},
+          book_2_v1: {id: 200, author_id: 200, period: t+4...t+6},
+          book_2_v2: {id: 200, author_id: 200, period: t+6...nil}
         },
         "Author" => {
-          author_1: {b_id: 100},
-          author_2: {b_id: 200}
+          author_1: {id: 100},
+          author_2: {id: 200}
         }
       }
     end
@@ -160,14 +160,14 @@ RSpec.describe "belongs to" do
     build_records do
       {
         "Book" => {
-          book_1: {b_id: 100, author_id: nil},
-          book_2: {b_id: 200, author_id: 200}
+          book_1: {id: 100, author_id: nil},
+          book_2: {id: 200, author_id: 200}
         },
         "Author" => {
-          author_1_v1: {b_id: 100, period: t+2...nil},
-          author_2_v1: {b_id: 200, period: t+2...t+4},
-          author_2_v2: {b_id: 200, period: t+4...t+6},
-          author_2_v3: {b_id: 200, period: t+6...nil}
+          author_1_v1: {id: 100, period: t+2...nil},
+          author_2_v1: {id: 200, period: t+2...t+4},
+          author_2_v2: {id: 200, period: t+4...t+6},
+          author_2_v3: {id: 200, period: t+6...nil}
         }
       }
     end

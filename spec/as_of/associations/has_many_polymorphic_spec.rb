@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe "has many polymorphic" do
   before do
     model "Author", as_of: true do
-      has_many :pics, temporal_association_scope, as: :picable, primary_key: :b_id
+      has_many :pics, temporal_association_scope, as: :picable
     end
     model "Pic", as_of: true do
       belongs_to :picable, temporal_association_scope, polymorphic: true
@@ -27,17 +27,17 @@ RSpec.describe "has many polymorphic" do
     build_records do
       {
         "Author" => {
-          author_1_v1: {b_id: 1, period: t+1...t+3},
-          author_1_v2: {b_id: 1, period: t+3...t+5},
-          author_1_v3: {b_id: 1, period: t+5...nil},
-          author_2_v1: {b_id: 2, period: t+2...t+4},
-          author_2_v2: {b_id: 2, period: t+4...t+6},
-          author_2_v3: {b_id: 2, period: t+6...nil}
+          author_1_v1: {id: 1, period: t+1...t+3},
+          author_1_v2: {id: 1, period: t+3...t+5},
+          author_1_v3: {id: 1, period: t+5...nil},
+          author_2_v1: {id: 2, period: t+2...t+4},
+          author_2_v2: {id: 2, period: t+4...t+6},
+          author_2_v3: {id: 2, period: t+6...nil}
         },
         "Pic" => {
-          pic_v1: {b_id: 1, picable_type: "Author", picable_id: 1, period: t+2...t+4},
-          pic_v2: {b_id: 1, picable_type: "Author", picable_id: 1, period: t+4...t+7},
-          pic_v3: {b_id: 1, picable_type: "Author", picable_id: 2, period: t+7...nil}
+          pic_v1: {id: 1, picable_type: "Author", picable_id: 1, period: t+2...t+4},
+          pic_v2: {id: 1, picable_type: "Author", picable_id: 1, period: t+4...t+7},
+          pic_v3: {id: 1, picable_type: "Author", picable_id: 2, period: t+7...nil}
         }
       }
     end
@@ -108,11 +108,11 @@ RSpec.describe "has many polymorphic" do
     build_records do
       {
         "Author" => {
-          author_1_v1: {b_id: 1, period: t+1...t+3},
-          author_1_v2: {b_id: 1, period: t+3...nil}
+          author_1_v1: {id: 1, period: t+1...t+3},
+          author_1_v2: {id: 1, period: t+3...nil}
         },
         "Pic" => {
-          pic_1: {b_id: 1, picable_type: "Author", picable_id: 1}
+          pic_1: {id: 1, picable_type: "Author", picable_id: 1}
         }
       }
     end
@@ -161,13 +161,13 @@ RSpec.describe "has many polymorphic" do
     build_records do
       {
         "Author" => {
-          author_bob: {b_id: 1},
-          author_sam: {b_id: 2}
+          author_bob: {id: 1},
+          author_sam: {id: 2}
         },
         "Pic" => {
-          pic_v1: {b_id: 1, picable_type: "Author", picable_id: 1, period: t+1...t+2},
-          pic_v2: {b_id: 1, picable_type: "Author", picable_id: 1, period: t+2...t+3},
-          pic_v3: {b_id: 1, picable_type: "Author", picable_id: 2, period: t+3...nil}
+          pic_v1: {id: 1, picable_type: "Author", picable_id: 1, period: t+1...t+2},
+          pic_v2: {id: 1, picable_type: "Author", picable_id: 1, period: t+2...t+3},
+          pic_v3: {id: 1, picable_type: "Author", picable_id: 2, period: t+3...nil}
         }
       }
     end

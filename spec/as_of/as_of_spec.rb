@@ -16,7 +16,7 @@ RSpec.describe "version model" do
     end
 
     model "Author", as_of: true do
-      has_many :books, temporal_association_scope, primary_key: :b_id
+      has_many :books, temporal_association_scope
     end
     model "Book", as_of: true
     model "Library", as_of: true
@@ -29,22 +29,22 @@ RSpec.describe "version model" do
   build_records do
     {
       "Author" => {
-        author_bob_v1: {b_id: 1, name: "Bob", period: t+1...t+3},
-        author_bob_v2: {b_id: 1, name: "Bob", period: t+3...t+5},
-        author_bob_v3: {b_id: 1, name: "Bob", period: t+5...nil},
-        author_sam_v1: {b_id: 2, name: "Sam", period: t+2...t+4},
-        author_sam_v2: {b_id: 2, name: "Sam", period: t+4...t+6},
-        author_sam_v3: {b_id: 2, name: "Sam", period: t+6...nil}
+        author_bob_v1: {id: 1, name: "Bob", period: t+1...t+3},
+        author_bob_v2: {id: 1, name: "Bob", period: t+3...t+5},
+        author_bob_v3: {id: 1, name: "Bob", period: t+5...nil},
+        author_sam_v1: {id: 2, name: "Sam", period: t+2...t+4},
+        author_sam_v2: {id: 2, name: "Sam", period: t+4...t+6},
+        author_sam_v3: {id: 2, name: "Sam", period: t+6...nil}
       },
       "Book" => {
-        foo_v1: {b_id: 1, name: "Foo old", author_id: 1, period: t+2...t+4},
-        foo_v2: {b_id: 1, name: "Foo new", author_id: 1, period: t+4...t+7},
-        foo_v3: {b_id: 1, name: "Foo new", author_id: 2, period: t+7...nil}
+        foo_v1: {id: 1, name: "Foo old", author_id: 1, period: t+2...t+4},
+        foo_v2: {id: 1, name: "Foo new", author_id: 1, period: t+4...t+7},
+        foo_v3: {id: 1, name: "Foo new", author_id: 2, period: t+7...nil}
       },
       "Library" => {
         author_bob: {name: "Bob"},
         author_sam: {name: "Sam"}
-      },
+      }
     }
   end
 
@@ -216,8 +216,7 @@ RSpec.describe "version model" do
       before do
         Author.class_eval do
           has_many :books,
-            temporal_association_scope { where(name: "Foo old") },
-            primary_key: :b_id
+            temporal_association_scope { where(name: "Foo old") }
         end
       end
 
@@ -280,9 +279,7 @@ RSpec.describe "version model" do
           has_many :books,
             temporal_association_scope { |owner|
               (owner.name == "Bob") ? where(name: "Foo new") : none
-            },
-            primary_key: :b_id,
-            foreign_key: :author_id
+            }
         end
       end
 

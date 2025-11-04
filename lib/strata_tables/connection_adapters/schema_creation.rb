@@ -26,7 +26,7 @@ module StrataTables
         <<~SQL
           CREATE OR REPLACE FUNCTION #{function_name}() RETURNS TRIGGER AS $$
             BEGIN
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, sys_period)
+              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, system_period)
               VALUES (#{values}, tstzrange(now(), 'infinity'));
 
               RETURN NULL;
@@ -51,12 +51,12 @@ module StrataTables
               END IF;
 
               UPDATE #{quote_table_name(o.history_table)}
-              SET sys_period = tstzrange(lower(sys_period), now())
+              SET system_period = tstzrange(lower(system_period), now())
               WHERE
                 id = OLD.id AND
-                upper(sys_period) = 'infinity';
+                upper(system_period) = 'infinity';
 
-              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, sys_period)
+              INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, system_period)
               VALUES (#{values}, tstzrange(now(), 'infinity'));
 
               RETURN NULL;
@@ -75,10 +75,10 @@ module StrataTables
           CREATE OR REPLACE FUNCTION #{function_name}() RETURNS TRIGGER AS $$
             BEGIN
               UPDATE #{quote_table_name(o.history_table)}
-              SET sys_period = tstzrange(lower(sys_period), now())
+              SET system_period = tstzrange(lower(system_period), now())
               WHERE
                 id = OLD.id AND
-                upper(sys_period) = 'infinity';
+                upper(system_period) = 'infinity';
 
               RETURN NULL;
             END;

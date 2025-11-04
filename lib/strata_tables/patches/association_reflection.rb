@@ -1,5 +1,5 @@
 module StrataTables
-  module Reflection
+  module Patches
     module AssociationReflection
       def check_eager_loadable!
         super unless as_of_scope? && scope_requires_no_params?

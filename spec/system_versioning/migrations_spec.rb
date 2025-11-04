@@ -39,7 +39,7 @@ RSpec.describe "migrations" do
     it "'up' creates history table" do
       migration.migrate(:up)
 
-      books_history_table = conn.table(:books_history)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_present
       expect(books_history_table).to be_history_table_for(:books)
@@ -49,15 +49,15 @@ RSpec.describe "migrations" do
       migration.migrate(:up)
       migration.migrate(:down)
 
-      books_table = conn.table(:books)
-      books_history_table = conn.table(:books_history)
+      books_table = spec_conn.table(:books)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_nil
       expect(books_table)
         .to not_have_trigger(:on_insert_strata_trigger)
         .and not_have_trigger(:on_update_strata_trigger)
         .and not_have_trigger(:on_delete_strata_trigger)
-      expect(conn)
+      expect(spec_conn)
         .to not_have_function(:books_history_insert)
         .and not_have_function(:books_history_update)
         .and not_have_function(:books_history_delete)
@@ -72,7 +72,7 @@ RSpec.describe "migrations" do
     it "'up' creates history table" do
       migration.migrate(:up)
 
-      books_history_table = conn.table(:books_history)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_present
       expect(books_history_table)
@@ -85,15 +85,15 @@ RSpec.describe "migrations" do
       migration.migrate(:up)
       migration.migrate(:down)
 
-      books_table = conn.table(:books)
-      books_history_table = conn.table(:books_history)
+      books_table = spec_conn.table(:books)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_nil
       expect(books_table)
         .to not_have_trigger(:on_insert_strata_trigger)
         .and not_have_trigger(:on_update_strata_trigger)
         .and not_have_trigger(:on_delete_strata_trigger)
-      expect(conn)
+      expect(spec_conn)
         .to not_have_function(:books_history_insert)
         .and not_have_function(:books_history_update)
         .and not_have_function(:books_history_delete)
@@ -112,15 +112,15 @@ RSpec.describe "migrations" do
     it "'up' drops history table" do
       migration.migrate(:up)
 
-      books_table = conn.table(:books)
-      books_history_table = conn.table(:books_history)
+      books_table = spec_conn.table(:books)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_nil
       expect(books_table)
         .to not_have_trigger(:on_insert_strata_trigger)
         .and not_have_trigger(:on_update_strata_trigger)
         .and not_have_trigger(:on_delete_strata_trigger)
-      expect(conn)
+      expect(spec_conn)
         .to not_have_function(:books_history_insert)
         .and not_have_function(:books_history_update)
         .and not_have_function(:books_history_delete)
@@ -130,7 +130,7 @@ RSpec.describe "migrations" do
       migration.migrate(:up)
       migration.migrate(:down)
 
-      books_history_table = conn.table(:books_history)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_present
       expect(books_history_table).to be_history_table_for(:books)
@@ -149,14 +149,14 @@ RSpec.describe "migrations" do
     it "'up' drops history table" do
       migration.migrate(:up)
 
-      expect(conn.table(:books_history)).to be_nil
+      expect(spec_conn.table(:books_history)).to be_nil
     end
 
     it "'down' creates history table" do
       migration.migrate(:up)
       migration.migrate(:down)
 
-      books_history_table = conn.table(:books_history)
+      books_history_table = spec_conn.table(:books_history)
 
       expect(books_history_table).to be_present
       expect(books_history_table).to be_history_table_for(:books)
@@ -179,14 +179,14 @@ RSpec.describe "migrations" do
     it "'up' drops history table" do
       migration.migrate(:up)
 
-      expect(conn.table(:book_history)).to be_nil
+      expect(spec_conn.table(:book_history)).to be_nil
     end
 
     it "'down' creates history table" do
       migration.migrate(:up)
       migration.migrate(:down)
 
-      book_history_table = conn.table(:book_history)
+      book_history_table = spec_conn.table(:book_history)
 
       expect(book_history_table).to be_present
       expect(book_history_table).to be_history_table_for(:books)

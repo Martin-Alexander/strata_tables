@@ -35,6 +35,8 @@ module StrataTables
       end
 
       def temporal_association_scope(&merge_scope)
+        as_of_attribute = @as_of_attribute
+
         scope = if merge_scope
           if merge_scope.arity == 0
             ->(owner = nil) do
@@ -101,7 +103,7 @@ module StrataTables
     end
 
     def as_of(time)
-      self.class.as_of(time).find_by(self.class.primary_key => id)
+      self.class.as_of(time).find_by(self.class.primary_key => [id])
     end
   end
 end

@@ -1,6 +1,8 @@
 module StrataTables
-  module ConnectionAdapters
+  module Patches
     module SchemaStatements
+      include ConnectionAdapters
+
       def create_strata_metadata_table
         create_table :strata_metadata, id: false do |t|
           t.primary_keys [:history_table]
@@ -18,7 +20,7 @@ module StrataTables
 
         history_table ||= "#{source_table}_history"
 
-        create_table history_table, primary_key: :version_id do |t|
+        create_table history_table, primary_key: [:id, :system_start] do |t|
           source_columns.each do |column|
             t.send(
               column.type,
@@ -33,10 +35,18 @@ module StrataTables
             )
           end
 
-          t.tstzrange :sys_period, null: false
+          t.tstzrange :system_period, null: false
+          t.virtual :system_start,
+            type: :timestamptz,
+            as: "lower(system_period)",
+            stored: true
+          t.virtual :system_end,
+            type: :timestamptz,
+            as: "upper(system_period)",
+            stored: true
 
           if extension_enabled?(:btree_gist)
-            t.exclusion_constraint("id WITH =, sys_period WITH &&", using: :gist)
+            t.exclusion_constraint("id WITH =, system_period WITH &&", using: :gist)
           end
         end
 
@@ -141,15 +151,15 @@ module StrataTables
       def copy_data(source_table, history_table, columns, options)
         fields = columns.map(&:name).join(", ")
 
-        sys_period_start = if options.is_a?(Hash) && options[:epoch_time]
+        system_period_start = if options.is_a?(Hash) && options[:epoch_time]
           "'#{options[:epoch_time].utc.iso8601}'"
         else
-          "NULL"
+          "'-infinity'"
         end
 
         execute(<<~SQL.squish)
-          INSERT INTO #{quote_table_name(history_table)} (#{fields}, sys_period)
-          SELECT #{fields}, tstzrange(#{sys_period_start}, NULL)
+          INSERT INTO #{quote_table_name(history_table)} (#{fields}, system_period)
+          SELECT #{fields}, tstzrange(#{system_period_start}, NULL)
           FROM #{quote_table_name(source_table)};
         SQL
       end

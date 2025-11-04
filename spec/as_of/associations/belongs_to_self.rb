@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe "belongs to self" do
   before do
     model "User", as_of: true do
-      belongs_to :fav, temporal_association_scope, class_name: "User", primary_key: :b_id
+      belongs_to :fav, temporal_association_scope, class_name: "User"
     end
   end
 
@@ -31,12 +31,12 @@ RSpec.describe "belongs to self" do
     build_records do
       {
         "User" => {
-          user_1_v1: {b_id: 100, fav_id: nil, period: t+2...t+4},
-          user_1_v2: {b_id: 100, fav_id: 200, period: t+4...t+6},
-          user_1_v3: {b_id: 100, fav_id: nil, period: t+6...nil},
-          user_2_v1: {b_id: 200, fav_id: nil, period: t+3...t+5},
-          user_2_v2: {b_id: 200, fav_id: nil, period: t+5...t+7},
-          user_2_v3: {b_id: 200, fav_id: 100, period: t+7...nil}
+          user_1_v1: {id: 100, fav_id: nil, period: t+2...t+4},
+          user_1_v2: {id: 100, fav_id: 200, period: t+4...t+6},
+          user_1_v3: {id: 100, fav_id: nil, period: t+6...nil},
+          user_2_v1: {id: 200, fav_id: nil, period: t+3...t+5},
+          user_2_v2: {id: 200, fav_id: nil, period: t+5...t+7},
+          user_2_v3: {id: 200, fav_id: 100, period: t+7...nil}
         }
       }
     end

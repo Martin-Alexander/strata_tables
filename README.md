@@ -32,7 +32,7 @@ class CreateHistoryTableForAuthorsAndBooks < ActiveRecord::Migration[8.0]
 end
 ```
 
-New history tables will have the same columns as their source table in addition to a `version_id` primary key and `sys_period` for tracking when the row was valid from a system perspective.
+New history tables will have the same columns as their source table in addition to a `version_id` primary key and `system_period` for tracking when the row was valid from a system perspective.
 
 For an existing `products` tables, the SQL produced will be roughly equivalent to:
 
@@ -43,18 +43,18 @@ CREATE TABLE products_history (
     name character varying,
     price integer,
     category_id bigint,
-    sys_period tstzrange NOT NULL
+    system_period tstzrange NOT NULL
 );
 
 ALTER TABLE ONLY products_history ADD CONSTRAINT excl_rails_42e30d1c5d EXCLUDE
-  USING gist (id WITH =, sys_period WITH &&);
+  USING gist (id WITH =, system_period WITH &&);
 ALTER TABLE ONLY products_history ADD CONSTRAINT products_history_pkey
   PRIMARY KEY (version_id);
 
 CREATE FUNCTION products_history_delete() RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
-    UPDATE "products_history" SET sys_period = tstzrange(lower(sys_period), now())
-    WHERE id = OLD.id AND upper_inf(sys_period);
+    UPDATE "products_history" SET system_period = tstzrange(lower(system_period), now())
+    WHERE id = OLD.id AND upper_inf(system_period);
 
     RETURN NULL;
   END;
@@ -62,7 +62,7 @@ $$;
 
 CREATE FUNCTION products_history_insert() RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
-    INSERT INTO "products_history" (id, name, price, category_id, sys_period)
+    INSERT INTO "products_history" (id, name, price, category_id, system_period)
     VALUES (NEW.id, NEW.name, NEW.price, NEW.category_id, tstzrange(now(), NULL));
 
     RETURN NULL;
@@ -75,10 +75,10 @@ CREATE FUNCTION products_history_update() RETURNS trigger LANGUAGE plpgsql AS $$
       RETURN NULL;
     END IF;
 
-    UPDATE "products_history" SET sys_period = tstzrange(lower(sys_period), now())
-    WHERE id = OLD.id AND upper_inf(sys_period);
+    UPDATE "products_history" SET system_period = tstzrange(lower(system_period), now())
+    WHERE id = OLD.id AND upper_inf(system_period);
 
-    INSERT INTO "products_history" (id, name, price, category_id, sys_period)
+    INSERT INTO "products_history" (id, name, price, category_id, system_period)
     VALUES (NEW.id, NEW.name, NEW.price, NEW.category_id, tstzrange(now(), NULL));
 
     RETURN NULL;
@@ -108,22 +108,22 @@ time = 1.day.ago
 # => 2025-10-13 19:00:00 UTC
 
 product = Product.as_of(time).where("price > 100").first
-# Product::Version Load (1.2ms)  SELECT "products_history".* FROM "products_history" WHERE ("products_history"."sys_period" @> $1::timestamptz) AND (price > 100) ORDER BY "products_history"."version_id" ASC LIMIT $2  [[nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
+# Product::Version Load (1.2ms)  SELECT "products_history".* FROM "products_history" WHERE ("products_history"."system_period" @> $1::timestamptz) AND (price > 100) ORDER BY "products_history"."version_id" ASC LIMIT $2  [[nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
 # => #<Product::Version
 #  version_id: 3,
 #  id: 3,
 #  name: "Zepbound",
 #  price: 349,
 #  category_id: 2,
-#  sys_period: 2025-10-13 18:24:39.807499 UTC...>
+#  system_period: 2025-10-13 18:24:39.807499 UTC...>
 
 product.category
-# Category::Version Load (0.5ms)  SELECT "categories_history".* FROM "categories_history" WHERE "categories_history"."id" = $1 AND ("categories_history"."sys_period" @> $2::timestamptz) LIMIT $3  [["id", 2], [nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
+# Category::Version Load (0.5ms)  SELECT "categories_history".* FROM "categories_history" WHERE "categories_history"."id" = $1 AND ("categories_history"."system_period" @> $2::timestamptz) LIMIT $3  [["id", 2], [nil, "2025-10-13 19:00:00"], ["LIMIT", 1]]
 # => #<Category::Version
 #  version_id: 2,
 #  id: 2,
 #  name: "Weight Loss",
-#  sys_period: 2025-10-13 18:24:39.807499 UTC...> 
+#  system_period: 2025-10-13 18:24:39.807499 UTC...> 
 ```
 
 ## Contributing

@@ -5,11 +5,11 @@ require "spec_helper"
 RSpec.describe "has many through" do
   before do
     model "Author", as_of: true do
-      has_many :books, temporal_association_scope, primary_key: :b_id
-      has_many :publishers, temporal_association_scope, through: :books, primary_key: :b_id
+      has_many :books, temporal_association_scope
+      has_many :publishers, temporal_association_scope, through: :books
     end
     model "Book", as_of: true do
-      belongs_to :publisher, temporal_association_scope, primary_key: :b_id
+      belongs_to :publisher, temporal_association_scope
     end
     model "Publisher", as_of: true
   end
@@ -30,18 +30,18 @@ RSpec.describe "has many through" do
     build_records do
       {
         "Author" => {
-          author_v1: {b_id: 100, period: t+1...t+4},
-          author_v2: {b_id: 100, period: t+4...nil}
+          author_v1: {id: 100, period: t+1...t+4},
+          author_v2: {id: 100, period: t+4...nil}
         },
         "Book" => {
-          book_1_v1: {b_id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
-          book_1_v2: {b_id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
-          book_2_v1: {b_id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
+          book_1_v1: {id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
+          book_1_v2: {id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
+          book_2_v1: {id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
         },
         "Publisher" => {
-          publisher_1_v1: {b_id: 100, period: t+1...t+4},
-          publisher_2_v1: {b_id: 101, period: t+3...t+5},
-          publisher_2_v2: {b_id: 101, period: t+5...nil}
+          publisher_1_v1: {id: 100, period: t+1...t+4},
+          publisher_2_v1: {id: 101, period: t+3...t+5},
+          publisher_2_v2: {id: 101, period: t+5...nil}
 
         }
       }
@@ -112,17 +112,16 @@ RSpec.describe "has many through" do
     build_records do
       {
         "Author" => {
-          author_v1: {b_id: 100, period: t+1...nil}
+          author_v1: {id: 100, period: t+1...nil}
         },
         "Book" => {
-          book_1: {b_id: 100, author_id: 100, publisher_id: 100},
-          book_2: {b_id: 101, author_id: 100, publisher_id: 101}
+          book_1: {id: 100, author_id: 100, publisher_id: 100},
+          book_2: {id: 101, author_id: 100, publisher_id: 101}
         },
         "Publisher" => {
-          publisher_1_v1: {b_id: 100, period: t+1...t+4},
-          publisher_2_v1: {b_id: 101, period: t+3...t+5},
-          publisher_2_v2: {b_id: 101, period: t+5...nil}
-
+          publisher_1_v1: {id: 100, period: t+1...t+4},
+          publisher_2_v1: {id: 101, period: t+3...t+5},
+          publisher_2_v2: {id: 101, period: t+5...nil}
         }
       }
     end
@@ -165,17 +164,16 @@ RSpec.describe "has many through" do
     build_records do
       {
         "Author" => {
-          author_v1: {b_id: 100, period: t+1...nil}
+          author_v1: {id: 100, period: t+1...nil}
         },
         "Book" => {
-          book_1_v1: {b_id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
-          book_1_v2: {b_id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
-          book_2_v1: {b_id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
+          book_1_v1: {id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
+          book_1_v2: {id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
+          book_2_v1: {id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
         },
         "Publisher" => {
-          publisher_1: {b_id: 100},
-          publisher_2: {b_id: 101}
-
+          publisher_1: {id: 100},
+          publisher_2: {id: 101}
         }
       }
     end
@@ -239,17 +237,17 @@ RSpec.describe "has many through" do
     build_records do
       {
         "Author" => {
-          author_1: {b_id: 100}
+          author_1: {id: 100}
         },
         "Book" => {
-          book_1_v1: {b_id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
-          book_1_v2: {b_id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
-          book_2_v1: {b_id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
+          book_1_v1: {id: 100, author_id: 100, publisher_id: 100, period: t+2...t+3},
+          book_1_v2: {id: 100, author_id: 100, publisher_id: 101, period: t+3...nil},
+          book_2_v1: {id: 101, author_id: 100, publisher_id: 101, period: t+4...nil}
         },
         "Publisher" => {
-          publisher_1_v1: {b_id: 100, period: t+1...t+4},
-          publisher_2_v1: {b_id: 101, period: t+3...t+5},
-          publisher_2_v2: {b_id: 101, period: t+5...nil}
+          publisher_1_v1: {id: 100, period: t+1...t+4},
+          publisher_2_v1: {id: 101, period: t+3...t+5},
+          publisher_2_v2: {id: 101, period: t+5...nil}
 
         }
       }

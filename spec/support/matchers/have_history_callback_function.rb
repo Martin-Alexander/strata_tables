@@ -4,7 +4,7 @@ RSpec::Matchers.define :have_history_callback_function do |verb|
   match do |table|
     function_name = table.history_callback_function_name(verb)
 
-    expect(conn).to have_function(function_name)
+    expect(table.conn).to have_function(function_name)
   end
 end
 

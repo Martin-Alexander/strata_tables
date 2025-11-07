@@ -2,17 +2,17 @@ module StrataTablesTest
   module Associations
     extend ActiveSupport::Concern
 
+    BASIS_TIME = Time.parse("2000-01-01")
+
     def build_matcher(node, &block)
       case node
       in [ActiveRecord::Base, Hash]
         build_matcher(node[0], &block).and(build_matcher(node[1], &block))
       in Hash
-        have_attributes(node.each do |key, value|
+        have_attributes(node.map do |key, value|
           [key, build_matcher(value, &block)]
         end.to_h)
       in Array
-        be_empty if node.empty?
-
         contain_exactly(*node.map { |child| build_matcher(child, &block) })
       else
         block.call(node)
@@ -21,13 +21,7 @@ module StrataTablesTest
 
     class_methods do
       def test_eager_loading(n_steps:, &block)
-        examples = n_steps.times.map do |step|
-          if step.zero?
-            [nil, "without as-of"]
-          else
-            [Time.parse("2000-01-01") + step, "as-of t+#{step}"]
-          end
-        end
+        examples, current_time = step_up_examples(n_steps)
 
         describe "temporal querying" do
           examples.each do |(time, name)|
@@ -36,76 +30,100 @@ module StrataTablesTest
 
               relation = instance_exec(&block)
 
-              as_of_relation = time ? relation.as_of(time) : relation
-
               matcher = build_matcher(records) { |record| eq(record) }
 
-              expect(as_of_relation.load).to matcher
+              if time
+                expect(relation.as_of(time)).to matcher
+              else
+                travel_to current_time do
+                  expect(relation).to matcher
+                end
+              end
             end
           end
         end
 
-        describe "tagging record and associations with as-of" do
+        describe "tags associations" do
           examples.each do |(time, name)|
             it name do
               records = timeline[time]
 
               relation = instance_exec(&block)
 
-              as_of_relation = time ? relation.as_of(time) : relation
-
               matcher = build_matcher(records) do |record|
-                have_attributes(period_as_of: time)
+                have_attributes(period_as_of: time) if record
               end
 
-              expect(as_of_relation.load).to matcher
+              if time
+                expect(relation.as_of(time)).to matcher
+              else
+                travel_to current_time do
+                  expect(relation).to matcher
+                end
+              end
             end
           end
         end
       end
 
-      def test_association_reader(n_steps:, &block)
-        examples = n_steps.times.map do |step|
-          if step.zero?
-            [nil, "without as-of"]
-          else
-            [Time.parse("2000-01-01") + step, "as-of t+#{step}"]
-          end
-        end
+      def test_association_reader(n_steps:)
+        examples, current_time = step_up_examples(n_steps)
 
         describe "temporal querying" do
           examples.each do |(time, name)|
             it name do
               records = timeline[time]
 
-              records.each do |ar_record, expected|
-                ar_record = time ? ar_record.as_of(time) : ar_record
+              records.each do |record, expected|
+                matcher = build_matcher(expected) { |record| eq(record) }
 
-                matcher = build_matcher(expected) { |ar_record| eq(ar_record) }
-
-                expect(ar_record).to matcher
+                if time
+                  expect(record.as_of(time)).to matcher
+                else
+                  travel_to current_time do
+                    expect(record).to matcher
+                  end
+                end
               end
             end
           end
         end
 
-        describe "tagging associated recorded" do
+        describe "tags associations" do
           examples.each do |(time, name)|
             it name do
               records = timeline[time]
 
-              records.each do |ar_record, expected|
-                ar_record = time ? ar_record.as_of(time) : ar_record
-
-                matcher = build_matcher(expected) do |ar_record|
-                  have_attributes(period_as_of: time)
+              records.each do |record, expected|
+                matcher = build_matcher(expected) do |record|
+                  have_attributes(period_as_of: time) if record
                 end
 
-                expect(ar_record).to matcher
+                if time
+                  expect(record.as_of(time)).to matcher
+                else
+                  travel_to current_time do
+                    expect(record).to matcher
+                  end
+                end
               end
             end
           end
         end
+      end
+
+      def step_up_examples(n_steps)
+        examples = n_steps.times.map do |step|
+          if step.zero?
+            [nil, "without as-of"]
+          else
+            [BASIS_TIME + step, "as-of t+#{step}"]
+          end
+        end
+
+        current_time = BASIS_TIME + n_steps
+
+        [examples, current_time]
       end
     end
   end

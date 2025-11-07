@@ -20,12 +20,6 @@ module StrataTables
           connection.column_exists?(table_name, as_of_attribute)
       end
 
-      def extant_constraint(table, attribute)
-        <<~SQL
-          upper("#{table.name}"."#{attribute}") = 'infinity' OR upper("#{table.name}"."#{attribute}") IS NULL
-        SQL
-      end
-
       def existed_at_constraint(table, time, attribute)
         time_f = time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N")
 
@@ -45,7 +39,7 @@ module StrataTables
               as_of_time = owner&.send("#{as_of_attribute}_as_of") ||
                 AsOfRegistry.timestamps[as_of_attribute]
 
-              as_of_time ? base_scope.as_of(as_of_time) : base_scope.extant
+              as_of_time ? base_scope.as_of(as_of_time) : base_scope.existed_at(Time.current)
             end
           else
             ->(owner) do
@@ -54,7 +48,7 @@ module StrataTables
               as_of_time = owner&.send("#{as_of_attribute}_as_of") ||
                 AsOfRegistry.timestamps[as_of_attribute]
 
-              as_of_time ? base_scope.as_of(as_of_time) : base_scope.extant
+              as_of_time ? base_scope.as_of(as_of_time) : base_scope.existed_at(Time.current)
             end
           end
         else
@@ -62,7 +56,7 @@ module StrataTables
             as_of_time = owner&.send("#{as_of_attribute}_as_of") ||
               AsOfRegistry.timestamps[as_of_attribute]
 
-            as_of_time ? as_of(as_of_time) : extant
+            as_of_time ? as_of(as_of_time) : existed_at(Time.current)
           end
         end
 
@@ -81,12 +75,6 @@ module StrataTables
         return unless as_of_column_exists?
 
         where(existed_at_constraint(table, time, as_of_attribute))
-      end
-
-      scope :extant, -> do
-        return unless as_of_column_exists?
-
-        where(extant_constraint(table, as_of_attribute))
       end
     end
 

@@ -48,6 +48,11 @@ RSpec.describe "version model" do
     }
   end
 
+  it "does not temporally scope by default" do
+    expect(Author.all.size).to eq(6)
+    expect(Author.count).to eq(6)
+  end
+
   describe "::existed_at" do
     it "scopes to records existing as of given time" do
       expect(Author.existed_at(t+3))
@@ -62,19 +67,6 @@ RSpec.describe "version model" do
       it "does not scope" do
         expect(Library.existed_at(t+3)).to eq(Library.all)
         expect(Library.existed_at(t+99)).to eq(Library.all)
-      end
-    end
-  end
-
-  describe "::extant" do
-    it "scopes to existing records " do
-      expect(Author.extant)
-        .to contain_exactly(author_bob_v3, author_sam_v3)
-    end
-
-    context "when column does not exist" do
-      it "does not scope" do
-        expect(Library.extant).to eq(Library.all)
       end
     end
   end

@@ -14,6 +14,8 @@ require_relative "strata_tables/patches/through_association"
 require_relative "strata_tables/system_versioning"
 
 ActiveSupport.on_load(:active_record) do
+  require "active_record/connection_adapters/postgresql_adapter" # TODO: add test
+
   [
     [
       ActiveRecord::Associations::Preloader::ThroughAssociation,

@@ -89,10 +89,12 @@ module StrataTables
       end
 
       def initialize_as_of_timestamps(record)
-        as_of_timestamp_values.each do |attribute, value|
-          method_name = "#{attribute}_as_of="
+        return unless record.respond_to?(:temporal_query_tags)
 
-          record.send(method_name, value) if record.respond_to?(method_name)
+        record.temporal_query_tags = {}
+
+        as_of_timestamp_values.each do |temporal_query, value|
+          record.temporal_query_tags[temporal_query] = value
         end
       end
     end

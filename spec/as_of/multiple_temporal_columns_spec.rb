@@ -1,0 +1,140 @@
+require "spec_helper"
+
+RSpec.describe "multiple columns spec" do
+  before do
+    table :employees, primary_key: [:id, :rev, :sys_period] do |t|
+      t.bigint :id
+      t.bigint :rev
+      t.tstzrange :validity
+      t.tstzrange :sys_period
+      t.integer :salary
+      t.references :org
+    end
+    table :orgs, primary_key: [:id, :rev, :sys_period] do |t|
+      t.bigint :id
+      t.bigserial :rev
+      t.tstzrange :validity
+      t.tstzrange :sys_period
+    end
+
+    model "Employee" do
+      include StrataTables::AsOf
+
+      belongs_to :org, temporal_association_scope
+    end
+
+    model "Org" do
+      include StrataTables::AsOf
+
+      has_many :employees, temporal_association_scope
+    end
+  end
+
+  after { drop_all_tables }
+
+  t = Time.utc(2000)
+
+  build_records do
+    {
+      "Org" => {
+        org: {id: 1, rev: 1, validity: t+0...nil, sys_period: t+0...},
+      },
+      "Employee" => {
+        employee_av1_sv1: {id: 1, rev: 1, org_id: 1, salary: nil, validity: t+1...nil, sys_period: t+0...t+1},
+        employee_av1_sv2: {id: 1, rev: 1, org_id: 1, salary: nil, validity: t+1...t+2, sys_period: t+1...t+3},
+        employee_av2_sv1: {id: 1, rev: 2, org_id: 1, salary: 150, validity: t+2...nil, sys_period: t+1...t+2},
+        employee_av2_sv2: {id: 1, rev: 2, org_id: 1, salary: 110, validity: t+2...nil, sys_period: t+2...t+3},
+        employee_av1_sv3: {id: 1, rev: 1, org_id: 1, salary: nil, validity: t+1...t+3, sys_period: t+3...nil},
+        employee_av2_sv3: {id: 1, rev: 2, org_id: 1, salary: 110, validity: t+3...nil, sys_period: t+3...nil},
+      }
+    }
+  end
+
+  it "temporal queries are applied" do
+    expect(Employee.as_of(validity: t+1))
+      .to contain_exactly(employee_av1_sv1, employee_av1_sv2, employee_av1_sv3)
+    expect(Employee.as_of(sys_period: t+1))
+      .to contain_exactly(employee_av1_sv2, employee_av2_sv1)
+    expect(Employee.as_of(validity: t+1, sys_period: t+1))
+      .to contain_exactly(employee_av1_sv2)
+  end
+
+  it "tags are applied" do
+    expected_tags = {temporal_query_tags: {validity: t+1, sys_period: t+1}}
+
+    expect(Employee.as_of(validity: t+1, sys_period: t+1))
+      .to all(have_attributes(expected_tags))
+  end
+
+  it "temporal queries are applied through associations" do
+    expect(Org.as_of(validity: t+1, sys_period: t+1).first.employees)
+      .to contain_exactly(employee_av1_sv2)
+  end
+
+  it "tags are applied through associations" do
+    expected_tags = {temporal_query_tags: {validity: t+1, sys_period: t+1}}
+
+    org = Org.as_of(validity: t+1, sys_period: t+1).sole
+
+    expect(org).to have_attributes(expected_tags)
+    expect(org.employees).to all(have_attributes(expected_tags))
+
+  end
+
+  it "bitemporal querying" do
+    expectations = [
+      [
+        employee_av1_sv1,
+        employee_av1_sv2,
+        employee_av2_sv1,
+        employee_av2_sv2,
+        employee_av1_sv3,
+        employee_av2_sv3
+      ],
+      [],
+      [employee_av1_sv1, employee_av1_sv2, employee_av1_sv3],
+      [employee_av1_sv1, employee_av2_sv1, employee_av2_sv2, employee_av1_sv3],
+      [employee_av1_sv1, employee_av2_sv1, employee_av2_sv2, employee_av2_sv3],
+
+      [employee_av1_sv1],
+      [],
+      [employee_av1_sv1],
+      [employee_av1_sv1],
+      [employee_av1_sv1],
+
+      [employee_av1_sv2, employee_av2_sv1],
+      [],
+      [employee_av1_sv2],
+      [employee_av2_sv1],
+      [employee_av2_sv1],
+
+      [employee_av1_sv2, employee_av2_sv2],
+      [],
+      [employee_av1_sv2],
+      [employee_av2_sv2],
+      [employee_av2_sv2],
+
+      [employee_av1_sv3, employee_av2_sv3],
+      [],
+      [employee_av1_sv3],
+      [employee_av1_sv3],
+      [employee_av2_sv3]
+    ].each_with_index do |expected, index|
+      sys_period = (index / 5) - 1
+      validity = (index % 5) - 1
+
+      temporal_queries = {}
+
+      if sys_period > -1
+        temporal_queries[:sys_period] = t+sys_period
+      end
+
+      if validity > -1
+        temporal_queries[:validity] = t+validity
+      end
+
+      expect(Employee.as_of(**temporal_queries))
+        .to contain_exactly(*expected)
+    end
+  end
+end

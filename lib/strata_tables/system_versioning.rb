@@ -2,10 +2,8 @@ module StrataTables
   module VersionModel
     extend ActiveSupport::Concern
 
-    include AsOf
-
     included do |base|
-      self.as_of_attribute = :system_period
+      self.default_temporal_query = :system_period
 
       base.reflect_on_all_associations.each do |reflection|
         scope = temporal_association_scope(&reflection.scope)
@@ -42,13 +40,15 @@ module StrataTables
 
         version_model = if model.history_table
           Class.new(model) do
-            include VersionModel
-
             self.table_name = "#{model.table_name}_history"
             self.primary_key = [:id, :system_start]
+
+            include AsOf
+            include VersionModel
           end
         else
           Class.new(model) do
+            include AsOf
             include VersionModel
           end
         end
@@ -60,8 +60,6 @@ module StrataTables
 
   module SystemVersioning
     extend ActiveSupport::Concern
-
-    include StrataTables::AsOf
 
     class_methods do
       def history_table

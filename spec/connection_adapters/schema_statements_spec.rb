@@ -138,6 +138,7 @@ RSpec.describe "schema statements" do
         expect(Version::Book.count).to eq(2)
         expect(Version::Book.all.as_of(after_create_time).count).to eq(2)
         expect(Version::Book.all.as_of(Time.current).count).to eq(2)
+
         expect(Version::Book.all.as_of(epoch_time - 1.day).count).to eq(0)
       end
     end

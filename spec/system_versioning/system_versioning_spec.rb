@@ -52,8 +52,7 @@ RSpec.describe "system versioning" do
     expect(Version::Author).to have_attributes(
       superclass: Author,
       table_name: "authors_history",
-      primary_key: ["id", "system_start"],
-      as_of_attribute: :system_period
+      primary_key: ["id", "system_start"]
     )
     expect(Version::Author).to be_include(StrataTables::AsOf)
   end
@@ -62,8 +61,7 @@ RSpec.describe "system versioning" do
     expect(Version::Library).to have_attributes(
       superclass: Library,
       table_name: "libraries",
-      primary_key: "id",
-      as_of_attribute: :system_period
+      primary_key: "id"
     )
     expect(Version::Library).to be_include(StrataTables::AsOf)
   end

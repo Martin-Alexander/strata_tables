@@ -1,3 +1,5 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
 require "spec_helper"
 
 RSpec.describe "multiple columns spec" do
@@ -21,12 +23,16 @@ RSpec.describe "multiple columns spec" do
       include StrataTables::AsOf
 
       belongs_to :org, temporal_association_scope
+
+      self.temporal_queries = [:validity, :sys_period]
     end
 
     model "Org" do
       include StrataTables::AsOf
 
       has_many :employees, temporal_association_scope
+
+      self.temporal_queries = [:validity, :sys_period]
     end
   end
 
@@ -37,7 +43,7 @@ RSpec.describe "multiple columns spec" do
   build_records do
     {
       "Org" => {
-        org: {id: 1, rev: 1, validity: t+0...nil, sys_period: t+0...},
+        org: {id: 1, rev: 1, validity: t+0...nil, sys_period: t+0...}
       },
       "Employee" => {
         employee_av1_sv1: {id: 1, rev: 1, org_id: 1, salary: nil, validity: t+1...nil, sys_period: t+0...t+1},
@@ -45,7 +51,7 @@ RSpec.describe "multiple columns spec" do
         employee_av2_sv1: {id: 1, rev: 2, org_id: 1, salary: 150, validity: t+2...nil, sys_period: t+1...t+2},
         employee_av2_sv2: {id: 1, rev: 2, org_id: 1, salary: 110, validity: t+2...nil, sys_period: t+2...t+3},
         employee_av1_sv3: {id: 1, rev: 1, org_id: 1, salary: nil, validity: t+1...t+3, sys_period: t+3...nil},
-        employee_av2_sv3: {id: 1, rev: 2, org_id: 1, salary: 110, validity: t+3...nil, sys_period: t+3...nil},
+        employee_av2_sv3: {id: 1, rev: 2, org_id: 1, salary: 110, validity: t+3...nil, sys_period: t+3...nil}
       }
     }
   end
@@ -78,11 +84,25 @@ RSpec.describe "multiple columns spec" do
 
     expect(org).to have_attributes(expected_tags)
     expect(org.employees).to all(have_attributes(expected_tags))
+  end
 
+  it "scopes the omitted temporal query to the current time on associations" do
+    org_2 = Org.create!(id_value: 2, rev: 1, validity: t+0...nil, sys_period: t+0...nil)
+    emp_2_av1_sv1 = org_2.employees.create!(id_value: 2, rev: 1, validity: t+0...t+2, sys_period: t+0...t+2)
+    org_2.employees.create!(id_value: 2, rev: 1, validity: t+0...nil, sys_period: t+2...nil)
+
+    org_as_of_t1 = Org.as_of(validity: t+0).find_by(id: 2)
+
+    travel_to t+1 do
+      employees = org_as_of_t1.employees
+
+      expect(employees).to contain_exactly(emp_2_av1_sv1)
+      expect(employees.sole.temporal_query_tags).to eq(validity: t+0)
+    end
   end
 
   it "bitemporal querying" do
-    expectations = [
+    [
       [
         employee_av1_sv1,
         employee_av1_sv2,
@@ -138,3 +158,5 @@ RSpec.describe "multiple columns spec" do
     end
   end
 end
+
+# rubocop:enable Layout/SpaceAroundOperators

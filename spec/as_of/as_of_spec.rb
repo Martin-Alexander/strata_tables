@@ -23,6 +23,7 @@ RSpec.describe "version model" do
 
     model "Author" do
       include StrataTables::AsOf
+
       self.default_temporal_query = :period
 
       has_many :books, temporal_association_scope
@@ -30,11 +31,13 @@ RSpec.describe "version model" do
 
     model "Book" do
       include StrataTables::AsOf
+
       self.default_temporal_query = :period
     end
 
     model "Library" do
       include StrataTables::AsOf
+
       self.default_temporal_query = :period
     end
   end
@@ -91,7 +94,7 @@ RSpec.describe "version model" do
   describe "::as_of" do
     it "scopes by as-of and tags loaded records" do
       time = t+3
-      relation = Author.as_of(time)
+      Author.as_of(time)
 
       # expect(relation).to contain_exactly(author_bob_v2, author_sam_v1)
       # expect(relation).to all(have_attributes(temporal_query_tag: time))

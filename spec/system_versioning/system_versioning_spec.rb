@@ -1,3 +1,5 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
 require "spec_helper"
 
 RSpec.describe "system versioning" do
@@ -141,3 +143,5 @@ RSpec.describe "system versioning" do
     end
   end
 end
+
+# rubocop:enable Layout/SpaceAroundOperators

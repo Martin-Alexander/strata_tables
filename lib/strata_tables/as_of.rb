@@ -5,14 +5,12 @@ module StrataTables
     extend ActiveSupport::Concern
 
     class_methods do
-      attr_accessor :default_temporal_query, :temporal_query_columns
+      attr_accessor :default_temporal_query, :temporal_queries, :temporal_query_columns
 
       def temporal_query_column_exists?(temporal_query = nil)
         temporal_query ||= default_temporal_query
 
-        temporal_query_columns[temporal_query] ||= begin
-          connection.column_exists?(table_name, temporal_query)
-        end
+        temporal_query_columns[temporal_query] ||= connection.column_exists?(table_name, temporal_query)
 
         connection.column_exists?(table_name, temporal_query)
       end
@@ -37,14 +35,18 @@ module StrataTables
 
       def build_temporal_scope(&block)
         temporalize = ->(owner = nil, base_scope) do
-          temporal_queries = owner&.temporal_query_tags
-          temporal_queries = AsOfRegistry.timestamps unless temporal_queries&.any?
+          (temporal_queries | [default_temporal_query]).map do |temporal_query|
+            time = owner&.temporal_query_tags&.dig(temporal_query) ||
+              AsOfRegistry.timestamps[temporal_query]
 
-          if temporal_queries&.any?
-            base_scope.as_of(**temporal_queries)
-          else
-            base_scope.existed_at(Time.current)
+            base_scope = if time
+              base_scope.as_of(temporal_query => time)
+            else
+              base_scope.existed_at(temporal_query => Time.current)
+            end
           end
+
+          base_scope
         end
 
         if !block
@@ -61,6 +63,7 @@ module StrataTables
 
     included do
       self.temporal_query_columns = {}
+      self.temporal_queries = []
 
       scope :as_of, ->(*time, **temporal_queries) do
         time = time.first
@@ -134,7 +137,7 @@ module StrataTables
             raise RangeError, "#{time} is outside of '#{temporal_query}' range"
           end
 
-          self.temporal_query_tags.merge!(default_temporal_query => time)
+          temporal_query_tags.merge!(default_temporal_query => time)
         end
       end
     end

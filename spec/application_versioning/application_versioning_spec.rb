@@ -2,17 +2,19 @@ require "spec_helper"
 
 RSpec.describe "application versioning" do
   before do
-    conn.create_table :users, primary_key: [:id, :revision] do |t|
-      t.bigint :revision, null: false, default: 1
+    conn.enable_extension(:btree_gist)
+
+    conn.create_table :users, primary_key: [:id, :version] do |t|
       t.bigserial :id, null: false
+      t.bigint :version, null: false, default: 1
       t.tstzrange :validity, null: false
       t.string :name
       t.exclusion_constraint "id WITH =, validity WITH &&", using: :gist
     end
 
-    conn.create_table :tasks, primary_key: [:id, :revision] do |t|
-      t.bigint :revision, null: false, default: 1
+    conn.create_table :tasks, primary_key: [:id, :version] do |t|
       t.bigserial :id, null: false
+      t.bigint :version, null: false, default: 1
       t.tstzrange :validity, null: false
       t.string :name
       t.boolean :done
@@ -22,21 +24,18 @@ RSpec.describe "application versioning" do
 
     model "ApplicationRecord" do
       self.abstract_class = true
+
+      include StrataTables::AsOf
+      include StrataTables::ApplicationVersioning
     end
 
     model "User", ApplicationRecord do
-      include StrataTables::AsOf
-      include StrataTables::ApplicationVersioning
-
       self.default_time_dimension = :validity
 
       has_many :tasks, temporal_association_scope
     end
 
     model "Task", ApplicationRecord do
-      include StrataTables::AsOf
-      include StrataTables::ApplicationVersioning
-
       self.default_time_dimension = :validity
 
       belongs_to :user, temporal_association_scope
@@ -51,28 +50,89 @@ RSpec.describe "application versioning" do
     travel_to(t, &example)
   end
 
-  it "create user" do
-    user = User.create!(name: "Bob", validity: t...nil)
+  let(:user) { User.create!(id_value: 1, name: "Bob", validity: t-1...nil) }
 
-    expect(user).to have_attributes(
-      id_value: 1,
-      revision: 1,
-      validity: t...nil,
-      name: "Bob"
-    )
+  describe "#revise_at" do
+    it "creates a revision at the given time" do
+      new_user, old_user = user.revise_at(t+1).with(name: "Sam")
+
+      expect(User.count).to eq(2)
+
+      expect(old_user).to have_attributes(
+        id_value: 1,
+        name: "Bob",
+        version: 1,
+        validity: t-1...t+1
+      )
+      expect(new_user).to have_attributes(
+        id_value: 1,
+        name: "Sam",
+        version: 2,
+        validity: t+1...nil
+      )
+    end
   end
 
-  it "create task for given user" do
-    user = User.create!(name: "Bob", validity: t...nil)
+  describe "#revise" do
+    it "creates a revision at the current time" do
+      new_user, old_user = user.revise.with(name: "Sam")
 
-    task = Task.create!(name: "Walk dog", done: false, user: user, validity: t...nil)
+      expect(old_user).to have_attributes(
+        id_value: 1,
+        name: "Bob",
+        version: 1,
+        validity: t-1...Time.current
+      )
+      expect(new_user).to have_attributes(
+        id_value: 1,
+        name: "Sam",
+        version: 2,
+        validity: Time.current...nil
+      )
+    end
+  end
 
-    expect(task).to have_attributes(
-      id_value: 1,
-      revision: 1,
-      validity: t...nil,
-      name: "Walk dog",
-      user: user
-    )
+  describe "#revision" do
+    it "initializes a revision at the given time" do
+      new_user, old_user = user.revision_at(t+1).with(name: "Sam")
+
+      expect(old_user.changes).to eq("validity" => [t-1...nil, t-1...t+1])
+      expect(new_user).to_not be_persisted
+      expect(new_user).to have_attributes(
+        id_value: 1,
+        name: "Sam",
+        version: 2,
+        validity: t+1...nil
+      )
+    end
+  end
+
+  describe "#revision_at" do
+    it "initializes a revision at the current time" do
+      new_user, old_user = user.revision.with(name: "Sam")
+
+      expect(old_user.changes).to eq("validity" => [t-1...nil, t-1...Time.current])
+      expect(new_user).to_not be_persisted
+      expect(new_user).to have_attributes(
+        id_value: 1,
+        name: "Sam",
+        version: 2,
+        validity: Time.current...nil
+      )
+    end
+  end
+
+  describe "#inactivate_at" do
+    it "inactivates a record at a given time" do
+      expect { user.inactivate_at(t+2) }
+        .to(change { user.reload.validity }.from(t-1...nil).to(t-1...t+2))
+    end
+  end
+
+  describe "#inactivate" do
+    it "inactivates a record at a current time" do
+      expect { user.inactivate }
+        .to(change { user.reload.validity }.from(t-1...nil).to(t-1...t))
+    end
   end
 end

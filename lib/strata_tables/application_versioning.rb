@@ -12,11 +12,11 @@ module StrataTables
       def with(attributes)
         new_revision = record.dup
         new_revision.assign_attributes(attributes)
-        new_revision.period_start = time
-        new_revision.as_of_value = record.as_of_value
-        record.period_end = time
+        new_revision.set_time_dimension_start(time)
+        new_revision.time_scopes = record.time_scopes
+        record.set_time_dimension_end(time)
 
-        new_revision.initialize_revsion(record)
+        new_revision.after_initialize_revsion(record)
 
         if options[:save]
           record.class.transaction do
@@ -28,6 +28,15 @@ module StrataTables
       end
     end
 
+    def after_initialize_revsion(old_revision)
+      self.version = old_revision.version + 1
+      self.id_value = old_revision.id_value
+    end
+
+    def head_revision?
+      time_dimension && !time_dimension_end
+    end
+
     def revise
       revise_at(Time.current)
     end
@@ -36,6 +45,27 @@ module StrataTables
       raise "not head revision" unless head_revision?
 
       Revision.new(self, time, save: true)
+    end
+
+    def revision
+      revision_at(Time.current)
+    end
+
+    def revision_at(time)
+      raise "not head revision" unless head_revision?
+
+      Revision.new(self, time, save: false)
+    end
+
+    def inactivate
+      inactivate_at(Time.current)
+    end
+
+    def inactivate_at(time)
+      raise "not head revision" unless head_revision?
+
+      set_time_dimension_end(time)
+      save
     end
   end
 end

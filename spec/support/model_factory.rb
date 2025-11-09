@@ -1,13 +1,16 @@
 module StrataTablesTest
   module ModelFactory
     def model(name, super_class = ActiveRecord::Base, as_of: false, &block)
-      klass = stub_const(name, Class.new(super_class) do
-        include StrataTables::AsOf if as_of
+      klass = Class.new(super_class)
 
-        instance_exec(&block) if block
-      end)
+      stub_const(name, klass)
 
-      klass.time_dimension = :period if as_of
+      if as_of
+        klass.include StrataTables::AsOf
+        klass.time_dimension = :period
+      end
+
+      klass.class_eval(&block) if block
 
       klass
     end

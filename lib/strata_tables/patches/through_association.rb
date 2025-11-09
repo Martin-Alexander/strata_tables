@@ -3,7 +3,7 @@ module StrataTables
     module ThroughAssociation
       def through_scope
         super.tap do |scope|
-          scope.as_of_timestamp_values = reflection_scope.as_of_timestamp_values
+          scope.time_scope_values = reflection_scope.time_scope_values
         end
       end
     end

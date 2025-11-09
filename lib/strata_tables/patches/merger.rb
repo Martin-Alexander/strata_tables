@@ -3,7 +3,7 @@ module StrataTables
     module Merger
       def merge
         super.tap do |relation|
-          relation.as_of_timestamp!(values[:as_of_timestamp] || {})
+          relation.time_scope!(values[:time_scope] || {})
         end
       end
     end

@@ -5,23 +5,26 @@ module StrataTables
     extend ActiveSupport::Concern
 
     class_methods do
-      attr_accessor :default_temporal_query, :temporal_queries, :temporal_query_columns
+      attr_accessor :default_time_dimension, :time_dimensions
 
-      def temporal_query_column_exists?(temporal_query = nil)
-        temporal_query ||= default_temporal_query
-
-        temporal_query_columns[temporal_query] ||= connection.column_exists?(table_name, temporal_query)
-
-        connection.column_exists?(table_name, temporal_query)
+      def default_time_scopes
+        TemporalQueryRegistry.default_scopes
       end
 
-      def existed_at_constraint(table, time, temporal_query = nil)
-        temporal_query ||= default_temporal_query
+      def time_dimension=(value)
+        self.default_time_dimension = value
+        self.time_dimensions = [value]
+      end
 
+      def time_dimension_column?(time_dimension)
+        connection.column_exists?(table_name, time_dimension)
+      end
+
+      def existed_at_constraint(arel_table, time, time_dimension)
         time_f = time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N")
 
         <<~SQL
-          "#{table.name}"."#{temporal_query}" @> '#{time_f}'::timestamptz
+          "#{arel_table.name}"."#{time_dimension}" @> '#{time_f}'::timestamptz
         SQL
       end
 
@@ -35,18 +38,14 @@ module StrataTables
 
       def build_temporal_scope(&block)
         temporalize = ->(owner = nil, base_scope) do
-          (temporal_queries | [default_temporal_query]).map do |temporal_query|
-            time = owner&.temporal_query_tags&.dig(temporal_query) ||
-              AsOfRegistry.timestamps[temporal_query]
+          time_scopes = TemporalQueryRegistry.query_scope_for(time_dimensions)
+          owner_time_scopes = owner&.time_scopes_for(time_dimensions)
 
-            base_scope = if time
-              base_scope.as_of(temporal_query => time)
-            else
-              base_scope.existed_at(temporal_query => Time.current)
-            end
-          end
+          time_scopes.merge!(owner_time_scopes) if owner_time_scopes
 
           base_scope
+            .existed_at(default_association_time_predicates.merge(time_scopes))
+            .time_scope(time_scopes)
         end
 
         if !block
@@ -59,101 +58,94 @@ module StrataTables
 
         ->(owner = nil) { temporalize.call(owner, instance_exec(owner, &block)) }
       end
+
+      def resolve_time_scopes(time_or_time_scopes)
+        return time_or_time_scopes if time_or_time_scopes.is_a?(Hash)
+
+        {default_time_dimension.to_sym => time_or_time_scopes}
+      end
+
+      def default_association_time_predicates
+        time_dimensions.map do |dimension|
+          [dimension, Time.current]
+        end.to_h
+      end
     end
 
     included do
-      self.temporal_query_columns = {}
-      self.temporal_queries = []
+      delegate :time_dimension_columns,
+        :default_time_dimension,
+        :time_dimension_column?,
+        :resolve_time_scopes,
+        to: :class
 
-      scope :as_of, ->(*time, **temporal_queries) do
-        time = time.first
+      self.time_dimensions = []
 
-        if time
-          return existed_at(time).as_of_timestamp(default_temporal_query => time)
-        end
-
-        existed_at(**temporal_queries).as_of_timestamp(temporal_queries)
+      default_scope -> do
+        existed_at(default_time_scopes) if default_time_scopes.any?
       end
 
-      scope :existed_at, ->(*time, **temporal_queries) do
-        time = time.first
+      scope :as_of, ->(time) do
+        time_scopes = resolve_time_scopes(time)
 
-        if time
-          return unless temporal_query_column_exists?
-          return where(existed_at_constraint(table, time))
-        end
+        existed_at(time_scopes).time_scope(time_scopes)
+      end
+
+      scope :existed_at, ->(time) do
+        time_scopes = resolve_time_scopes(time)
 
         rel = all
 
-        temporal_queries.each do |temporal_query, time|
-          next unless temporal_query_column_exists?(temporal_query)
-          rel = rel.where(existed_at_constraint(table, time, temporal_query))
+        time_scopes.each do |time_dimension, time|
+          next unless time_dimension_column?(time_dimension)
+
+          rel = rel.where(existed_at_constraint(table, time, time_dimension))
         end
 
         rel
       end
     end
 
-    def temporal_query_tags
-      @temporal_query_tags
+    def time_scopes
+      @time_scopes || {}
     end
 
-    def temporal_query_tags=(value)
-      @temporal_query_tags = value
+    def time_scopes=(value)
+      @time_scopes = value
     end
 
-    def temporal_query_tag
-      temporal_query_tags&.dig(default_temporal_query)
+    def time_scope
+      time_scopes[default_time_dimension]
     end
 
-    def temporal_query_tag=(value)
-      self.temporal_query_tags = {default_temporal_query => value}
+    def time_scopes_for(time_dimensions)
+      time_scopes.slice(*time_dimensions)
     end
 
-    def temporal_query_columns
-      self.class.temporal_query_columns
-    end
+    def as_of!(time)
+      time_scopes = resolve_time_scopes(time)
 
-    def default_temporal_query
-      self.class.default_temporal_query
-    end
-
-    def as_of!(*time, **temporal_queries)
-      time = time.first
+      ensure_time_scopes_in_bounds!(time_scopes)
 
       reload
 
-      if time
-        if self.class.temporal_query_column_exists? && !time_range.cover?(time)
-          raise RangeError, "#{time} is outside of '#{default_temporal_query}' range"
-        end
-
-        self.temporal_query_tags = {default_temporal_query => time}
-      else
-        self.temporal_query_tags = {}
-
-        temporal_queries.each do |temporal_query, time|
-          if self.class.temporal_query_column_exists?(temporal_query) && !time_range(temporal_query).cover?(time)
-            raise RangeError, "#{time} is outside of '#{temporal_query}' range"
-          end
-
-          temporal_query_tags.merge!(default_temporal_query => time)
-        end
-      end
+      self.time_scopes = time_scopes
     end
 
-    def as_of(*time, **temporal_queries)
-      time = time.first
+    def as_of(time)
+      time_scopes = resolve_time_scopes(time)
 
-      if time
-        self.class.as_of(time).find_by(self.class.primary_key => [id])
-      else
-        self.class.as_of(**temporal_queries).find_by(self.class.primary_key => [id])
-      end
+      self.class.as_of(time_scopes).find_by(self.class.primary_key => [id])
     end
 
-    def time_range(temporal_query = nil)
-      send(temporal_query || default_temporal_query)
+    private
+
+    def ensure_time_scopes_in_bounds!(time_scopes)
+      time_scopes.each do |dimension, time|
+        if time_dimension_column?(dimension) && !send(dimension).cover?(time)
+          raise RangeError, "#{time} is outside of '#{dimension}' range"
+        end
+      end
     end
   end
 end

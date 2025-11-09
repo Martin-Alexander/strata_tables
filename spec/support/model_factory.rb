@@ -7,7 +7,7 @@ module StrataTablesTest
         instance_exec(&block) if block
       end)
 
-      klass.default_temporal_query = :period if as_of
+      klass.time_dimension = :period if as_of
 
       klass
     end

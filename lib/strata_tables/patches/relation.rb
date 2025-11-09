@@ -1,56 +1,41 @@
 module StrataTables
   module Patches
     module Relation
-      def as_of_timestamp(timestamp)
-        spawn.as_of_timestamp!(timestamp)
+      def time_scope(scope)
+        spawn.time_scope!(scope)
       end
 
-      def as_of_timestamp!(timestamp)
-        self.as_of_timestamp_values = as_of_timestamp_values.merge(timestamp)
+      def time_scope!(scope)
+        self.time_scope_values = time_scope_values.merge(scope)
         self
       end
 
-      def as_of_timestamp_values
-        @values.fetch(:as_of_timestamp, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
+      def time_scope_values
+        @values.fetch(:time_scope, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
       end
 
-      def as_of_timestamp_values=(timestamp)
+      def time_scope_values=(scope)
         # TODO: add tests for: assert_modifiable!
-        @values[:as_of_timestamp] = timestamp
+
+        @values[:time_scope] = scope
       end
 
       private
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")
         def build_arel(connection)
-          ensure_as_of_timestamp_registry { super }
+          TemporalQueryRegistry.with_query_scope(time_scope_values) { super }
         end
       else
         def build_arel(connection, aliases = nil)
-          ensure_as_of_timestamp_registry { super }
-        end
-      end
-
-      def ensure_as_of_timestamp_registry
-        set_as_of_registry_values = AsOfRegistry.timestamps.empty? && as_of_timestamp_values.any?
-
-        return yield unless set_as_of_registry_values
-
-        begin
-          as_of_timestamp_values.each do |attribute, value|
-            AsOfRegistry.timestamps[attribute] = value
-          end
-
-          yield
-        ensure
-          AsOfRegistry.clear
+          TemporalQueryRegistry.with_query_scope(time_scope_values) { super }
         end
       end
 
       def instantiate_records(rows, &block)
         super.tap do |records|
           records.each do |record|
-            initialize_as_of_timestamps(record)
+            set_time_scopes(record)
 
             walk_associations(record, includes_values | eager_load_values) do |record, assoc_name|
               reflection = record.class.reflect_on_association(assoc_name)
@@ -61,10 +46,10 @@ module StrataTables
 
               if target.is_a?(Array)
                 target.each do |t|
-                  initialize_as_of_timestamps(t)
+                  set_time_scopes(t)
                 end
               else
-                initialize_as_of_timestamps(target)
+                set_time_scopes(target)
               end
             end
           end
@@ -88,14 +73,10 @@ module StrataTables
         end
       end
 
-      def initialize_as_of_timestamps(record)
-        return unless record.respond_to?(:temporal_query_tags)
+      def set_time_scopes(record)
+        return unless record.respond_to?(:time_scopes=)
 
-        record.temporal_query_tags = {}
-
-        as_of_timestamp_values.each do |temporal_query, value|
-          record.temporal_query_tags[temporal_query] = value
-        end
+        record.time_scopes = time_scope_values
       end
     end
   end

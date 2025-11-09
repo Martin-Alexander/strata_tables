@@ -3,7 +3,7 @@ module StrataTables
     extend ActiveSupport::Concern
 
     included do |base|
-      self.default_temporal_query = :system_period
+      self.default_time_dimension = :system_period
 
       base.reflect_on_all_associations.each do |reflection|
         scope = temporal_association_scope(&reflection.scope)

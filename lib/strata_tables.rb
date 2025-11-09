@@ -1,7 +1,8 @@
 require "active_support"
 
+require_relative "strata_tables/application_versioning"
 require_relative "strata_tables/as_of"
-require_relative "strata_tables/as_of_registry"
+require_relative "strata_tables/temporal_query_registry"
 require_relative "strata_tables/connection_adapters/schema_creation"
 require_relative "strata_tables/connection_adapters/schema_definitions"
 require_relative "strata_tables/patches/association_reflection"

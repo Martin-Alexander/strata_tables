@@ -24,7 +24,7 @@ RSpec.describe "version model" do
     model "Author" do
       include StrataTables::AsOf
 
-      self.default_temporal_query = :period
+      self.time_dimension = :period
 
       has_many :books, temporal_association_scope
     end
@@ -32,13 +32,13 @@ RSpec.describe "version model" do
     model "Book" do
       include StrataTables::AsOf
 
-      self.default_temporal_query = :period
+      self.time_dimension = :period
     end
 
     model "Library" do
       include StrataTables::AsOf
 
-      self.default_temporal_query = :period
+      self.time_dimension = :period
     end
   end
 
@@ -94,10 +94,12 @@ RSpec.describe "version model" do
   describe "::as_of" do
     it "scopes by as-of and tags loaded records" do
       time = t+3
-      Author.as_of(time)
+      relation = Author.as_of(time)
 
-      # expect(relation).to contain_exactly(author_bob_v2, author_sam_v1)
-      # expect(relation).to all(have_attributes(temporal_query_tag: time))
+      expect(relation)
+        .to contain_exactly(author_bob_v2, author_sam_v1)
+      expect(relation)
+        .to all(have_attributes(time_scope: t+3))
     end
 
     context "when column does not exist" do
@@ -106,7 +108,7 @@ RSpec.describe "version model" do
         relation = Library.as_of(time)
 
         expect(Library.as_of(time)).to eq(Library.all)
-        expect(relation).to all(have_attributes(temporal_query_tag: time))
+        expect(relation).to all(have_attributes(time_scope: time))
       end
     end
   end
@@ -118,10 +120,10 @@ RSpec.describe "version model" do
       author_bob.as_of!(t-99)
       author_sam.as_of!(t+99)
 
-      expect(author_bob_v1.temporal_query_tag).to eq(t+2)
-      expect(author_sam_v3.temporal_query_tag).to eq(t+9)
-      expect(author_bob.temporal_query_tag).to eq(t-99)
-      expect(author_sam.temporal_query_tag).to eq(t+99)
+      expect(author_bob_v1.time_scope).to eq(t+2)
+      expect(author_sam_v3.time_scope).to eq(t+9)
+      expect(author_bob.time_scope).to eq(t-99)
+      expect(author_sam.time_scope).to eq(t+99)
     end
 
     it "reloads the record" do
@@ -154,10 +156,10 @@ RSpec.describe "version model" do
       author_bob_tagged = author_bob.as_of(t-99)
       author_sam_tagged = author_sam.as_of(t+99)
 
-      expect(author_bob_v1_tagged.temporal_query_tag).to eq(t+2)
-      expect(author_sam_v3_tagged.temporal_query_tag).to eq(t+9)
-      expect(author_bob_tagged.temporal_query_tag).to eq(t-99)
-      expect(author_sam_tagged.temporal_query_tag).to eq(t+99)
+      expect(author_bob_v1_tagged.time_scope).to eq(t+2)
+      expect(author_sam_v3_tagged.time_scope).to eq(t+9)
+      expect(author_bob_tagged.time_scope).to eq(t-99)
+      expect(author_sam_tagged.time_scope).to eq(t+99)
     end
 
     it "returns nil if the time is outside the record's as-of range" do

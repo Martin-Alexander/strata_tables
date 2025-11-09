@@ -24,7 +24,7 @@ RSpec.describe "multiple columns spec" do
 
       belongs_to :org, temporal_association_scope
 
-      self.temporal_queries = [:validity, :sys_period]
+      self.time_dimensions = [:validity, :sys_period]
     end
 
     model "Org" do
@@ -32,7 +32,7 @@ RSpec.describe "multiple columns spec" do
 
       has_many :employees, temporal_association_scope
 
-      self.temporal_queries = [:validity, :sys_period]
+      self.time_dimensions = [:validity, :sys_period]
     end
   end
 
@@ -66,7 +66,7 @@ RSpec.describe "multiple columns spec" do
   end
 
   it "tags are applied" do
-    expected_tags = {temporal_query_tags: {validity: t+1, sys_period: t+1}}
+    expected_tags = {time_scopes: {validity: t+1, sys_period: t+1}}
 
     expect(Employee.as_of(validity: t+1, sys_period: t+1))
       .to all(have_attributes(expected_tags))
@@ -78,7 +78,7 @@ RSpec.describe "multiple columns spec" do
   end
 
   it "tags are applied through associations" do
-    expected_tags = {temporal_query_tags: {validity: t+1, sys_period: t+1}}
+    expected_tags = {time_scopes: {validity: t+1, sys_period: t+1}}
 
     org = Org.as_of(validity: t+1, sys_period: t+1).sole
 
@@ -97,7 +97,7 @@ RSpec.describe "multiple columns spec" do
       employees = org_as_of_t1.employees
 
       expect(employees).to contain_exactly(emp_2_av1_sv1)
-      expect(employees.sole.temporal_query_tags).to eq(validity: t+0)
+      expect(employees.sole.time_scopes).to eq(validity: t+0)
     end
   end
 
@@ -143,17 +143,17 @@ RSpec.describe "multiple columns spec" do
       sys_period = (index / 5) - 1
       validity = (index % 5) - 1
 
-      temporal_queries = {}
+      time_dimensions = {}
 
       if sys_period > -1
-        temporal_queries[:sys_period] = t+sys_period
+        time_dimensions[:sys_period] = t+sys_period
       end
 
       if validity > -1
-        temporal_queries[:validity] = t+validity
+        time_dimensions[:validity] = t+validity
       end
 
-      expect(Employee.as_of(**temporal_queries))
+      expect(Employee.as_of(time_dimensions))
         .to contain_exactly(*expected)
     end
   end

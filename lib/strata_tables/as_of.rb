@@ -142,10 +142,44 @@ module StrataTables
       dimension ||= default_time_dimension
 
       if !time_dimension_column?(dimension)
-        raise ArgumentError, "column '#{dimension}' does not exist on '#{self.class.table_name}'"
+        raise ArgumentError, "no time dimension column '#{dimension}'"
       end
 
       send(dimension)
+    end
+
+    def time_dimension_start(dimension = nil)
+      time_dimension(dimension)&.begin
+    end
+
+    def time_dimension_end(dimension = nil)
+      time_dimension(dimension)&.end
+    end
+
+    def set_time_dimension(dimension = nil, value)
+      dimension ||= default_time_dimension
+
+      if !time_dimension_column?(dimension)
+        raise ArgumentError, "no time dimension column '#{dimension}'"
+      end
+
+      send("#{dimension}=", value)
+    end
+
+    def set_time_dimension_start(dimension = nil, value)
+      existing_value = time_dimension(dimension)
+
+      new_value = existing_value ? value...existing_value.end : value...nil
+
+      set_time_dimension(dimension, new_value)
+    end
+
+    def set_time_dimension_end(dimension = nil, value)
+      existing_value = time_dimension(dimension)
+
+      new_value = existing_value ? existing_value.begin...value : nil...value
+
+      set_time_dimension(dimension, new_value)
     end
 
     private

@@ -22,17 +22,17 @@ RSpec.describe "multiple columns spec" do
     model "Employee" do
       include StrataTables::AsOf
 
-      belongs_to :org, temporal_association_scope
+      set_time_dimensions :validity, :sys_period
 
-      self.time_dimensions = [:validity, :sys_period]
+      belongs_to :org, temporal_association_scope
     end
 
     model "Org" do
       include StrataTables::AsOf
 
-      has_many :employees, temporal_association_scope
+      set_time_dimensions :validity, :sys_period
 
-      self.time_dimensions = [:validity, :sys_period]
+      has_many :employees, temporal_association_scope
     end
   end
 

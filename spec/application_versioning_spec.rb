@@ -1,3 +1,5 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
 require "spec_helper"
 
 RSpec.describe "application versioning" do
@@ -27,17 +29,15 @@ RSpec.describe "application versioning" do
 
       include StrataTables::AsOf
       include StrataTables::ApplicationVersioning
+
+      set_time_dimensions :validity
     end
 
     model "User", ApplicationRecord do
-      self.default_time_dimension = :validity
-
       has_many :tasks, temporal_association_scope
     end
 
     model "Task", ApplicationRecord do
-      self.default_time_dimension = :validity
-
       belongs_to :user, temporal_association_scope
     end
   end
@@ -136,3 +136,5 @@ RSpec.describe "application versioning" do
     end
   end
 end
+
+# rubocop:enable Layout/SpaceAroundOperators

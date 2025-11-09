@@ -24,7 +24,7 @@ RSpec.describe "as of" do
     model "Author" do
       include StrataTables::AsOf
 
-      self.time_dimension = :period
+      set_time_dimensions :period
 
       has_many :books, temporal_association_scope
     end
@@ -32,13 +32,13 @@ RSpec.describe "as of" do
     model "Book" do
       include StrataTables::AsOf
 
-      self.time_dimension = :period
+      set_time_dimensions :period
     end
 
     model "Library" do
       include StrataTables::AsOf
 
-      self.time_dimension = :period
+      set_time_dimensions :period
     end
   end
 

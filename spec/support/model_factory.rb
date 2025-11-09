@@ -7,7 +7,7 @@ module StrataTablesTest
 
       if as_of
         klass.include StrataTables::AsOf
-        klass.time_dimension = :period
+        klass.set_time_dimensions :period
       end
 
       klass.class_eval(&block) if block

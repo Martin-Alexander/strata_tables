@@ -2,10 +2,12 @@ module StrataTables
   module VersionModel
     extend ActiveSupport::Concern
 
-    included do |base|
-      self.default_time_dimension = :system_period
+    included do
+      include AsOf
 
-      base.reflect_on_all_associations.each do |reflection|
+      set_time_dimensions :system_period
+
+      reflect_on_all_associations.each do |reflection|
         scope = temporal_association_scope(&reflection.scope)
 
         send(reflection.macro, reflection.name, scope, **reflection.options)
@@ -43,12 +45,10 @@ module StrataTables
             self.table_name = "#{model.table_name}_history"
             self.primary_key = [:id, :system_start]
 
-            include AsOf
             include VersionModel
           end
         else
           Class.new(model) do
-            include AsOf
             include VersionModel
           end
         end

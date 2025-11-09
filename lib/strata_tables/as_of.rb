@@ -5,16 +5,13 @@ module StrataTables
     extend ActiveSupport::Concern
 
     class_methods do
-      attr_accessor :default_time_dimension, :time_dimensions
-
-      def default_time_scopes
-        TemporalQueryRegistry.default_scopes
+      def set_time_dimensions(*dimensions)
+        define_singleton_method(:time_dimensions) { dimensions }
+        define_singleton_method(:default_time_dimension) { dimensions.first }
       end
 
-      def time_dimension=(value)
-        self.default_time_dimension = value
-        self.time_dimensions = [value]
-      end
+      def time_dimensions = []
+      def default_time_dimension = nil
 
       def time_dimension_column?(time_dimension)
         connection.column_exists?(table_name, time_dimension)
@@ -35,6 +32,14 @@ module StrataTables
 
         scope
       end
+
+      def resolve_time_scopes(time_or_time_scopes)
+        return time_or_time_scopes if time_or_time_scopes.is_a?(Hash)
+
+        {default_time_dimension.to_sym => time_or_time_scopes}
+      end
+
+      private
 
       def build_temporal_scope(&block)
         temporalize = ->(owner = nil, base_scope) do
@@ -59,12 +64,6 @@ module StrataTables
         ->(owner = nil) { temporalize.call(owner, instance_exec(owner, &block)) }
       end
 
-      def resolve_time_scopes(time_or_time_scopes)
-        return time_or_time_scopes if time_or_time_scopes.is_a?(Hash)
-
-        {default_time_dimension.to_sym => time_or_time_scopes}
-      end
-
       def default_association_time_predicates
         time_dimensions.map do |dimension|
           [dimension, Time.current]
@@ -78,12 +77,6 @@ module StrataTables
         :time_dimension_column?,
         :resolve_time_scopes,
         to: :class
-
-      self.time_dimensions = []
-
-      default_scope -> do
-        existed_at(default_time_scopes) if default_time_scopes.any?
-      end
 
       scope :as_of, ->(time) do
         time_scopes = resolve_time_scopes(time)
@@ -156,7 +149,7 @@ module StrataTables
       time_dimension(dimension)&.end
     end
 
-    def set_time_dimension(dimension = nil, value)
+    def set_time_dimension(value, dimension = nil)
       dimension ||= default_time_dimension
 
       if !time_dimension_column?(dimension)
@@ -166,20 +159,20 @@ module StrataTables
       send("#{dimension}=", value)
     end
 
-    def set_time_dimension_start(dimension = nil, value)
+    def set_time_dimension_start(value, dimension = nil)
       existing_value = time_dimension(dimension)
 
       new_value = existing_value ? value...existing_value.end : value...nil
 
-      set_time_dimension(dimension, new_value)
+      set_time_dimension(new_value, dimension)
     end
 
-    def set_time_dimension_end(dimension = nil, value)
+    def set_time_dimension_end(value, dimension = nil)
       existing_value = time_dimension(dimension)
 
       new_value = existing_value ? existing_value.begin...value : nil...value
 
-      set_time_dimension(dimension, new_value)
+      set_time_dimension(new_value, dimension)
     end
 
     private

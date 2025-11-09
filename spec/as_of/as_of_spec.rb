@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "version model" do
+RSpec.describe "as of" do
   before do
     table :authors, primary_key: [:id, :version_id] do |t|
       t.bigint :id
@@ -168,6 +168,42 @@ RSpec.describe "version model" do
 
       expect(author_bob_v1_tagged).to be_nil
       expect(author_sam_v3_tagged).to be_nil
+    end
+  end
+
+  describe "#time_dimension" do
+    before do
+      table :cats, primary_key: [:id, :period_1] do |t|
+        t.bigserial :id
+        t.tstzrange :period_1
+        t.tstzrange :period_2
+      end
+
+      model "Cat" do
+        include StrataTables::AsOf
+        self.time_dimensions = [:period_1, :period_2, :period_3]
+        self.default_time_dimension = :period_2
+      end
+    end
+
+    after { drop_all_tables }
+
+    let(:cat) { cat = Cat.create!(period_1: t...t+2, period_2: t...nil) }
+
+    it "returns the value of a given dimension" do
+      expect(cat.time_dimension(:period_1)).to eq(t...t+2)
+      expect(cat.time_dimension(:period_2)).to eq(t...nil)
+    end
+
+    it "without an argument it falls back on the default dimension" do
+      expect(cat.time_dimension).to eq(t...nil)
+    end
+
+    it "it raises an error of the time dimensino is not backed by a column" do
+      cat.as_of!(period_3: t...nil)
+      expect(cat.time_scopes[:period_3]).to eq(t...nil)
+      expect { cat.time_dimension(:period_3) }
+        .to raise_error(ArgumentError, "column 'period_3' does not exist on 'cats'")
     end
   end
 

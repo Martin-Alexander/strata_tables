@@ -138,11 +138,21 @@ module StrataTables
       self.class.as_of(time_scopes).find_by(self.class.primary_key => [id])
     end
 
+    def time_dimension(dimension = nil)
+      dimension ||= default_time_dimension
+
+      if !time_dimension_column?(dimension)
+        raise ArgumentError, "column '#{dimension}' does not exist on '#{self.class.table_name}'"
+      end
+
+      send(dimension)
+    end
+
     private
 
     def ensure_time_scopes_in_bounds!(time_scopes)
       time_scopes.each do |dimension, time|
-        if time_dimension_column?(dimension) && !send(dimension).cover?(time)
+        if time_dimension_column?(dimension) && !time_dimension(dimension).cover?(time)
           raise RangeError, "#{time} is outside of '#{dimension}' range"
         end
       end

@@ -15,7 +15,7 @@ module StrataTables
       end
 
       def time_scope_values=(scope)
-        # TODO: add tests for: assert_modifiable!
+        assert_modifiable! # TODO: write test
 
         @values[:time_scope] = scope
       end

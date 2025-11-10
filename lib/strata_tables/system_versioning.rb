@@ -43,7 +43,7 @@ module StrataTables
         version_model = if model.history_table
           Class.new(model) do
             self.table_name = "#{model.table_name}_history"
-            self.primary_key = [:id, :system_start]
+            self.primary_key = [:id, :system_period]
 
             include VersionModel
           end
@@ -63,7 +63,7 @@ module StrataTables
 
     class_methods do
       def history_table
-        connection.history_table_for(table_name)
+        connection.history_table(table_name)
       end
 
       def version_model

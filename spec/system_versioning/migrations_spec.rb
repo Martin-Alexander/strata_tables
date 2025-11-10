@@ -12,15 +12,24 @@ RSpec.describe "migrations" do
   end
 
   before do
-    conn.create_table(:books) do |t|
+    conn.create_table :books do |t|
       t.string :title
       t.string :author_name
+      t.integer :pages
     end
-    conn.create_strata_metadata_table
+
+    conn.create_table :books_history, primary_key: [:id, :sys_period] do |t|
+      t.bigserial :id, null: false
+      t.string :title
+      t.string :author_name
+      t.integer :pages
+      t.tstzrange :sys_period, null: false
+    end
   end
 
   after do
-    conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
+    drop_all_tables
+    drop_all_versioning_hooks
   end
 
   let(:migration) do
@@ -31,165 +40,143 @@ RSpec.describe "migrations" do
     migration_klass.new
   end
 
-  describe "create_history_table_for :books" do
+  describe "#create_versioning_hook" do
     let(:migration_change) do
-      -> { create_history_table_for(:books) }
+      -> do
+        create_versioning_hook(
+          :books,
+          :books_history,
+          columns: [:title, :author_name]
+        )
+      end
     end
 
-    it "'up' creates history table" do
+    it "is reversable" do
       migration.migrate(:up)
 
-      books_history_table = spec_conn.table(:books_history)
+      expect(:books)
+        .to have_versioning_hook(:books_history, [:title, :author_name])
 
-      expect(books_history_table).to be_present
-      expect(books_history_table).to be_history_table_for(:books)
-    end
-
-    it "'down' drops history table" do
-      migration.migrate(:up)
       migration.migrate(:down)
 
-      books_table = spec_conn.table(:books)
-      books_history_table = spec_conn.table(:books_history)
-
-      expect(books_history_table).to be_nil
-      expect(books_table)
-        .to not_have_trigger(:on_insert_strata_trigger)
-        .and not_have_trigger(:on_update_strata_trigger)
-        .and not_have_trigger(:on_delete_strata_trigger)
-      expect(spec_conn)
-        .to not_have_function(:books_history_insert)
-        .and not_have_function(:books_history_update)
-        .and not_have_function(:books_history_delete)
+      expect(conn.versioning_hook(:books)).to be_nil
     end
   end
 
-  describe "create_history_table_for :books, except: [:author_name]" do
-    let(:migration_change) do
-      -> { create_history_table_for(:books, except: [:author_name]) }
-    end
-
-    it "'up' creates history table" do
-      migration.migrate(:up)
-
-      books_history_table = spec_conn.table(:books_history)
-
-      expect(books_history_table).to be_present
-      expect(books_history_table)
-        .to be_history_table_for(:books)
-        .and have_column(:title)
-        .and not_have_column(:author_name)
-    end
-
-    it "'down' drops history table" do
-      migration.migrate(:up)
-      migration.migrate(:down)
-
-      books_table = spec_conn.table(:books)
-      books_history_table = spec_conn.table(:books_history)
-
-      expect(books_history_table).to be_nil
-      expect(books_table)
-        .to not_have_trigger(:on_insert_strata_trigger)
-        .and not_have_trigger(:on_update_strata_trigger)
-        .and not_have_trigger(:on_delete_strata_trigger)
-      expect(spec_conn)
-        .to not_have_function(:books_history_insert)
-        .and not_have_function(:books_history_update)
-        .and not_have_function(:books_history_delete)
-    end
-  end
-
-  describe "drop_history_table" do
+  describe "#drop_versioning_hook" do
     before do
-      conn.create_history_table_for(:books)
+      conn.create_versioning_hook(
+        :books,
+        :books_history,
+        columns: [:title, :author_name]
+      )
     end
 
     let(:migration_change) do
-      -> { drop_history_table_for(:books) }
+      -> do
+        drop_versioning_hook(
+          :books,
+          :books_history,
+          columns: [:title, :author_name]
+        )
+      end
     end
 
-    it "'up' drops history table" do
+    it "is reversable" do
       migration.migrate(:up)
 
-      books_table = spec_conn.table(:books)
-      books_history_table = spec_conn.table(:books_history)
+      expect(conn.versioning_hook(:books)).to be_nil
 
-      expect(books_history_table).to be_nil
-      expect(books_table)
-        .to not_have_trigger(:on_insert_strata_trigger)
-        .and not_have_trigger(:on_update_strata_trigger)
-        .and not_have_trigger(:on_delete_strata_trigger)
-      expect(spec_conn)
-        .to not_have_function(:books_history_insert)
-        .and not_have_function(:books_history_update)
-        .and not_have_function(:books_history_delete)
-    end
-
-    it "'down' creates history table" do
-      migration.migrate(:up)
       migration.migrate(:down)
 
-      books_history_table = spec_conn.table(:books_history)
+      expect(:books)
+        .to have_versioning_hook(:books_history, [:title, :author_name])
+    end
 
-      expect(books_history_table).to be_present
-      expect(books_history_table).to be_history_table_for(:books)
+    context "when columns are not provided" do
+      let(:migration_change) do
+        -> { drop_versioning_hook(:books, :books_history) }
+      end
+
+      it "is not reversable" do
+        migration.migrate(:up)
+
+        expect(conn.versioning_hook(:books)).to be_nil
+
+        expect { migration.migrate(:down) }
+          .to raise_error(ActiveRecord::IrreversibleMigration)
+      end
     end
   end
 
-  describe "drop_history_table_for :books, except: [:author_name]" do
+  describe "#change_versioning_hook", "adding columns" do
     before do
-      conn.create_history_table_for(:books, except: [:author_name])
+      conn.create_versioning_hook(
+        :books,
+        :books_history,
+        columns: [:title, :author_name]
+      )
     end
 
-    let(:migration_change) do
-      -> { drop_history_table_for(:books, except: [:author_name]) }
+    describe "adding columns" do
+      let(:migration_change) do
+        -> { change_versioning_hook(:books, :books_history, add_columns: [:pages]) }
+      end
+
+      it "is reversable" do
+        migration.migrate(:up)
+
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:title, :author_name, :pages)
+
+        migration.migrate(:down)
+
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:title, :author_name)
+      end
     end
 
-    it "'up' drops history table" do
-      migration.migrate(:up)
+    describe "removing columns" do
+      let(:migration_change) do
+        -> { change_versioning_hook(:books, :books_history, remove_columns: [:title]) }
+      end
 
-      expect(spec_conn.table(:books_history)).to be_nil
+      it "is reversable" do
+        migration.migrate(:up)
+
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:author_name)
+
+        migration.migrate(:down)
+
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:title, :author_name)
+      end
     end
 
-    it "'down' creates history table" do
-      migration.migrate(:up)
-      migration.migrate(:down)
+    describe "adding and removing columns" do
+      let(:migration_change) do
+        -> do
+          change_versioning_hook(
+            :books,
+            :books_history,
+            add_columns: [:pages],
+            remove_columns: [:title]
+          )
+        end
+      end
 
-      books_history_table = spec_conn.table(:books_history)
+      it "is reversable" do
+        migration.migrate(:up)
 
-      expect(books_history_table).to be_present
-      expect(books_history_table).to be_history_table_for(:books)
-      expect(books_history_table)
-        .to be_history_table_for(:books)
-        .and have_column(:title)
-        .and not_have_column(:author_name)
-    end
-  end
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:author_name, :pages)
 
-  describe "drop_history_table_for :books, :book_history" do
-    before do
-      conn.create_history_table_for(:books, :book_history)
-    end
+        migration.migrate(:down)
 
-    let(:migration_change) do
-      -> { drop_history_table_for(:books, :book_history) }
-    end
-
-    it "'up' drops history table" do
-      migration.migrate(:up)
-
-      expect(spec_conn.table(:book_history)).to be_nil
-    end
-
-    it "'down' creates history table" do
-      migration.migrate(:up)
-      migration.migrate(:down)
-
-      book_history_table = spec_conn.table(:book_history)
-
-      expect(book_history_table).to be_present
-      expect(book_history_table).to be_history_table_for(:books)
+        expect(conn.versioning_hook(:books).columns)
+          .to contain_exactly(:title, :author_name)
+      end
     end
   end
 end

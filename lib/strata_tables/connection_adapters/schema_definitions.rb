@@ -1,23 +1,31 @@
 module StrataTables
   module ConnectionAdapters
-    class StrataTriggerSetDefinition
-      attr_reader :source_table, :history_table, :column_names, :insert_trigger, :update_trigger, :delete_trigger
+    class VersioningHookDefinition
+      attr_accessor :source_table, :history_table, :columns
 
-      def initialize(source_table, history_table, column_names)
+      def initialize(source_table, history_table, columns)
         @source_table = source_table
         @history_table = history_table
-        @column_names = column_names
+        @columns = columns
+      end
 
-        @insert_trigger = InsertStrataTriggerDefinition.new(source_table, history_table, column_names)
-        @update_trigger = UpdateStrataTriggerDefinition.new(source_table, history_table, column_names)
-        @delete_trigger = DeleteStrataTriggerDefinition.new(source_table, history_table)
+      def insert_hook
+        InsertHookDefinition.new(@source_table, @history_table, @columns)
+      end
+
+      def update_hook
+        UpdateHookDefinition.new(@source_table, @history_table, @columns)
+      end
+
+      def delete_hook
+        DeleteHookDefinition.new(@source_table, @history_table)
       end
     end
 
-    InsertStrataTriggerDefinition = Struct.new(:source_table, :history_table, :column_names)
+    InsertHookDefinition = Struct.new(:source_table, :history_table, :columns)
 
-    UpdateStrataTriggerDefinition = Struct.new(:source_table, :history_table, :column_names)
+    UpdateHookDefinition = Struct.new(:source_table, :history_table, :columns)
 
-    DeleteStrataTriggerDefinition = Struct.new(:source_table, :history_table)
+    DeleteHookDefinition = Struct.new(:source_table, :history_table)
   end
 end

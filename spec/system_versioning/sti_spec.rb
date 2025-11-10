@@ -25,6 +25,7 @@ RSpec.describe "version model" do
 
   after do
     drop_all_tables
+    drop_all_versioning_hooks
   end
 
   it "::instantiate returns version class for type" do

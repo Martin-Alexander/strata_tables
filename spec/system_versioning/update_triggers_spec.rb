@@ -23,6 +23,7 @@ RSpec.describe "update triggers" do
 
   after do
     drop_all_tables
+    drop_all_versioning_hooks
     conn.drop_schema("myschema", if_exists: true)
   end
 

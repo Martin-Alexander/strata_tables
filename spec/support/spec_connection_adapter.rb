@@ -76,7 +76,7 @@ module StrataTablesTest
             AND n.nspname NOT IN ('pg_catalog', 'information_schema');
       SQL
 
-      rows.map { |row| StrataTables::PlPgsqlFunction.new(*row.values) }
+      rows.map { |row| PlPgsqlFunction.new(*row.values) }
     end
   end
 end

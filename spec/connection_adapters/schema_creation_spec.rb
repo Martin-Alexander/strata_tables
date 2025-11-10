@@ -6,37 +6,46 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
   let(:connection) { ActiveRecord::Base.connection }
 
   describe "#accept" do
-    let(:insert_trigger_definition) do
-      StrataTables::ConnectionAdapters::InsertStrataTriggerDefinition.new(
+    let(:insert_hook_definition) do
+      StrataTables::ConnectionAdapters::InsertHookDefinition.new(
         :books,
         :books_history,
         [:id, :title, :pages, :published_at]
       )
     end
 
-    let(:update_trigger_definition) do
-      StrataTables::ConnectionAdapters::UpdateStrataTriggerDefinition.new(
+    let(:update_hook_definition) do
+      StrataTables::ConnectionAdapters::UpdateHookDefinition.new(
         :books,
         :books_history,
         [:id, :title, :pages, :published_at]
       )
     end
 
-    let(:delete_trigger_definition) do
-      StrataTables::ConnectionAdapters::DeleteStrataTriggerDefinition.new(
+    let(:delete_hook_definition) do
+      StrataTables::ConnectionAdapters::DeleteHookDefinition.new(
         :books,
         :books_history
       )
     end
 
-    context "given InsertStrataTriggerDefinition" do
-      let(:object) { insert_trigger_definition }
+    context "given InsertHookDefinition" do
+      let(:object) { insert_hook_definition }
 
       it "returns the correct SQL" do
+        function_id = Digest::SHA256.hexdigest("books_insert").first(10)
+        expected_function_name = "sys_ver_func_" + function_id
+        expected_function_comment = JSON.generate(
+          verb: "insert",
+          source_table: "books",
+          history_table: "books_history",
+          columns: %w[id title pages published_at]
+        )
+
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION strata_cb_3c9e7bcd97() RETURNS TRIGGER AS $$
+          CREATE FUNCTION #{expected_function_name}() RETURNS TRIGGER AS $$
             BEGIN
               INSERT INTO "books_history" (id, title, pages, published_at, system_period)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(NOW(), 'infinity'));
@@ -45,20 +54,31 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER on_insert_strata_trigger AFTER INSERT ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE strata_cb_3c9e7bcd97();
+          CREATE TRIGGER versioning_insert_trigger AFTER INSERT ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
+
+          COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
         SQL
       end
     end
 
-    context "given UpdateStrataTriggerDefinition" do
-      let(:object) { update_trigger_definition }
+    context "given UpdateHookDefinition" do
+      let(:object) { update_hook_definition }
 
       it "returns the correct SQL" do
+        function_id = Digest::SHA256.hexdigest("books_update").first(10)
+        expected_function_name = "sys_ver_func_" + function_id
+        expected_function_comment = JSON.generate(
+          verb: "update",
+          source_table: "books",
+          history_table: "books_history",
+          columns: %w[id title pages published_at]
+        )
+
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION strata_cb_a0409343fa() RETURNS trigger AS $$
+          CREATE FUNCTION #{expected_function_name}() RETURNS trigger AS $$
             BEGIN
               IF OLD IS NOT DISTINCT FROM NEW THEN
                 RETURN NULL;
@@ -70,26 +90,36 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
 
               INSERT INTO "books_history" (id, title, pages, published_at, system_period)
               VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(NOW(), 'infinity'))
-              ON CONFLICT (id, system_start) DO UPDATE SET id = EXCLUDED.id, title = EXCLUDED.title, pages = EXCLUDED.pages, published_at = EXCLUDED.published_at;
+              ON CONFLICT (id, system_period) DO UPDATE SET id = EXCLUDED.id, title = EXCLUDED.title, pages = EXCLUDED.pages, published_at = EXCLUDED.published_at;
 
               RETURN NULL;
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER on_update_strata_trigger AFTER UPDATE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE strata_cb_a0409343fa();
+          CREATE TRIGGER versioning_update_trigger AFTER UPDATE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
+
+          COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
         SQL
       end
     end
 
-    context "given DeleteStrataTriggerDefinition" do
-      let(:object) { delete_trigger_definition }
+    context "given DeleteHookDefinition" do
+      let(:object) { delete_hook_definition }
 
       it "returns the correct SQL" do
+        function_id = Digest::SHA256.hexdigest("books_delete").first(10)
+        expected_function_name = "sys_ver_func_" + function_id
+        expected_function_comment = JSON.generate(
+          verb: "delete",
+          source_table: "books",
+          history_table: "books_history"
+        )
+
         sql = subject.accept(object)
 
         expect(sql.squish).to eq(<<~SQL.squish)
-          CREATE OR REPLACE FUNCTION strata_cb_1bf6acb0c3() RETURNS TRIGGER AS $$
+          CREATE FUNCTION #{expected_function_name}() RETURNS TRIGGER AS $$
             BEGIN
               DELETE FROM "books_history"
               WHERE id = OLD.id AND system_period = tstzrange(NOW(), 'infinity');
@@ -102,15 +132,17 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
             END;
           $$ LANGUAGE plpgsql;
 
-          CREATE OR REPLACE TRIGGER on_delete_strata_trigger AFTER DELETE ON "books"
-            FOR EACH ROW EXECUTE PROCEDURE strata_cb_1bf6acb0c3();
+          CREATE TRIGGER versioning_delete_trigger AFTER DELETE ON "books"
+            FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
+
+          COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
         SQL
       end
     end
 
-    context "given StrataTriggerSetDefinition" do
+    context "given VersioningHookDefinition" do
       let(:object) do
-        StrataTables::ConnectionAdapters::StrataTriggerSetDefinition.new(
+        StrataTables::ConnectionAdapters::VersioningHookDefinition.new(
           :books,
           :books_history,
           [:id, :title, :pages, :published_at]
@@ -122,9 +154,9 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
 
         expect(sql).to eq(
           [
-            subject.accept(insert_trigger_definition),
-            subject.accept(update_trigger_definition),
-            subject.accept(delete_trigger_definition)
+            subject.accept(insert_hook_definition),
+            subject.accept(update_hook_definition),
+            subject.accept(delete_hook_definition)
           ].join(" ")
         )
       end

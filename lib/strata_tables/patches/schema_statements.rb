@@ -3,165 +3,107 @@ module StrataTables
     module SchemaStatements
       include ConnectionAdapters
 
-      def create_strata_metadata_table
-        create_table :strata_metadata, id: false do |t|
-          t.primary_keys [:history_table]
-          t.string :history_table
-          t.string :temporal_table
-        end
-      end
+      def create_versioning_hook(source_table, history_table, columns:)
+        ensure_columns_match!(source_table, history_table, columns)
 
-      def create_history_table_for(source_table, history_table = nil, **options)
-        except = options[:except]&.map(&:to_sym) || []
-
-        source_columns = columns(source_table).reject do |column|
-          except.include?(column.name.to_sym)
-        end
-
-        history_table ||= "#{source_table}_history"
-
-        create_table history_table, primary_key: [:id, :system_start] do |t|
-          source_columns.each do |column|
-            t.send(
-              column.type,
-              column.name,
-              comment: column.comment,
-              collation: column.collation,
-              default: column.default,
-              limit: column.limit,
-              null: column.null,
-              precision: column.precision,
-              scale: column.scale
-            )
-          end
-
-          t.tstzrange :system_period, null: false
-          t.virtual :system_start,
-            type: :timestamptz,
-            as: "lower(system_period)",
-            stored: true
-          t.virtual :system_end,
-            type: :timestamptz,
-            as: "upper(system_period)",
-            stored: true
-
-          if extension_enabled?(:btree_gist)
-            t.exclusion_constraint("id WITH =, system_period WITH &&", using: :gist)
-          end
-        end
-
-        register_history_table(history_table, source_table)
-        recreate_history_triggers(source_table)
-
-        if options[:copy_data]
-          copy_data(
-            source_table,
-            history_table,
-            source_columns,
-            options[:copy_data]
-          )
-        end
-      end
-
-      def drop_history_table_for(source_table, history_table = nil, **options)
-        history_table ||= history_table_for(source_table)
-
-        drop_table(history_table)
-        drop_history_triggers(source_table)
-        unregister_history_table(history_table, source_table)
-      end
-
-      def recreate_history_triggers(source_table)
         schema_creation = SchemaCreation.new(self)
 
-        history_table = history_table_for(source_table)
-        column_names = columns(source_table).map(&:name)
+        hook_definition = VersioningHookDefinition.new(source_table, history_table, columns)
 
-        trigger_set = StrataTriggerSetDefinition.new(source_table, history_table, column_names)
-
-        execute schema_creation.accept(trigger_set)
+        execute schema_creation.accept(hook_definition)
       end
 
-      def drop_history_triggers(source_table)
+      def drop_versioning_hook(source_table, history_table, columns: nil)
         %i[insert update delete].each do |verb|
-          function_name = history_callback_function_name(source_table, verb)
+          function_name = versioning_function_name(source_table, verb)
 
           execute "DROP FUNCTION #{function_name}() CASCADE"
         end
       end
 
-      def history_callback_function_name(table_name, verb)
-        identifier = "#{table_name}_#{verb}"
+      def versioning_hook(source_table)
+        insert_function_name = versioning_function_name(source_table, :insert)
+
+        row = execute(<<~SQL.squish).first
+          SELECT
+            pg_proc.proname as function_name,
+            obj_description(pg_proc.oid, 'pg_proc') as comment
+          FROM pg_proc
+          JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
+          WHERE pg_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+            AND pg_proc.proname = '#{insert_function_name}'
+        SQL
+
+        return unless row
+
+        metadata = JSON.parse(row["comment"])
+
+        VersioningHookDefinition.new(
+          metadata["source_table"].to_sym,
+          metadata["history_table"].to_sym,
+          metadata["columns"].map(&:to_sym)
+        )
+      end
+
+      def change_versioning_hook(source_table, history_table, options)
+        add_columns = options[:add_columns] || []
+        remove_columns = options[:remove_columns] || []
+
+        hook_definition = versioning_hook(source_table)
+
+        ensure_columns_match!(source_table, history_table, add_columns)
+        ensure_hook_has_columns!(hook_definition, remove_columns)
+
+        drop_versioning_hook(source_table, history_table)
+
+        new_columns = hook_definition.columns + add_columns - remove_columns
+
+        create_versioning_hook(source_table, history_table, columns: new_columns)
+      end
+
+      def history_table(source_table)
+        hook_definition = versioning_hook(source_table)
+
+        hook_definition&.history_table
+      end
+
+      def versioning_function_name(source_table, verb)
+        identifier = "#{source_table}_#{verb}"
         hashed_identifier = Digest::SHA256.hexdigest(identifier).first(10)
 
-        "strata_cb_#{hashed_identifier}"
-      end
-
-      def history_table?(table_name)
-        results = execute(<<~SQL.squish)
-          SELECT 1
-          FROM strata_metadata
-          WHERE history_table = '#{table_name}'
-        SQL
-
-        results.count > 0
-      end
-
-      def history_table_for(temporal_table)
-        results = execute(<<~SQL.squish)
-          SELECT history_table
-          FROM strata_metadata
-          WHERE temporal_table = '#{temporal_table}'
-        SQL
-
-        return if results.count.zero?
-
-        results.first["history_table"]
-      end
-
-      def temporal_table_for(history_table)
-        results = execute(<<~SQL.squish)
-          SELECT temporal_table
-          FROM strata_metadata
-          WHERE history_table = '#{history_table}'
-        SQL
-
-        return if results.count.zero?
-
-        results.first["temporal_table"]
-      end
-
-      def register_history_table(history_table, temporal_table = nil)
-        conn.execute(<<~SQL)
-          INSERT INTO strata_metadata (history_table, temporal_table)
-          VALUES ('#{history_table}', '#{temporal_table}')
-        SQL
-      end
-
-      def unregister_history_table(history_table, temporal_table = nil)
-        conn.execute(<<~SQL)
-          DELETE FROM strata_metadata
-          WHERE history_table = '#{history_table}'
-            AND temporal_table = '#{temporal_table}'
-        SQL
+        "sys_ver_func_#{hashed_identifier}"
       end
 
       private
 
-      def copy_data(source_table, history_table, columns, options)
-        fields = columns.map(&:name).join(", ")
+      def ensure_columns_match!(source_table, history_table, column_names)
+        source_columns = columns(source_table)
+        history_columns = columns(history_table)
 
-        system_period_start = if options.is_a?(Hash) && options[:epoch_time]
-          "'#{options[:epoch_time].utc.iso8601}'"
-        else
-          "'-infinity'"
+        column_names.each do |column_name|
+          source_column = source_columns.find { _1.name == column_name.to_s }
+          history_column = history_columns.find { _1.name == column_name.to_s }
+
+          if source_column.nil?
+            raise ArgumentError, "table '#{source_table}' does not have column '#{column_name}'"
+          end
+
+          if history_column.nil?
+            raise ArgumentError, "table '#{history_table}' does not have column '#{column_name}'"
+          end
+
+          if source_column.type != history_column.type
+            raise ArgumentError, "table '#{history_table}' does not have column '#{column_name}' of type '#{source_column.type}'"
+          end
         end
+      end
 
-        execute(<<~SQL.squish)
-          INSERT INTO #{quote_table_name(history_table)} (#{fields}, system_period)
-          SELECT #{fields}, tstzrange(#{system_period_start}, NULL)
-          FROM #{quote_table_name(source_table)};
-        SQL
+      def ensure_hook_has_columns!(hook, column_names)
+        column_names.each do |column_name|
+          next if hook.columns.include?(column_name)
+
+          raise ArgumentError, "versioning hook between '#{hook.source_table}' and '#{hook.history_table}' does not have column '#{column_name}'"
+        end
       end
     end
   end

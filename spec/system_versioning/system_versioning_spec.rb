@@ -48,13 +48,14 @@ RSpec.describe "system versioning" do
 
   after do
     drop_all_tables
+    drop_all_versioning_hooks
   end
 
   it "Version::Author is an version model" do
     expect(Version::Author).to have_attributes(
       superclass: Author,
       table_name: "authors_history",
-      primary_key: ["id", "system_start"]
+      primary_key: ["id", "system_period"]
     )
     expect(Version::Author).to be_include(StrataTables::AsOf)
   end
@@ -76,20 +77,17 @@ RSpec.describe "system versioning" do
 
     expect(Version::Author.first).to have_attributes(
       name: nil,
-      system_start: be_instance_of(Time),
-      system_end: be_instance_of(Time)
+      system_period: be_instance_of(Range)
     )
 
     expect(Version::Author.second).to have_attributes(
       name: "Bob",
-      system_start: be_instance_of(Time),
-      system_end: be_instance_of(Time)
+      system_period: be_instance_of(Range)
     )
 
     expect(Version::Author.third).to have_attributes(
       name: "Sam",
-      system_start: be_instance_of(Time),
-      system_end: eq(Float::INFINITY)
+      system_period: be_instance_of(Range)
     )
   end
 

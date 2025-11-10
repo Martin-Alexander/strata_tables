@@ -1,24 +1,46 @@
 module StrataTables
   module Patches
     module CommandRecorder
-      {
-        create_history_table_for: :drop_history_table_for
-      }.each do |method, inverse|
-        [[method, inverse], [inverse, method]].each do |method, inverse|
-          class_eval <<-EOV, __FILE__, __LINE__ + 1
-            def invert_#{method}(args)
-              [:#{inverse}, args]
-            end
-          EOV
+      [
+        :create_versioning_hook,
+        :drop_versioning_hook,
+        :change_versioning_hook
+      ].each do |method|
+        class_eval <<-EOV, __FILE__, __LINE__ + 1
+          def #{method}(*args)
+            record(:#{method}, args)
+          end
+        EOV
 
-          class_eval <<-EOV, __FILE__, __LINE__ + 1
-            def #{method}(*args)
-              record(:#{method}, args)
-            end
-          EOV
+        ruby2_keywords(method)
+      end
 
-          ruby2_keywords(method)
+      def invert_drop_versioning_hook(args)
+        _, _, columns = args
+
+        if columns.nil?
+          raise ActiveRecord::IrreversibleMigration, "drop_versioning_hook is only reversible if given :columns option."
         end
+
+        [:create_versioning_hook, args]
+      end
+
+      def invert_create_versioning_hook(args)
+        [:drop_versioning_hook, args]
+      end
+
+      def invert_change_versioning_hook(args)
+        source_table, history_table, options = args
+
+        [
+          :change_versioning_hook,
+          [
+            source_table,
+            history_table,
+            add_columns: options[:remove_columns],
+            remove_columns: options[:add_columns]
+          ]
+        ]
       end
     end
   end

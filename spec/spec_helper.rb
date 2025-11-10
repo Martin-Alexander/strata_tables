@@ -8,14 +8,7 @@ require "strata_tables"
 
 require "support/associations"
 require "support/db_config"
-require "support/matchers/be_history_table_for"
-require "support/matchers/have_column"
-require "support/matchers/has_exclusion_constraint"
-require "support/matchers/have_function"
-require "support/matchers/have_history_callback_function"
-require "support/matchers/have_loaded"
-require "support/matchers/have_table"
-require "support/matchers/have_trigger"
+require "support/have_versioning_hook"
 require "support/model_factory"
 require "support/record_factory"
 require "support/spec_connection_adapter"
@@ -45,6 +38,16 @@ RSpec.configure do |config|
 
   def drop_all_tables
     conn.tables.each { |table| conn.drop_table(table, force: :cascade) }
+  end
+
+  def drop_all_versioning_hooks
+    functions = spec_conn.plpgsql_functions
+
+    return if functions.empty?
+
+    function_names = functions.map { "#{_1.name}()" }.join(", ")
+
+    conn.execute("DROP FUNCTION #{function_names} CASCADE")
   end
 
   def conn

@@ -9,12 +9,23 @@ module StrataTablesTest
     end
 
     def system_versioned_table(name, **options, &block)
-      regular_table(name, **options, &block)
+      source_table_name = name
+      history_table_name = "#{name}_history"
 
-      ensure_btree_gist_enabled
-      ensure_metadata_table_exists
+      regular_table(source_table_name, **options, &block)
 
-      conn.create_history_table_for(name)
+      primary_key = Array(conn.primary_key(source_table_name))
+      history_table_options = {primary_key: primary_key + [:system_period]}.merge(options)
+
+      regular_table(history_table_name, **history_table_options) do |t|
+        instance_exec(t, &block) if block
+
+        t.bigint :id, null: false
+        t.tstzrange :system_period, null: false
+      end
+
+      columns = conn.columns(source_table_name).map(&:name)
+      conn.create_versioning_hook(source_table_name, history_table_name, columns: columns)
     end
 
     private
@@ -59,10 +70,6 @@ module StrataTablesTest
 
     def ensure_btree_gist_enabled
       conn.enable_extension(:btree_gist) unless conn.extension_enabled?(:btree_gist)
-    end
-
-    def ensure_metadata_table_exists
-      conn.create_strata_metadata_table unless conn.table_exists?(:strata_metadata)
     end
   end
 end

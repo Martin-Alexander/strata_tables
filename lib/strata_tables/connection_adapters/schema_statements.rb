@@ -1,5 +1,5 @@
 module StrataTables
-  module Patches
+  module ConnectionAdapters
     module SchemaStatements
       include ConnectionAdapters
 

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe "version model" do
+RSpec.describe "sti" do
   before do
     system_versioned_table :vehicles do |t|
       t.string :name

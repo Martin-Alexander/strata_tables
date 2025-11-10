@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "application versioning" do
+RSpec.describe StrataTables::ApplicationVersioning do
   before do
     conn.enable_extension(:btree_gist)
 

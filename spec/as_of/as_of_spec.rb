@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "as of" do
+RSpec.describe StrataTables::AsOf do
   before do
     table :authors, primary_key: [:id, :version_id] do |t|
       t.bigint :id

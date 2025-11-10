@@ -2,6 +2,7 @@ require "active_support"
 
 require_relative "temporal/application_versioning"
 require_relative "temporal/as_of"
+require_relative "temporal/association_walker"
 require_relative "temporal/temporal_query_registry"
 require_relative "temporal/connection_adapters/schema_creation"
 require_relative "temporal/connection_adapters/schema_definitions"

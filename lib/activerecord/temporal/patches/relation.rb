@@ -33,50 +33,15 @@ module ActiveRecord::Temporal
       end
 
       def instantiate_records(rows, &block)
-        super.tap do |records|
-          records.each do |record|
-            set_time_scopes(record)
+        return super if time_scope_values.empty?
 
-            walk_associations(record, includes_values | eager_load_values) do |record, assoc_name|
-              reflection = record.class.reflect_on_association(assoc_name)
-              next unless reflection
+        records = super
 
-              assoc = record.association(assoc_name)
-              target = assoc.target
-
-              if target.is_a?(Array)
-                target.each do |t|
-                  set_time_scopes(t)
-                end
-              else
-                set_time_scopes(target)
-              end
-            end
-          end
+        records.each do |record|
+          record.initialize_time_scope_from_relation(self) if record.is_a?(AsOf)
         end
-      end
 
-      def walk_associations(record, node, &block)
-        case node
-        when Symbol, String
-          block.call(record, node)
-        when Array
-          node.each { |child| walk_associations(record, child, &block) }
-        when Hash
-          # TODO: Write tests
-
-          node.each do |parent, child|
-            block.call(record, parent)
-
-            walk_associations(record, child, &block)
-          end
-        end
-      end
-
-      def set_time_scopes(record)
-        return unless record.respond_to?(:time_scopes=)
-
-        record.time_scopes = time_scope_values
+        records
       end
     end
   end

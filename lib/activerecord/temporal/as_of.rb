@@ -72,7 +72,7 @@ module ActiveRecord::Temporal
     end
 
     included do
-      delegate :time_dimension_columns,
+      delegate :time_dimensions,
         :default_time_dimension,
         :time_dimension_column?,
         :resolve_time_scopes,
@@ -104,7 +104,7 @@ module ActiveRecord::Temporal
     end
 
     def time_scopes=(value)
-      @time_scopes = value
+      @time_scopes = value&.slice(*time_dimensions)
     end
 
     def time_scope
@@ -173,6 +173,16 @@ module ActiveRecord::Temporal
       new_value = existing_value ? existing_value.begin...value : nil...value
 
       set_time_dimension(new_value, dimension)
+    end
+
+    def initialize_time_scope_from_relation(relation)
+      associations = relation.includes_values | relation.eager_load_values
+
+      self.time_scopes = relation.time_scope_values
+
+      AssociationWalker.each_target(self, associations) do |target|
+        target.time_scopes = relation.time_scope_values
+      end
     end
 
     private

@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module Patches
     module Relation
       def time_scope(scope)

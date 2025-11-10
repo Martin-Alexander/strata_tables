@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module VersionModel
     extend ActiveSupport::Concern
 

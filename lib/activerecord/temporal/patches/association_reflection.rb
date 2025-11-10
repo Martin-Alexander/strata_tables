@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module Patches
     module AssociationReflection
       def check_eager_loadable!

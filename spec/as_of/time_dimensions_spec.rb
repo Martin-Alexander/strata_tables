@@ -11,7 +11,7 @@ RSpec.describe "time dimensions" do
     end
 
     model "Cat" do
-      include StrataTables::AsOf
+      include AsOf
 
       set_time_dimensions :period_2, :period_1, :period_3
     end

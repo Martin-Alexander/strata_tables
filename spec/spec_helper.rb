@@ -4,27 +4,30 @@ require "active_record/connection_adapters/postgresql_adapter"
 require "debug"
 require "niceql"
 
-require "strata_tables"
+require "activerecord/temporal"
 
 require "support/associations"
 require "support/db_config"
 require "support/have_versioning_hook"
 require "support/model_factory"
 require "support/record_factory"
-require "support/spec_connection_adapter"
+require "support/test_connection_adapter"
 require "support/table_factory"
 require "support/transaction_time"
 
-ActiveRecord::Base.establish_connection(StrataTablesTest::DbConfig.get)
-ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
-
 RSpec.configure do |config|
+  ActiveRecord::Base.establish_connection(ActiveRecordTemporalTests::DbConfig.get)
+  ActiveRecord::Base.logger = Logger.new($stdout) if ENV.fetch("AR_LOG") { false }
+
+  include ActiveRecord::Temporal
+  include ActiveRecordTemporalTests
+
   config.include ActiveSupport::Testing::TimeHelpers
-  config.include StrataTablesTest::Associations
-  config.include StrataTablesTest::ModelFactory
-  config.include StrataTablesTest::RecordFactory
-  config.include StrataTablesTest::TableFactory
-  config.include StrataTablesTest::TransactionTime
+  config.include Associations
+  config.include ModelFactory
+  config.include RecordFactory
+  config.include TableFactory
+  config.include TransactionTime
 
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
@@ -55,9 +58,9 @@ RSpec.configure do |config|
   end
 
   def spec_conn
-    db_config = StrataTablesTest::DbConfig.get
+    db_config = DbConfig.get
 
-    @spec_conn ||= StrataTablesTest::SpecConnectionAdapter.new(db_config)
+    @spec_conn ||= TestConnectionAdapter.new(db_config)
   end
 
   def p_sql(relation)

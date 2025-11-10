@@ -1,4 +1,4 @@
-module StrataTablesTest
+module ActiveRecordTemporalTests
   module TransactionTime
     def transaction_with_time(connection)
       connection.transaction do

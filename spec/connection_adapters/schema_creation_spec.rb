@@ -1,13 +1,13 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
+RSpec.describe ConnectionAdapters::SchemaCreation do
   subject { described_class.new(connection) }
 
   let(:connection) { ActiveRecord::Base.connection }
 
   describe "#accept" do
     let(:insert_hook_definition) do
-      StrataTables::ConnectionAdapters::InsertHookDefinition.new(
+      ConnectionAdapters::InsertHookDefinition.new(
         :books,
         :books_history,
         [:id, :title, :pages, :published_at]
@@ -15,7 +15,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
     end
 
     let(:update_hook_definition) do
-      StrataTables::ConnectionAdapters::UpdateHookDefinition.new(
+      ConnectionAdapters::UpdateHookDefinition.new(
         :books,
         :books_history,
         [:id, :title, :pages, :published_at]
@@ -23,7 +23,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
     end
 
     let(:delete_hook_definition) do
-      StrataTables::ConnectionAdapters::DeleteHookDefinition.new(
+      ConnectionAdapters::DeleteHookDefinition.new(
         :books,
         :books_history
       )
@@ -142,7 +142,7 @@ RSpec.describe StrataTables::ConnectionAdapters::SchemaCreation do
 
     context "given VersioningHookDefinition" do
       let(:object) do
-        StrataTables::ConnectionAdapters::VersioningHookDefinition.new(
+        ActiveRecord::Temporal::ConnectionAdapters::VersioningHookDefinition.new(
           :books,
           :books_history,
           [:id, :title, :pages, :published_at]

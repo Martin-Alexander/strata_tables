@@ -8,13 +8,13 @@ RSpec.describe "delete triggers" do
     end
 
     stub_const("Version", Module.new do
-      include StrataTables::SystemVersioningNamespace
+      include SystemVersioningNamespace
     end)
 
     model "ApplicationRecord" do
       self.abstract_class = true
 
-      include StrataTables::SystemVersioning
+      include SystemVersioning
 
       system_versioning
     end

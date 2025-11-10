@@ -1,10 +1,10 @@
-module StrataTables
+module ActiveRecord::Temporal
   class TemporalQueryRegistry
     class << self
       delegate :default_scopes, :query_scopes, :set_default_scopes, :query_scope_for, :with_query_scope, to: :instance
 
       def instance
-        ActiveSupport::IsolatedExecutionState[:strata_tables_registry] ||= new
+        ActiveSupport::IsolatedExecutionState[:activerecord_temporal_registry] ||= new
       end
     end
 

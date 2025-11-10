@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module ConnectionAdapters
     class SchemaCreation
       def initialize(conn)

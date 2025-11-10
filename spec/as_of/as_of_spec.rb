@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe StrataTables::AsOf do
+RSpec.describe AsOf do
   before do
     table :authors, primary_key: [:id, :version_id] do |t|
       t.bigint :id
@@ -22,7 +22,7 @@ RSpec.describe StrataTables::AsOf do
     end
 
     model "Author" do
-      include StrataTables::AsOf
+      include AsOf
 
       set_time_dimensions :period
 
@@ -30,13 +30,13 @@ RSpec.describe StrataTables::AsOf do
     end
 
     model "Book" do
-      include StrataTables::AsOf
+      include AsOf
 
       set_time_dimensions :period
     end
 
     model "Library" do
-      include StrataTables::AsOf
+      include AsOf
 
       set_time_dimensions :period
     end
@@ -138,12 +138,12 @@ RSpec.describe StrataTables::AsOf do
 
     it "raises an error if the time is outside the record's as-of range" do
       expect { author_bob_v1.as_of!(t+3) }.to raise_error(
-        StrataTables::AsOf::RangeError,
+        AsOf::RangeError,
         "#{t+3} is outside of 'period' range"
       )
 
       expect { author_sam_v3.as_of!(t+5) }.to raise_error(
-        StrataTables::AsOf::RangeError,
+        AsOf::RangeError,
         "#{t+5} is outside of 'period' range"
       )
     end

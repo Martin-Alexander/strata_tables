@@ -1,4 +1,4 @@
-module StrataTablesTest
+module ActiveRecordTemporalTests
   module Associations
     extend ActiveSupport::Concern
 

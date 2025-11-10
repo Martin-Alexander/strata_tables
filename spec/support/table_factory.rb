@@ -1,4 +1,4 @@
-module StrataTablesTest
+module ActiveRecordTemporalTests
   module TableFactory
     def table(name, as_of: false, **options, &block)
       if as_of

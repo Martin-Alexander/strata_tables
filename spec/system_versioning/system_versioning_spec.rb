@@ -18,13 +18,13 @@ RSpec.describe "system versioning" do
     end
 
     stub_const("Version", Module.new do
-      include StrataTables::SystemVersioningNamespace
+      include SystemVersioningNamespace
     end)
 
     model "ApplicationRecord" do
       self.abstract_class = true
 
-      include StrataTables::SystemVersioning
+      include SystemVersioning
 
       system_versioning
     end
@@ -57,7 +57,7 @@ RSpec.describe "system versioning" do
       table_name: "authors_history",
       primary_key: ["id", "system_period"]
     )
-    expect(Version::Author).to be_include(StrataTables::AsOf)
+    expect(Version::Author).to be_include(AsOf)
   end
 
   it "Version::Library is a virtual version model" do
@@ -66,7 +66,7 @@ RSpec.describe "system versioning" do
       table_name: "libraries",
       primary_key: "id"
     )
-    expect(Version::Library).to be_include(StrataTables::AsOf)
+    expect(Version::Library).to be_include(AsOf)
   end
 
   it "Author has system versioning enabled" do

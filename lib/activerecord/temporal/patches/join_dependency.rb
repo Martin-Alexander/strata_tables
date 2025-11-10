@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module Patches
     module JoinDependency
       # Implement fix from https://github.com/rails/rails/pull/56088

@@ -1,4 +1,4 @@
-module StrataTablesTest
+module ActiveRecordTemporalTests
   module RecordFactory
     extend ActiveSupport::Concern
 

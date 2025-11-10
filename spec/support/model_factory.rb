@@ -1,4 +1,4 @@
-module StrataTablesTest
+module ActiveRecordTemporalTests
   module ModelFactory
     def model(name, super_class = ActiveRecord::Base, as_of: false, &block)
       klass = Class.new(super_class)
@@ -6,7 +6,7 @@ module StrataTablesTest
       stub_const(name, klass)
 
       if as_of
-        klass.include StrataTables::AsOf
+        klass.include AsOf
         klass.set_time_dimensions :period
       end
 

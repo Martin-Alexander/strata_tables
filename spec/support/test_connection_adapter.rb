@@ -1,5 +1,5 @@
-module StrataTablesTest
-  class SpecConnectionAdapter < ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
+module ActiveRecordTemporalTests
+  class TestConnectionAdapter < ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
     PlPgsqlFunction = Struct.new(:name, :body)
 
     class TableWrapper

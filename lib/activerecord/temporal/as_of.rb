@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module AsOf
     class RangeError < StandardError; end
 

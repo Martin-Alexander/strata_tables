@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe StrataTables::ConnectionAdapters::SchemaStatements do
+RSpec.describe ConnectionAdapters::SchemaStatements do
   before do
     conn.create_table :authors do |t|
       t.string :first_name

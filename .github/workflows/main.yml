@@ -42,7 +42,7 @@ jobs:
       - uses: ankane/setup-postgres@v1
         with:
           postgres-version: 16
-          database: strata_tables_test
+          database: activerecord_temporal_test
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

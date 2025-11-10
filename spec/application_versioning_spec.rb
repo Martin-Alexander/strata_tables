@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe StrataTables::ApplicationVersioning do
+RSpec.describe ApplicationVersioning do
   before do
     conn.enable_extension(:btree_gist)
 
@@ -27,7 +27,7 @@ RSpec.describe StrataTables::ApplicationVersioning do
     model "ApplicationRecord" do
       self.abstract_class = true
 
-      include StrataTables::ApplicationVersioning
+      include ApplicationVersioning
 
       set_time_dimensions :validity
     end

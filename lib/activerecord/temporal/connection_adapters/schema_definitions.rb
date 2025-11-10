@@ -1,4 +1,4 @@
-module StrataTables
+module ActiveRecord::Temporal
   module ConnectionAdapters
     class VersioningHookDefinition
       attr_accessor :source_table, :history_table, :columns

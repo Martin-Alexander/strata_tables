@@ -27,7 +27,6 @@ RSpec.describe StrataTables::ApplicationVersioning do
     model "ApplicationRecord" do
       self.abstract_class = true
 
-      include StrataTables::AsOf
       include StrataTables::ApplicationVersioning
 
       set_time_dimensions :validity

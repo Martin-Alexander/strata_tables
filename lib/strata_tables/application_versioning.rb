@@ -1,5 +1,11 @@
 module StrataTables
   module ApplicationVersioning
+    extend ActiveSupport::Concern
+
+    included do
+      include AsOf
+    end
+
     class Revision
       attr_reader :record, :time, :options
 

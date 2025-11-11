@@ -6,7 +6,7 @@ module ActiveRecordTemporalTests
       stub_const(name, klass)
 
       if as_of
-        klass.include AsOf
+        klass.include AsOfQuery
         klass.set_time_dimensions :period
       end
 

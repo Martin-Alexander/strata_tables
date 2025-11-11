@@ -2,17 +2,16 @@
 
 require "spec_helper"
 
-RSpec.describe "time dimensions" do
+RSpec.describe ActiveRecord::Temporal::AsOfQuery::TimeDimensions do
   before do
-    table :cats, primary_key: [:id, :period_1, :period_2] do |t|
+    table :cats, primary_key: [:id, :version] do |t|
       t.bigserial :id
+      t.bigserial :version
       t.tstzrange :period_1
       t.tstzrange :period_2
     end
 
-    model "Cat" do
-      include AsOf
-
+    model "Cat", as_of: true do
       set_time_dimensions :period_2, :period_1, :period_3
     end
   end

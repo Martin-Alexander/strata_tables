@@ -5,11 +5,11 @@ require "spec_helper"
 RSpec.describe "has many through" do
   before do
     model "Author", as_of: true do
-      has_many :books, temporal_association_scope
-      has_many :publishers, temporal_association_scope, through: :books
+      has_many :books, temporal: true
+      has_many :publishers, temporal: true, through: :books
     end
     model "Book", as_of: true do
-      belongs_to :publisher, temporal_association_scope
+      belongs_to :publisher, temporal: true
     end
     model "Publisher", as_of: true
   end
@@ -18,9 +18,9 @@ RSpec.describe "has many through" do
 
   context "when all tables have period columns" do
     before(:context) do
-      table :authors, as_of: true
-      table :publishers, as_of: true
-      table :books, as_of: true do |t|
+      as_of_table :authors
+      as_of_table :publishers
+      as_of_table :books do |t|
         t.references :author
         t.references :publisher
       end
@@ -100,8 +100,8 @@ RSpec.describe "has many through" do
 
   context "when through table has no period column" do
     before(:context) do
-      table :authors, as_of: true
-      table :publishers, as_of: true
+      as_of_table :authors
+      as_of_table :publishers
       table :books do |t|
         t.references :author
         t.references :publisher
@@ -152,9 +152,9 @@ RSpec.describe "has many through" do
 
   context "when target table has no period column" do
     before(:context) do
-      table :authors, as_of: true
+      as_of_table :authors
       table :publishers
-      table :books, as_of: true do |t|
+      as_of_table :books do |t|
         t.references :author
         t.references :publisher
       end
@@ -226,8 +226,8 @@ RSpec.describe "has many through" do
   context "when source table has no period column" do
     before(:context) do
       table :authors
-      table :publishers, as_of: true
-      table :books, as_of: true do |t|
+      as_of_table :publishers
+      as_of_table :books do |t|
         t.references :author
         t.references :publisher
       end

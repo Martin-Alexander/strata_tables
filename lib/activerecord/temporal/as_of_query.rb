@@ -1,22 +1,10 @@
 module ActiveRecord::Temporal
-  module AsOf
+  module AsOfQuery
     class RangeError < StandardError; end
 
     extend ActiveSupport::Concern
 
     class_methods do
-      def set_time_dimensions(*dimensions)
-        define_singleton_method(:time_dimensions) { dimensions }
-        define_singleton_method(:default_time_dimension) { dimensions.first }
-      end
-
-      def time_dimensions = []
-      def default_time_dimension = nil
-
-      def time_dimension_column?(time_dimension)
-        connection.column_exists?(table_name, time_dimension)
-      end
-
       def existed_at_constraint(arel_table, time, time_dimension)
         time_f = time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N")
 
@@ -26,7 +14,7 @@ module ActiveRecord::Temporal
       end
 
       def temporal_association_scope(&block)
-        AsOfAssociationScope.build(block)
+        AssociationScope.build(block)
       end
 
       def resolve_time_scopes(time_or_time_scopes)
@@ -37,7 +25,10 @@ module ActiveRecord::Temporal
     end
 
     included do
-      delegate :time_dimensions, :default_time_dimension, :time_dimension_column?, :resolve_time_scopes, to: :class
+      include AssociationMacros
+      include TimeDimensions
+
+      delegate :resolve_time_scopes, to: :class
 
       scope :as_of, ->(time) do
         time_scopes = resolve_time_scopes(time)
@@ -90,50 +81,6 @@ module ActiveRecord::Temporal
       time_scopes = resolve_time_scopes(time)
 
       self.class.as_of(time_scopes).find_by(self.class.primary_key => [id])
-    end
-
-    def time_dimension(dimension = nil)
-      dimension ||= default_time_dimension
-
-      if !time_dimension_column?(dimension)
-        raise ArgumentError, "no time dimension column '#{dimension}'"
-      end
-
-      send(dimension)
-    end
-
-    def time_dimension_start(dimension = nil)
-      time_dimension(dimension)&.begin
-    end
-
-    def time_dimension_end(dimension = nil)
-      time_dimension(dimension)&.end
-    end
-
-    def set_time_dimension(value, dimension = nil)
-      dimension ||= default_time_dimension
-
-      if !time_dimension_column?(dimension)
-        raise ArgumentError, "no time dimension column '#{dimension}'"
-      end
-
-      send("#{dimension}=", value)
-    end
-
-    def set_time_dimension_start(value, dimension = nil)
-      existing_value = time_dimension(dimension)
-
-      new_value = existing_value ? value...existing_value.end : value...nil
-
-      set_time_dimension(new_value, dimension)
-    end
-
-    def set_time_dimension_end(value, dimension = nil)
-      existing_value = time_dimension(dimension)
-
-      new_value = existing_value ? existing_value.begin...value : nil...value
-
-      set_time_dimension(new_value, dimension)
     end
 
     def initialize_time_scope_from_relation(relation)

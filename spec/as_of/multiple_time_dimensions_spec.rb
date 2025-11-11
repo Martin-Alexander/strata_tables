@@ -20,19 +20,19 @@ RSpec.describe "multiple columns spec" do
     end
 
     model "Employee" do
-      include AsOf
+      include AsOfQuery
 
       set_time_dimensions :validity, :sys_period
 
-      belongs_to :org, temporal_association_scope
+      belongs_to :org, temporal: true
     end
 
     model "Org" do
-      include AsOf
+      include AsOfQuery
 
       set_time_dimensions :validity, :sys_period
 
-      has_many :employees, temporal_association_scope
+      has_many :employees, temporal: true
     end
   end
 

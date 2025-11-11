@@ -5,10 +5,10 @@ require "spec_helper"
 RSpec.describe "has many polymorphic" do
   before do
     model "Author", as_of: true do
-      has_many :pics, temporal_association_scope, as: :picable
+      has_many :pics, temporal: true, as: :picable
     end
     model "Pic", as_of: true do
-      belongs_to :picable, temporal_association_scope, polymorphic: true
+      belongs_to :picable, temporal: true, polymorphic: true
     end
   end
 
@@ -16,8 +16,8 @@ RSpec.describe "has many polymorphic" do
 
   context "when all tables have period columns" do
     before(:context) do
-      table :authors, as_of: true
-      table :pics, as_of: true do |t|
+      as_of_table :authors
+      as_of_table :pics do |t|
         t.bigint :picable_id
         t.string :picable_type
       end
@@ -97,7 +97,7 @@ RSpec.describe "has many polymorphic" do
 
   context "when target table has no period column" do
     before(:context) do
-      table :authors, as_of: true
+      as_of_table :authors
       table :pics do |t|
         t.bigint :picable_id
         t.string :picable_type
@@ -151,7 +151,7 @@ RSpec.describe "has many polymorphic" do
   context "when source table has no period column" do
     before(:context) do
       table :authors
-      table :pics, as_of: true do |t|
+      as_of_table :pics do |t|
         t.bigint :picable_id
         t.string :picable_type
       end

@@ -1,10 +1,24 @@
 module ActiveRecordTemporalTests
   module TableFactory
-    def table(name, as_of: false, **options, &block)
-      if as_of
-        as_of_table(name, **options, &block)
-      else
-        regular_table(name, **options, &block)
+    def table(name, **options, &block)
+      conn.create_table name, **options do |t|
+        instance_exec(t, &block) if block
+      end
+
+      Array(options[:primary_key] || :id).each do |col|
+        randomize_sequence(name, col)
+      end
+    end
+
+    def as_of_table name, **options, &block
+      options = options.merge(primary_key: [:id, :version])
+
+      table name, **options do |t|
+        t.bigint :id
+        t.bigserial :version
+        t.tstzrange :period, null: false
+
+        instance_exec(t, &block) if block
       end
     end
 
@@ -12,11 +26,11 @@ module ActiveRecordTemporalTests
       source_table_name = name
       history_table_name = "#{name}_history"
 
-      regular_table(source_table_name, **options, &block)
+      table source_table_name, **options, &block
 
       primary_key = Array(conn.primary_key(source_table_name))
 
-      regular_table(history_table_name, primary_key: primary_key + [:system_period]) do |t|
+      table history_table_name, primary_key: [:id, :system_period] do |t|
         instance_exec(t, &block) if block
 
         t.bigint :id, null: false
@@ -29,31 +43,6 @@ module ActiveRecordTemporalTests
 
     private
 
-    def as_of_table(name, **options, &block)
-      ensure_btree_gist_enabled
-
-      options = options.merge(primary_key: [:id, :version_id])
-
-      conn.create_table name, **options do |t|
-        t.bigint :id
-        t.bigserial :version_id
-        t.tstzrange :period, null: false
-        t.exclusion_constraint("id WITH =, period WITH &&", using: :gist)
-
-        instance_exec(t, &block) if block
-      end
-    end
-
-    def regular_table(name, **options, &block)
-      conn.create_table name, **options do |t|
-        instance_exec(t, &block) if block
-      end
-
-      Array(options[:primary_key] || :id).each do |col|
-        randomize_sequence(name, col)
-      end
-    end
-
     def randomize_sequence(table, column)
       offset = Math.exp(2 + rand * (10 - 2)).to_i
 
@@ -65,10 +54,6 @@ module ActiveRecordTemporalTests
           #{offset}
         )
       SQL
-    end
-
-    def ensure_btree_gist_enabled
-      conn.enable_extension(:btree_gist) unless conn.extension_enabled?(:btree_gist)
     end
   end
 end

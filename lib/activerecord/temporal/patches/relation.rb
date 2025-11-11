@@ -24,11 +24,11 @@ module ActiveRecord::Temporal
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")
         def build_arel(connection)
-          TemporalQueryRegistry.with_query_scope(time_scope_values) { super }
+          AsOfQuery::ScopeRegistry.with_query_scope(time_scope_values) { super }
         end
       else
         def build_arel(connection, aliases = nil)
-          TemporalQueryRegistry.with_query_scope(time_scope_values) { super }
+          AsOfQuery::ScopeRegistry.with_query_scope(time_scope_values) { super }
         end
       end
 
@@ -38,7 +38,7 @@ module ActiveRecord::Temporal
         records = super
 
         records.each do |record|
-          record.initialize_time_scope_from_relation(self) if record.is_a?(AsOf)
+          record.initialize_time_scope_from_relation(self) if record.is_a?(AsOfQuery)
         end
 
         records

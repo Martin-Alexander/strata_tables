@@ -3,7 +3,7 @@ module ActiveRecord::Temporal
     extend ActiveSupport::Concern
 
     included do
-      include AsOf
+      include AsOfQuery
     end
 
     class Revision

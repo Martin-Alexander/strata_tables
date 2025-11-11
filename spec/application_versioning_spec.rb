@@ -33,11 +33,11 @@ RSpec.describe ApplicationVersioning do
     end
 
     model "User", ApplicationRecord do
-      has_many :tasks, temporal_association_scope
+      has_many :tasks, temporal: true
     end
 
     model "Task", ApplicationRecord do
-      belongs_to :user, temporal_association_scope
+      belongs_to :user, temporal: true
     end
   end
 

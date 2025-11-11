@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe ConnectionAdapters::SchemaStatements do
+RSpec.describe SystemVersioning::SchemaStatements do
   before do
     conn.create_table :authors do |t|
       t.string :first_name

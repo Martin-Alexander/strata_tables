@@ -1,8 +1,6 @@
 module ActiveRecord::Temporal
-  module ConnectionAdapters
+  module SystemVersioning
     module SchemaStatements
-      include ConnectionAdapters
-
       def create_versioning_hook(source_table, history_table, **options)
         columns = options.fetch(:columns)&.map(&:to_s)
         primary_key = Array(options.fetch(:primary_key, :id))

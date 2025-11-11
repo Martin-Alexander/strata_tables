@@ -1,7 +1,7 @@
 require "active_support/core_ext/hash/deep_transform_values"
 
 module ActiveRecord::Temporal
-  module ConnectionAdapters
+  module SystemVersioning
     class SchemaCreation
       def initialize(conn)
         @conn = conn

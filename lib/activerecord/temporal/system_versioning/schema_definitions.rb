@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module ConnectionAdapters
+  module SystemVersioning
     class VersioningHookDefinition
       attr_accessor :source_table, :history_table, :columns, :primary_key
 

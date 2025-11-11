@@ -16,7 +16,7 @@ RSpec.describe "system versioning associations" do
     end
 
     stub_const("Version", Module.new do
-      include SystemVersioningNamespace
+      include SystemVersioning::Namespace
     end)
 
     model "ApplicationRecord" do

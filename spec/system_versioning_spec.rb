@@ -5,7 +5,7 @@ RSpec.describe "system versioning" do
     conn.enable_extension(:btree_gist)
 
     stub_const("Version", Module.new do
-      include SystemVersioningNamespace
+      include SystemVersioning::Namespace
     end)
 
     model "ApplicationRecord" do

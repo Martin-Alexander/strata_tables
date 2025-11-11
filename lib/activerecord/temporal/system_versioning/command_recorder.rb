@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module Patches
+  module SystemVersioning
     module CommandRecorder
       [
         :create_versioning_hook,

@@ -19,7 +19,7 @@ RSpec.describe "update triggers" do
     conn.create_versioning_hook(:books, :books_history, columns: [:id, :title, :pages])
 
     stub_const("Version", Module.new do
-      include SystemVersioningNamespace
+      include SystemVersioning::Namespace
     end)
 
     model "ApplicationRecord" do

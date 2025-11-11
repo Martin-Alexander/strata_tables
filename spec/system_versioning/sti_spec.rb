@@ -8,7 +8,7 @@ RSpec.describe "sti" do
     end
 
     stub_const("Version", Module.new do
-      include SystemVersioningNamespace
+      include SystemVersioning::Namespace
     end)
 
     model "ApplicationRecord" do

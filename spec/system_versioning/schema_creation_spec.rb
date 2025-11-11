@@ -1,10 +1,10 @@
 require "spec_helper"
 
-RSpec.describe ConnectionAdapters::SchemaCreation do
+RSpec.describe SystemVersioning::SchemaCreation do
   subject { described_class.new(ActiveRecord::Base.connection) }
 
   it "InsertHookDefinition returns the correct SQL" do
-    object = ConnectionAdapters::InsertHookDefinition.new(
+    object = SystemVersioning::InsertHookDefinition.new(
       :books,
       :books_history,
       [:id, :title, :pages, :published_at]
@@ -39,7 +39,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
   end
 
   it "UpdateHookDefinition returns the correct SQL" do
-    object = ConnectionAdapters::UpdateHookDefinition.new(
+    object = SystemVersioning::UpdateHookDefinition.new(
       :books,
       :books_history,
       [:id, :title, :pages],
@@ -85,7 +85,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
   end
 
   it "UpdateHookDefinition returns correct SQL given composite primary key" do
-    object = ConnectionAdapters::UpdateHookDefinition.new(
+    object = SystemVersioning::UpdateHookDefinition.new(
       :books,
       :books_history,
       [:id, :title, :pages],
@@ -104,7 +104,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
   end
 
   it "DeleteHookDefinition returns the correct SQL" do
-    object = ConnectionAdapters::DeleteHookDefinition.new(
+    object = SystemVersioning::DeleteHookDefinition.new(
       :books,
       :books_history,
       [:id]
@@ -143,7 +143,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
   end
 
   it "DeleteHookDefinition returns the correct SQL given composite primary key" do
-    object = ConnectionAdapters::DeleteHookDefinition.new(
+    object = SystemVersioning::DeleteHookDefinition.new(
       :books,
       :books_history,
       [:id, :title]
@@ -164,7 +164,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     columns = [:id, :title, :pages, :published_at]
     source_pk = [:id]
 
-    object = ActiveRecord::Temporal::ConnectionAdapters::VersioningHookDefinition.new(
+    object = ActiveRecord::Temporal::SystemVersioning::VersioningHookDefinition.new(
       :books,
       :books_history,
       columns: columns,
@@ -173,20 +173,20 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
 
     sql = subject.accept(object)
 
-    insert_hook_definition = ConnectionAdapters::InsertHookDefinition.new(
+    insert_hook_definition = SystemVersioning::InsertHookDefinition.new(
       :books,
       :books_history,
       columns
     )
 
-    update_hook_definition = ConnectionAdapters::UpdateHookDefinition.new(
+    update_hook_definition = SystemVersioning::UpdateHookDefinition.new(
       :books,
       :books_history,
       columns,
       source_pk
     )
 
-    delete_hook_definition = ConnectionAdapters::DeleteHookDefinition.new(
+    delete_hook_definition = SystemVersioning::DeleteHookDefinition.new(
       :books,
       :books_history,
       source_pk

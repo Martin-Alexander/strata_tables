@@ -39,6 +39,12 @@ module ActiveRecord::Temporal
     class_methods do
       def const_missing(name)
         model = name.to_s.constantize
+      rescue NameError
+        super
+      else
+        unless model.is_a?(Class) && model < ActiveRecord::Base
+          raise NameError, "#{model} is not a descendent of ActiveRecord::Base"
+        end
 
         version_model = if (history_table = model.history_table)
           Class.new(model) do

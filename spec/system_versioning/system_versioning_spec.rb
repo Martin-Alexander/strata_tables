@@ -23,6 +23,17 @@ RSpec.describe "system versioning" do
     conn.disable_extension(:btree_gist)
   end
 
+  it "raises an error when loading a contant that isn't an AR model" do
+    model "Author", ApplicationRecord
+    stub_const "Num", 1
+
+    expect { Version::Author }.not_to raise_error
+    expect { Version::Foo }.to raise_error(NameError, "uninitialized constant Version::Foo")
+    expect { Version::File }.to raise_error(NameError, "File is not a descendent of ActiveRecord::Base")
+    expect { Version::Kernel }.to raise_error(NameError, "Kernel is not a descendent of ActiveRecord::Base")
+    expect { Version::Num }.to raise_error(NameError, "1 is not a descendent of ActiveRecord::Base")
+  end
+
   shared_examples "versions records" do
     it "versions records" do
       t1 = transaction_time { Author.create!(name: "Will") }

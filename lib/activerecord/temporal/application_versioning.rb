@@ -22,7 +22,7 @@ module ActiveRecord::Temporal
         new_revision.time_scopes = record.time_scopes
         record.set_time_dimension_end(time)
 
-        new_revision.after_initialize_revsion(record)
+        new_revision.after_initialize_revision(record)
 
         if options[:save]
           record.class.transaction do
@@ -34,7 +34,7 @@ module ActiveRecord::Temporal
       end
     end
 
-    def after_initialize_revsion(old_revision)
+    def after_initialize_revision(old_revision)
       self.version = old_revision.version + 1
       self.id_value = old_revision.id_value
     end

@@ -4,7 +4,7 @@ module ActiveRecord::Temporal
       include ConnectionAdapters
 
       def create_versioning_hook(source_table, history_table, **options)
-        columns = options.fetch(:columns)
+        columns = options.fetch(:columns)&.map(&:to_s)
         primary_key = Array(options.fetch(:primary_key, :id))
 
         ensure_table_exists!(source_table)
@@ -50,16 +50,16 @@ module ActiveRecord::Temporal
         metadata = JSON.parse(row["comment"])
 
         VersioningHookDefinition.new(
-          metadata["source_table"].to_sym,
-          metadata["history_table"].to_sym,
-          columns: metadata["columns"].map(&:to_sym),
-          primary_key: metadata["primary_key"].map(&:to_sym)
+          metadata["source_table"],
+          metadata["history_table"],
+          columns: metadata["columns"],
+          primary_key: metadata["primary_key"]
         )
       end
 
       def change_versioning_hook(source_table, history_table, options)
-        add_columns = options[:add_columns] || []
-        remove_columns = options[:remove_columns] || []
+        add_columns = (options[:add_columns] || []).map(&:to_s)
+        remove_columns = (options[:remove_columns] || []).map(&:to_s)
 
         ensure_table_exists!(source_table)
         ensure_table_exists!(history_table)
@@ -102,8 +102,8 @@ module ActiveRecord::Temporal
         ensure_columns_exists!(history_table, column_names)
 
         column_names.each do |column|
-          source_column = columns(source_table).find { _1.name == column.to_s }
-          history_column = columns(history_table).find { _1.name == column.to_s }
+          source_column = columns(source_table).find { _1.name == column }
+          history_column = columns(history_table).find { _1.name == column }
 
           if source_column.type != history_column.type
             raise ArgumentError, "table '#{history_table}' does not have column '#{column}' of type '#{source_column.type}'"

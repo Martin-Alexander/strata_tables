@@ -13,10 +13,10 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     function_id = Digest::SHA256.hexdigest("books_insert").first(10)
     expected_function_name = "sys_ver_func_" + function_id
     expected_function_comment = JSON.generate(
-      verb: "insert",
-      source_table: "books",
-      history_table: "books_history",
-      columns: %w[id title pages published_at]
+      verb: :insert,
+      source_table: :books,
+      history_table: :books_history,
+      columns: %i[id title pages published_at]
     )
 
     sql = subject.accept(object)
@@ -24,8 +24,8 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     expect(sql.squish).to eq(<<~SQL.squish)
       CREATE FUNCTION #{expected_function_name}() RETURNS TRIGGER AS $$
         BEGIN
-          INSERT INTO "books_history" (id, title, pages, published_at, system_period)
-          VALUES (NEW.id, NEW.title, NEW.pages, NEW.published_at, tstzrange(NOW(), 'infinity'));
+          INSERT INTO "books_history" ("id", "title", "pages", "published_at", system_period)
+          VALUES (NEW."id", NEW."title", NEW."pages", NEW."published_at", tstzrange(NOW(), 'infinity'));
 
           RETURN NULL;
         END;
@@ -34,7 +34,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
       CREATE TRIGGER versioning_insert_trigger AFTER INSERT ON "books"
         FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
 
-      COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
+      COMMENT ON FUNCTION #{expected_function_name}() IS '#{expected_function_comment}';
     SQL
   end
 
@@ -67,11 +67,11 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
 
           UPDATE "books_history"
           SET system_period = tstzrange(lower(system_period), NOW())
-          WHERE id = OLD.id AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
+          WHERE "id" = OLD."id" AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
 
-          INSERT INTO "books_history" (id, title, pages, system_period)
-          VALUES (NEW.id, NEW.title, NEW.pages, tstzrange(NOW(), 'infinity'))
-          ON CONFLICT (id, system_period) DO UPDATE SET id = EXCLUDED.id, title = EXCLUDED.title, pages = EXCLUDED.pages;
+          INSERT INTO "books_history" ("id", "title", "pages", system_period)
+          VALUES (NEW."id", NEW."title", NEW."pages", tstzrange(NOW(), 'infinity'))
+          ON CONFLICT ("id", system_period) DO UPDATE SET "id" = EXCLUDED."id", "title" = EXCLUDED."title", "pages" = EXCLUDED."pages";
 
           RETURN NULL;
         END;
@@ -80,7 +80,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
       CREATE TRIGGER versioning_update_trigger AFTER UPDATE ON "books"
         FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
 
-      COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
+      COMMENT ON FUNCTION #{expected_function_name}() IS '#{expected_function_comment}';
     SQL
   end
 
@@ -95,11 +95,11 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     sql = subject.accept(object)
 
     expect(sql).to include(<<~SQL)
-      WHERE id = OLD.id AND title = OLD.title AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
+      WHERE "id" = OLD."id" AND "title" = OLD."title" AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
     SQL
 
     expect(sql).to include(<<~SQL)
-      ON CONFLICT (id, title, system_period) DO UPDATE SET id = EXCLUDED.id, title = EXCLUDED.title, pages = EXCLUDED.pages;
+      ON CONFLICT ("id", "title", system_period) DO UPDATE SET "id" = EXCLUDED."id", "title" = EXCLUDED."title", "pages" = EXCLUDED."pages";
     SQL
   end
 
@@ -113,9 +113,9 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     function_id = Digest::SHA256.hexdigest("books_delete").first(10)
     expected_function_name = "sys_ver_func_" + function_id
     expected_function_comment = JSON.generate(
-      verb: "delete",
-      source_table: "books",
-      history_table: "books_history",
+      verb: :delete,
+      source_table: :books,
+      history_table: :books_history,
       primary_key: [:id]
     )
 
@@ -125,11 +125,11 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
       CREATE FUNCTION #{expected_function_name}() RETURNS TRIGGER AS $$
         BEGIN
           DELETE FROM "books_history"
-          WHERE id = OLD.id AND system_period = tstzrange(NOW(), 'infinity');
+          WHERE "id" = OLD."id" AND system_period = tstzrange(NOW(), 'infinity');
 
           UPDATE "books_history"
           SET system_period = tstzrange(lower(system_period), NOW())
-          WHERE id = OLD.id AND upper(system_period) = 'infinity';
+          WHERE "id" = OLD."id" AND upper(system_period) = 'infinity';
 
           RETURN NULL;
         END;
@@ -138,7 +138,7 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
       CREATE TRIGGER versioning_delete_trigger AFTER DELETE ON "books"
         FOR EACH ROW EXECUTE PROCEDURE #{expected_function_name}();
 
-      COMMENT ON FUNCTION #{expected_function_name} IS '#{expected_function_comment}';
+      COMMENT ON FUNCTION #{expected_function_name}() IS '#{expected_function_comment}';
     SQL
   end
 
@@ -152,11 +152,11 @@ RSpec.describe ConnectionAdapters::SchemaCreation do
     sql = subject.accept(object)
 
     expect(sql).to include(<<~SQL)
-      WHERE id = OLD.id AND title = OLD.title AND system_period = tstzrange(NOW(), 'infinity');
+      WHERE "id" = OLD."id" AND "title" = OLD."title" AND system_period = tstzrange(NOW(), 'infinity');
     SQL
 
     expect(sql).to include(<<~SQL)
-      WHERE id = OLD.id AND title = OLD.title AND upper(system_period) = 'infinity';
+      WHERE "id" = OLD."id" AND "title" = OLD."title" AND upper(system_period) = 'infinity';
     SQL
   end
 

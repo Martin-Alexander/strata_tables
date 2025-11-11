@@ -1,3 +1,5 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
 require "spec_helper"
 
 RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationScope do
@@ -231,3 +233,5 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationScope do
     end
   end
 end
+
+# rubocop:enable Layout/SpaceAroundOperators

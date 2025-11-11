@@ -127,12 +127,12 @@ RSpec.describe "migrations" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:title, :author_name, :pages)
+          .to contain_exactly("title", "author_name", "pages")
 
         migration.migrate(:down)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:title, :author_name)
+          .to contain_exactly("title", "author_name")
       end
     end
 
@@ -145,12 +145,12 @@ RSpec.describe "migrations" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:author_name)
+          .to contain_exactly("author_name")
 
         migration.migrate(:down)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:title, :author_name)
+          .to contain_exactly("title", "author_name")
       end
     end
 
@@ -170,12 +170,12 @@ RSpec.describe "migrations" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:author_name, :pages)
+          .to contain_exactly("author_name", "pages")
 
         migration.migrate(:down)
 
         expect(conn.versioning_hook(:books).columns)
-          .to contain_exactly(:title, :author_name)
+          .to contain_exactly("title", "author_name")
       end
     end
   end

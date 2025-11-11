@@ -44,21 +44,6 @@ RSpec.describe "insert triggers" do
 
   include_examples "insert triggers"
 
-  context "when the table name has spaces" do
-    before do
-      system_versioned_table "My Books" do |t|
-        t.string :title
-        t.integer :pages
-      end
-
-      model "Book", ApplicationRecord do
-        self.table_name = "My Books"
-      end
-    end
-
-    include_examples "insert triggers"
-  end
-
   context "when the table name is schema qualified" do
     before do
       conn.create_schema("myschema")
@@ -70,6 +55,22 @@ RSpec.describe "insert triggers" do
 
       model "Book", ApplicationRecord do
         self.table_name = "myschema.books"
+      end
+    end
+
+    include_examples "insert triggers"
+  end
+
+  context "when column and table name has spaces and single quotes" do
+    before do
+      system_versioned_table "bob's books" do |t|
+        t.string "book's title"
+        t.integer :pages
+      end
+
+      model "Book", ApplicationRecord do
+        self.table_name = "bob's books"
+        alias_attribute :title, "book's title"
       end
     end
 

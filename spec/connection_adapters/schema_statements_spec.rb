@@ -47,10 +47,10 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
       )
 
       expect(conn.versioning_hook(:authors)).to have_attributes(
-        source_table: :authors,
-        history_table: :authors_history,
-        columns: [:first_name, :last_name],
-        primary_key: [:id]
+        source_table: "authors",
+        history_table: "authors_history",
+        columns: %w[first_name last_name],
+        primary_key: %w[id]
       )
     end
 
@@ -63,10 +63,10 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
       )
 
       expect(conn.versioning_hook(:authors)).to have_attributes(
-        source_table: :authors,
-        history_table: :authors_history,
-        columns: [:first_name, :last_name],
-        primary_key: [:id, :first_name, :last_name]
+        source_table: "authors",
+        history_table: "authors_history",
+        columns: %w[first_name last_name],
+        primary_key: %w[id first_name last_name]
       )
     end
 
@@ -121,6 +121,41 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
       expect(&create_hook)
         .to raise_error(ActiveRecord::StatementInvalid, /PG::DuplicateFunction/)
     end
+
+    it "handles table names with single quotes and spaces" do
+      conn.rename_table(:authors, "bob's authors")
+
+      conn.create_versioning_hook(
+        "bob's authors",
+        :authors_history,
+        columns: [:first_name, :last_name]
+      )
+
+      expect(conn.versioning_hook("bob's authors")).to have_attributes(
+        source_table: "bob's authors",
+        history_table: "authors_history",
+        columns: %w[first_name last_name],
+        primary_key: %w[id]
+      )
+    end
+
+    it "handles column names with single quotes and spaces" do
+      conn.rename_column(:authors, :first_name, "Author's First Name")
+      conn.rename_column(:authors_history, :first_name, "Author's First Name")
+
+      conn.create_versioning_hook(
+        :authors,
+        :authors_history,
+        columns: ["Author's First Name", :last_name]
+      )
+
+      expect(conn.versioning_hook(:authors)).to have_attributes(
+        source_table: "authors",
+        history_table: "authors_history",
+        columns: ["Author's First Name", "last_name"],
+        primary_key: ["id"]
+      )
+    end
   end
 
   describe "#drop_versioning_hook" do
@@ -170,9 +205,9 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
     it "returns the hook" do
       expect(conn.versioning_hook(:authors)).to have_attributes(
-        source_table: :authors,
-        history_table: :authors_history,
-        columns: contain_exactly(:first_name, :last_name)
+        source_table: "authors",
+        history_table: "authors_history",
+        columns: contain_exactly("first_name", "last_name")
       )
     end
 
@@ -212,7 +247,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
         versioning_hook = conn.versioning_hook(:authors)
 
         expect(versioning_hook.columns)
-          .to contain_exactly(:first_name, :last_name, :age)
+          .to contain_exactly("first_name", "last_name", "age")
       end
 
       it "raises an error if source table does not have added column" do
@@ -223,7 +258,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly(:first_name, :last_name)
+        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
       end
 
       it "raises an error if history table does not have added column" do
@@ -234,7 +269,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly(:first_name, :last_name)
+        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
       end
 
       it "raises an error if column types do not match" do
@@ -246,7 +281,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly(:first_name, :last_name)
+        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
       end
 
       it "raises an error if either table does not exist" do
@@ -268,7 +303,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly(:first_name, :last_name)
+        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
       end
     end
 
@@ -282,7 +317,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to eq([:last_name])
+        expect(versioning_hook.columns).to eq(["last_name"])
       end
 
       it "raises an error if hook does not have those columns" do
@@ -314,7 +349,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly(:first_name, :last_name)
+        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
       end
     end
 
@@ -331,7 +366,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
 
       versioning_hook = conn.versioning_hook(:authors)
 
-      expect(versioning_hook.columns).to contain_exactly(:last_name, :age)
+      expect(versioning_hook.columns).to contain_exactly("last_name", "age")
     end
   end
 end

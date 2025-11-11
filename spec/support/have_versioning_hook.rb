@@ -23,9 +23,9 @@ RSpec::Matchers.define :have_versioning_hook do |history_table, columns|
     versioning_hook = conn.versioning_hook(source_table)
 
     expect(versioning_hook).to have_attributes(
-      source_table: source_table,
-      history_table: history_table,
-      columns: contain_exactly(*columns)
+      source_table: source_table.to_s,
+      history_table: history_table.to_s,
+      columns: contain_exactly(*columns.map(&:to_s))
     )
   end
 end

@@ -1,3 +1,5 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
 require "spec_helper"
 
 RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationMacros do
@@ -19,10 +21,10 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationMacros do
       expect(Foo.reflect_on_association(:bar))
         .to have_attributes(klass: Bar, scope: be_present)
 
-        expect(Foo.reflect_on_association(:baz))
+      expect(Foo.reflect_on_association(:baz))
         .to have_attributes(klass: Baz, scope: be_nil)
 
-        expect(Foo.reflect_on_association(:boo))
+      expect(Foo.reflect_on_association(:boo))
         .to have_attributes(klass: Boo, scope: be_nil)
 
       expect(Foo.reflect_on_association(:moo))
@@ -85,3 +87,5 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationMacros do
     expect(Bar.as_of(t+1).first.foo.time_scope).to eq(t+1)
   end
 end
+
+# rubocop:enable Layout/SpaceAroundOperators

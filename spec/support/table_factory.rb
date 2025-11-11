@@ -28,8 +28,6 @@ module ActiveRecordTemporalTests
 
       table source_table_name, **options, &block
 
-      primary_key = Array(conn.primary_key(source_table_name))
-
       table history_table_name, primary_key: [:id, :system_period] do |t|
         instance_exec(t, &block) if block
 
@@ -46,11 +44,11 @@ module ActiveRecordTemporalTests
     def randomize_sequence(table, column)
       offset = Math.exp(2 + rand * (10 - 2)).to_i
 
-      quoted_table_name = conn.quote_table_name(table)
+      quoted_table = conn.quote_table_name(conn.quote_string(table.to_s))
 
       conn.execute(<<~SQL)
         SELECT setval(
-          pg_get_serial_sequence('#{quoted_table_name}', '#{column}'),
+          pg_get_serial_sequence('#{quoted_table}', '#{column}'),
           #{offset}
         )
       SQL

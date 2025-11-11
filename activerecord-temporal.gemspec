@@ -2,8 +2,8 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.name = "activerecord-temporal"
   s.version = "0.1.0"
-  s.summary = "Unintrusive temporal tables for Active Record"
-  s.description = "Unintrusive temporal tables for Active Record"
+  s.summary = "Time-travel querying, application/system versioning, and bitemporal support for Active Record"
+  s.description = "An unobtrusive and modular plugin for Active Record that adds support for time-travel querying and data versioning at the application level, at the system level via PostgreSQL triggers, or both."
 
   s.required_ruby_version = ">= 3.2.0"
 
@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
     "source_code_uri" => "https://github.com/Martin-Alexander/activerecord-temporal"
   }
 
-  s.add_dependency "activerecord", ">= 7.2"
-  s.add_dependency "activesupport", ">= 7.2"
+  s.add_dependency "activerecord", ">= 7.2.1"
+  s.add_dependency "activesupport", ">= 7.2.1"
   s.add_dependency "pg"
 end

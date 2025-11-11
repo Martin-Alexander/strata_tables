@@ -6,11 +6,14 @@ module ActiveRecord::Temporal
 
     class_methods do
       def existed_at_constraint(arel_table, time, time_dimension)
-        time_f = time.utc.strftime("%Y-%m-%d %H:%M:%S.%6N")
+        time_as_tstz = Arel::Nodes::As.new(
+          Arel::Nodes::Quoted.new(time),
+          Arel::Nodes::SqlLiteral.new("timestamptz")
+        )
 
-        <<~SQL
-          "#{arel_table.name}"."#{time_dimension}" @> '#{time_f}'::timestamptz
-        SQL
+        cast_value = Arel::Nodes::NamedFunction.new("CAST", [time_as_tstz])
+
+        arel_table[time_dimension].contains(cast_value)
       end
 
       def temporal_association_scope(&block)

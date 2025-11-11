@@ -1,9 +1,6 @@
 module ActiveRecord::Temporal
   module Patches
     module JoinDependency
-      # Implement fix from https://github.com/rails/rails/pull/56088
-      # TODO: remove when it gets release/backported
-
       def instantiate(result_set, strict_loading_value, &block)
         primary_key = Array(join_root.primary_key).map { |column| aliases.column_alias(join_root, column) }
 

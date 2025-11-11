@@ -1,25 +1,6 @@
 module ActiveRecord::Temporal
   module Patches
     module Relation
-      def time_scope(scope)
-        spawn.time_scope!(scope)
-      end
-
-      def time_scope!(scope)
-        self.time_scope_values = time_scope_values.merge(scope)
-        self
-      end
-
-      def time_scope_values
-        @values.fetch(:time_scope, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
-      end
-
-      def time_scope_values=(scope)
-        assert_modifiable! # TODO: write test
-
-        @values[:time_scope] = scope
-      end
-
       private
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")

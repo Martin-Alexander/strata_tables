@@ -50,13 +50,16 @@ module ActiveRecord::Temporal
       def visit_UpdateHookDefinition(o)
         fields = o.columns.join(", ")
         values = o.columns.map { |c| "NEW.#{c}" }.join(", ")
+        update_pk_predicates = o.primary_key.map { |c| "#{c} = OLD.#{c}" }.join(" AND ")
+        on_conflict_constraint = (o.primary_key + [:system_period]).join(", ")
         on_conflict_sets = o.columns.map { |c| "#{c} = EXCLUDED.#{c}" }.join(", ")
         function_name = versioning_function_name(o.source_table, :update)
         metadata = {
           verb: :update,
           source_table: o.source_table,
           history_table: o.history_table,
-          columns: o.columns
+          columns: o.columns,
+          primary_key: o.primary_key
         }
 
         <<~SQL
@@ -68,11 +71,11 @@ module ActiveRecord::Temporal
 
               UPDATE #{quote_table_name(o.history_table)}
               SET system_period = tstzrange(lower(system_period), NOW())
-              WHERE id = OLD.id AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
+              WHERE #{update_pk_predicates} AND upper(system_period) = 'infinity' AND lower(system_period) < NOW();
 
               INSERT INTO #{quote_table_name(o.history_table)} (#{fields}, system_period)
               VALUES (#{values}, tstzrange(NOW(), 'infinity'))
-              ON CONFLICT (id, system_period) DO UPDATE SET #{on_conflict_sets};
+              ON CONFLICT (#{on_conflict_constraint}) DO UPDATE SET #{on_conflict_sets};
 
               RETURN NULL;
             END;
@@ -87,21 +90,23 @@ module ActiveRecord::Temporal
 
       def visit_DeleteHookDefinition(o)
         function_name = versioning_function_name(o.source_table, :delete)
+        pk_predicates = Array(o.primary_key).map { |c| "#{c} = OLD.#{c}" }.join(" AND ")
         metadata = {
           verb: :delete,
           source_table: o.source_table,
-          history_table: o.history_table
+          history_table: o.history_table,
+          primary_key: o.primary_key
         }
 
         <<~SQL
           CREATE FUNCTION #{function_name}() RETURNS TRIGGER AS $$
             BEGIN
               DELETE FROM #{quote_table_name(o.history_table)}
-              WHERE id = OLD.id AND system_period = tstzrange(NOW(), 'infinity');
+              WHERE #{pk_predicates} AND system_period = tstzrange(NOW(), 'infinity');
 
               UPDATE #{quote_table_name(o.history_table)}
               SET system_period = tstzrange(lower(system_period), NOW())
-              WHERE id = OLD.id AND upper(system_period) = 'infinity';
+              WHERE #{pk_predicates} AND upper(system_period) = 'infinity';
 
               RETURN NULL;
             END;

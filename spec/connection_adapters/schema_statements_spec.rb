@@ -45,6 +45,29 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
         "versioning_update_trigger",
         "versioning_delete_trigger"
       )
+
+      expect(conn.versioning_hook(:authors)).to have_attributes(
+        source_table: :authors,
+        history_table: :authors_history,
+        columns: [:first_name, :last_name],
+        primary_key: [:id]
+      )
+    end
+
+    it "creates hook with custom primary key" do
+      conn.create_versioning_hook(
+        :authors,
+        :authors_history,
+        columns: [:first_name, :last_name],
+        primary_key: [:id, :first_name, :last_name]
+      )
+
+      expect(conn.versioning_hook(:authors)).to have_attributes(
+        source_table: :authors,
+        history_table: :authors_history,
+        columns: [:first_name, :last_name],
+        primary_key: [:id, :first_name, :last_name]
+      )
     end
 
     it "raises an error if columns don't match" do
@@ -71,6 +94,17 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
       expect do
         conn.create_versioning_hook(:books, :books_history, columns: [:author])
       end.to raise_error(ArgumentError, "table 'books_history' does not have column 'author' of type 'integer'")
+    end
+
+    it "raises an error if source table doesn't have columns in primary key" do
+      expect do
+        conn.create_versioning_hook(
+          :authors,
+          :authors_history,
+          columns: [:first_name, :last_name],
+          primary_key: :name
+        )
+      end.to raise_error(ArgumentError, "table 'authors' does not have column 'name'")
     end
 
     it "raises an error if the hook already exists" do
@@ -222,7 +256,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
             :authors_history,
             add_columns: [:age]
           )
-        end.to raise_error(ActiveRecord::StatementInvalid, /PG::UndefinedTable/)
+        end.to raise_error(ArgumentError, "table 'foo' does not exist")
 
         expect do
           conn.change_versioning_hook(
@@ -230,7 +264,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
             :foo,
             add_columns: [:age]
           )
-        end.to raise_error(ActiveRecord::StatementInvalid, /PG::UndefinedTable/)
+        end.to raise_error(ArgumentError, "table 'foo' does not exist")
 
         versioning_hook = conn.versioning_hook(:authors)
 
@@ -268,7 +302,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
             :authors_history,
             remove_columns: [:first_name]
           )
-        end.to raise_error(ActiveRecord::StatementInvalid, /PG::UndefinedTable/)
+        end.to raise_error(ArgumentError, "table 'foo' does not exist")
 
         expect do
           conn.change_versioning_hook(
@@ -276,7 +310,7 @@ RSpec.describe ConnectionAdapters::SchemaStatements do
             :foo,
             remove_columns: [:first_name]
           )
-        end.to raise_error(ActiveRecord::StatementInvalid, /PG::UndefinedTable/)
+        end.to raise_error(ArgumentError, "table 'foo' does not exist")
 
         versioning_hook = conn.versioning_hook(:authors)
 

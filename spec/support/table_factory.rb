@@ -15,9 +15,8 @@ module ActiveRecordTemporalTests
       regular_table(source_table_name, **options, &block)
 
       primary_key = Array(conn.primary_key(source_table_name))
-      history_table_options = {primary_key: primary_key + [:system_period]}.merge(options)
 
-      regular_table(history_table_name, **history_table_options) do |t|
+      regular_table(history_table_name, primary_key: primary_key + [:system_period]) do |t|
         instance_exec(t, &block) if block
 
         t.bigint :id, null: false

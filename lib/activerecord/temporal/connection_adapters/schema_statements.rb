@@ -3,12 +3,23 @@ module ActiveRecord::Temporal
     module SchemaStatements
       include ConnectionAdapters
 
-      def create_versioning_hook(source_table, history_table, columns:)
+      def create_versioning_hook(source_table, history_table, **options)
+        columns = options.fetch(:columns)
+        primary_key = Array(options.fetch(:primary_key, :id))
+
+        ensure_table_exists!(source_table)
+        ensure_table_exists!(history_table)
         ensure_columns_match!(source_table, history_table, columns)
+        ensure_columns_exists!(source_table, primary_key)
 
         schema_creation = SchemaCreation.new(self)
 
-        hook_definition = VersioningHookDefinition.new(source_table, history_table, columns)
+        hook_definition = VersioningHookDefinition.new(
+          source_table,
+          history_table,
+          columns: columns,
+          primary_key: primary_key
+        )
 
         execute schema_creation.accept(hook_definition)
       end
@@ -22,7 +33,7 @@ module ActiveRecord::Temporal
       end
 
       def versioning_hook(source_table)
-        insert_function_name = versioning_function_name(source_table, :insert)
+        update_function_name = versioning_function_name(source_table, :update)
 
         row = execute(<<~SQL.squish).first
           SELECT
@@ -31,7 +42,7 @@ module ActiveRecord::Temporal
           FROM pg_proc
           JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
           WHERE pg_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
-            AND pg_proc.proname = '#{insert_function_name}'
+            AND pg_proc.proname = '#{update_function_name}'
         SQL
 
         return unless row
@@ -41,7 +52,8 @@ module ActiveRecord::Temporal
         VersioningHookDefinition.new(
           metadata["source_table"].to_sym,
           metadata["history_table"].to_sym,
-          metadata["columns"].map(&:to_sym)
+          columns: metadata["columns"].map(&:to_sym),
+          primary_key: metadata["primary_key"].map(&:to_sym)
         )
       end
 
@@ -49,9 +61,12 @@ module ActiveRecord::Temporal
         add_columns = options[:add_columns] || []
         remove_columns = options[:remove_columns] || []
 
+        ensure_table_exists!(source_table)
+        ensure_table_exists!(history_table)
+        ensure_columns_match!(source_table, history_table, add_columns)
+
         hook_definition = versioning_hook(source_table)
 
-        ensure_columns_match!(source_table, history_table, add_columns)
         ensure_hook_has_columns!(hook_definition, remove_columns)
 
         drop_versioning_hook(source_table, history_table)
@@ -76,25 +91,31 @@ module ActiveRecord::Temporal
 
       private
 
+      def ensure_table_exists!(table_name)
+        return if table_exists?(table_name)
+
+        raise ArgumentError, "table '#{table_name}' does not exist"
+      end
+
       def ensure_columns_match!(source_table, history_table, column_names)
-        source_columns = columns(source_table)
-        history_columns = columns(history_table)
+        ensure_columns_exists!(source_table, column_names)
+        ensure_columns_exists!(history_table, column_names)
 
-        column_names.each do |column_name|
-          source_column = source_columns.find { _1.name == column_name.to_s }
-          history_column = history_columns.find { _1.name == column_name.to_s }
-
-          if source_column.nil?
-            raise ArgumentError, "table '#{source_table}' does not have column '#{column_name}'"
-          end
-
-          if history_column.nil?
-            raise ArgumentError, "table '#{history_table}' does not have column '#{column_name}'"
-          end
+        column_names.each do |column|
+          source_column = columns(source_table).find { _1.name == column.to_s }
+          history_column = columns(history_table).find { _1.name == column.to_s }
 
           if source_column.type != history_column.type
-            raise ArgumentError, "table '#{history_table}' does not have column '#{column_name}' of type '#{source_column.type}'"
+            raise ArgumentError, "table '#{history_table}' does not have column '#{column}' of type '#{source_column.type}'"
           end
+        end
+      end
+
+      def ensure_columns_exists!(table_name, column_names)
+        column_names.each do |column|
+          next if column_exists?(table_name, column)
+
+          raise ArgumentError, "table '#{table_name}' does not have column '#{column}'"
         end
       end
 

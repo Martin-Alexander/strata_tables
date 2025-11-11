@@ -2,10 +2,21 @@ require "spec_helper"
 
 RSpec.describe "update triggers" do
   before do
-    system_versioned_table :books do |t|
+    conn.enable_extension(:btree_gist)
+
+    conn.create_table :books do |t|
       t.string :title
       t.integer :pages
     end
+
+    conn.create_table :books_history, primary_key: [:id, :system_period] do |t|
+      t.bigint :id, null: false
+      t.string :title
+      t.integer :pages
+      t.tstzrange :system_period, null: false
+    end
+
+    conn.create_versioning_hook(:books, :books_history, columns: [:id, :title, :pages])
 
     stub_const("Version", Module.new do
       include SystemVersioningNamespace
@@ -29,11 +40,11 @@ RSpec.describe "update triggers" do
 
   shared_examples "update triggers" do
     it "sets current history record's upper bound system_period to the current time and creates a new history record" do
-      insert_time = transaction_with_time(conn) do
+      insert_time = transaction_time do
         Book.create!(title: "The Great Gatsby", pages: 180)
       end
 
-      update_time = transaction_with_time(conn) do
+      update_time = transaction_time do
         Book.first.update!(title: "The Greatest Gatsby")
       end
 
@@ -46,7 +57,7 @@ RSpec.describe "update triggers" do
 
     context "when the update doesn't change the record" do
       it "does not change the history table" do
-        insert_time = transaction_with_time(conn) do
+        insert_time = transaction_time do
           Book.create!(title: "The Great Gatsby", pages: 180)
         end
 
@@ -63,11 +74,11 @@ RSpec.describe "update triggers" do
 
     context "when two updates are made in a single transaction" do
       it "merges them into a single history record" do
-        insert_time = transaction_with_time(conn) do
+        insert_time = transaction_time do
           Book.create!(title: "The Great Gatsby", pages: 180)
         end
 
-        update_time = transaction_with_time(conn) do
+        update_time = transaction_time do
           Book.first.update!(title: "The Greatest Gatsby")
           Book.first.update!(title: "The Worst Gatsby")
           Book.first.update!(title: "The Absolutely Greatest Gatsby")

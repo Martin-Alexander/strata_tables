@@ -29,7 +29,7 @@ RSpec.describe "insert triggers" do
 
   shared_examples "insert triggers" do
     it "creates a new history record" do
-      insert_time = transaction_with_time(conn) do
+      insert_time = transaction_time do
         Book.create!(title: "The Great Gatsby", pages: 180)
       end
 

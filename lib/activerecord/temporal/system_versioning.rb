@@ -40,10 +40,10 @@ module ActiveRecord::Temporal
       def const_missing(name)
         model = name.to_s.constantize
 
-        version_model = if model.history_table
+        version_model = if (history_table = model.history_table)
           Class.new(model) do
-            self.table_name = "#{model.table_name}_history"
-            self.primary_key = [:id, :system_period]
+            self.table_name = history_table
+            self.primary_key = model.primary_key_from_db + [:system_period]
 
             include VersionModel
           end
@@ -64,6 +64,10 @@ module ActiveRecord::Temporal
     class_methods do
       def history_table
         connection.history_table(table_name)
+      end
+
+      def primary_key_from_db
+        Array(connection.primary_key(table_name)).map(&:to_sym)
       end
 
       def version_model

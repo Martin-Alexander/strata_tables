@@ -29,11 +29,11 @@ RSpec.describe "delete triggers" do
 
   shared_examples "delete triggers" do
     it "sets current history record's upper bound system_period to the current time" do
-      insert_time = transaction_with_time(conn) do
+      insert_time = transaction_time do
         Book.create!(title: "The Great Gatsby", pages: 180)
       end
 
-      delete_time = transaction_with_time(conn) do
+      delete_time = transaction_time do
         Book.first.destroy!
       end
 

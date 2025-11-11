@@ -26,11 +26,7 @@ module ActiveRecord::Temporal
       end
 
       def temporal_association_scope(&block)
-        scope = build_temporal_scope(&block)
-
-        def scope.as_of_scope? = true
-
-        scope
+        AsOfAssociationScope.build(block)
       end
 
       def resolve_time_scopes(time_or_time_scopes)
@@ -38,45 +34,10 @@ module ActiveRecord::Temporal
 
         {default_time_dimension.to_sym => time_or_time_scopes}
       end
-
-      private
-
-      def build_temporal_scope(&block)
-        temporalize = ->(owner = nil, base_scope) do
-          time_scopes = TemporalQueryRegistry.query_scope_for(time_dimensions)
-          owner_time_scopes = owner&.time_scopes_for(time_dimensions)
-
-          time_scopes.merge!(owner_time_scopes) if owner_time_scopes
-
-          base_scope
-            .existed_at(default_association_time_predicates.merge(time_scopes))
-            .time_scope(time_scopes)
-        end
-
-        if !block
-          return ->(owner = nil) { temporalize.call(owner, all) }
-        end
-
-        if block.arity != 0
-          return ->(owner) { temporalize.call(owner, instance_exec(owner, &block)) }
-        end
-
-        ->(owner = nil) { temporalize.call(owner, instance_exec(owner, &block)) }
-      end
-
-      def default_association_time_predicates
-        time_dimensions.map do |dimension|
-          [dimension, Time.current]
-        end.to_h
-      end
     end
 
     included do
-      delegate :time_dimensions,
-        :default_time_dimension,
-        :time_dimension_column?,
-        :resolve_time_scopes,
-        to: :class
+      delegate :time_dimensions, :default_time_dimension, :time_dimension_column?, :resolve_time_scopes, to: :class
 
       scope :as_of, ->(time) do
         time_scopes = resolve_time_scopes(time)

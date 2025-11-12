@@ -71,7 +71,10 @@ module ActiveRecord::Temporal
 
         new_columns = hook_definition.columns + add_columns - remove_columns
 
-        create_versioning_hook(source_table, history_table, columns: new_columns)
+        create_versioning_hook source_table,
+          history_table,
+          columns: new_columns,
+          primary_key: hook_definition.primary_key
       end
 
       def history_table(source_table)

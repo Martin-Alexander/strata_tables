@@ -13,6 +13,21 @@ RSpec.describe SystemVersioning::SchemaStatements do
       t.string :last_name
       t.tstzrange :sys_period, null: false
     end
+
+    conn.create_table :books, primary_key: [:id, :version] do |t|
+      t.bigserial :id, null: false
+      t.bigint :version, null: false, default: 1
+      t.string :name
+      t.tstzrange :period, null: false
+    end
+
+    conn.create_table :books_history, primary_key: [:id, :version, :sys_period] do |t|
+      t.bigint :id, null: false
+      t.bigint :version, null: false
+      t.string :name
+      t.tstzrange :period, null: false
+      t.tstzrange :sys_period, null: false
+    end
   end
 
   after do
@@ -25,7 +40,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         :authors,
         :authors_history,
-        columns: [:first_name, :last_name]
+        columns: [:id, :first_name, :last_name]
       )
 
       function_names = spec_conn.plpgsql_functions.map(&:name)
@@ -49,7 +64,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       expect(conn.versioning_hook(:authors)).to have_attributes(
         source_table: "authors",
         history_table: "authors_history",
-        columns: %w[first_name last_name],
+        columns: %w[id first_name last_name],
         primary_key: %w[id]
       )
     end
@@ -58,42 +73,42 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         :authors,
         :authors_history,
-        columns: [:first_name, :last_name],
+        columns: [:id, :first_name, :last_name],
         primary_key: [:id, :first_name, :last_name]
       )
 
       expect(conn.versioning_hook(:authors)).to have_attributes(
         source_table: "authors",
         history_table: "authors_history",
-        columns: %w[first_name last_name],
+        columns: %w[id first_name last_name],
         primary_key: %w[id first_name last_name]
       )
     end
 
     it "raises an error if columns don't match" do
-      conn.create_table :books do |t|
+      conn.create_table :movies do |t|
         t.string :title
-        t.bigint :author
+        t.bigint :director
       end
 
-      conn.create_table :books_history, primary_key: [:id, :sys_period] do |t|
+      conn.create_table :movies_history, primary_key: [:id, :sys_period] do |t|
         t.bigint :id, null: false
-        t.string :author
-        t.string :publisher
+        t.string :director
+        t.string :producer
         t.tstzrange :sys_period, null: false
       end
 
       expect do
-        conn.create_versioning_hook(:books, :books_history, columns: [:title])
-      end.to raise_error(ArgumentError, "table 'books_history' does not have column 'title'")
+        conn.create_versioning_hook(:movies, :movies_history, columns: [:id, :title])
+      end.to raise_error(ArgumentError, "table 'movies_history' does not have column 'title'")
 
       expect do
-        conn.create_versioning_hook(:books, :books_history, columns: [:publisher])
-      end.to raise_error(ArgumentError, "table 'books' does not have column 'publisher'")
+        conn.create_versioning_hook(:movies, :movies_history, columns: [:id, :producer])
+      end.to raise_error(ArgumentError, "table 'movies' does not have column 'producer'")
 
       expect do
-        conn.create_versioning_hook(:books, :books_history, columns: [:author])
-      end.to raise_error(ArgumentError, "table 'books_history' does not have column 'author' of type 'integer'")
+        conn.create_versioning_hook(:movies, :movies_history, columns: [:id, :director])
+      end.to raise_error(ArgumentError, "table 'movies_history' does not have column 'director' of type 'integer'")
     end
 
     it "raises an error if source table doesn't have columns in primary key" do
@@ -101,7 +116,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         conn.create_versioning_hook(
           :authors,
           :authors_history,
-          columns: [:first_name, :last_name],
+          columns: [:id, :first_name, :last_name],
           primary_key: :name
         )
       end.to raise_error(ArgumentError, "table 'authors' does not have column 'name'")
@@ -128,13 +143,13 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         "bob's authors",
         :authors_history,
-        columns: [:first_name, :last_name]
+        columns: [:id, :first_name, :last_name]
       )
 
       expect(conn.versioning_hook("bob's authors")).to have_attributes(
         source_table: "bob's authors",
         history_table: "authors_history",
-        columns: %w[first_name last_name],
+        columns: %w[id first_name last_name],
         primary_key: %w[id]
       )
     end
@@ -146,13 +161,13 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         :authors,
         :authors_history,
-        columns: ["Author's First Name", :last_name]
+        columns: [:id, "Author's First Name", :last_name]
       )
 
       expect(conn.versioning_hook(:authors)).to have_attributes(
         source_table: "authors",
         history_table: "authors_history",
-        columns: ["Author's First Name", "last_name"],
+        columns: ["id", "Author's First Name", "last_name"],
         primary_key: ["id"]
       )
     end
@@ -163,7 +178,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         :authors,
         :authors_history,
-        columns: [:first_name, :last_name]
+        columns: [:id, :first_name, :last_name]
       )
     end
 
@@ -171,7 +186,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.drop_versioning_hook(
         :authors,
         :authors_history,
-        columns: [:first_name, :last_name]
+        columns: [:id, :first_name, :last_name]
       )
 
       expect(spec_conn.plpgsql_functions.length).to eq(0)
@@ -183,7 +198,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         conn.drop_versioning_hook(
           :authors,
           :authors_history,
-          columns: [:first_name, :last_name]
+          columns: [:id, :first_name, :last_name]
         )
       end
 
@@ -199,7 +214,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       conn.create_versioning_hook(
         :authors,
         :authors_history,
-        columns: [:first_name, :last_name]
+        columns: [:id, :first_name, :last_name]
       )
     end
 
@@ -207,35 +222,36 @@ RSpec.describe SystemVersioning::SchemaStatements do
       expect(conn.versioning_hook(:authors)).to have_attributes(
         source_table: "authors",
         history_table: "authors_history",
-        columns: contain_exactly("first_name", "last_name")
+        columns: contain_exactly("id", "first_name", "last_name")
       )
     end
 
     it "returns nil if the hook does not exist" do
-      conn.create_table :books
-      conn.create_table :books_history
+      conn.create_table :movies
+      conn.create_table :movies_history
 
-      expect(conn.versioning_hook(:books)).to be_nil
+      expect(conn.versioning_hook(:movies)).to be_nil
       expect(conn.versioning_hook(:foo)).to be_nil
     end
   end
 
   describe "#change_versioning_hook" do
     before do
-      conn.create_versioning_hook(
-        :authors,
+      conn.create_versioning_hook :authors,
         :authors_history,
-        columns: [:first_name, :last_name]
-      )
+        columns: [:id, :first_name, :last_name]
+
+      conn.create_versioning_hook :books,
+        :books_history,
+        columns: [:id, :name],
+        primary_key: [:id, :version]
     end
 
     describe "add_columns" do
       subject do
-        conn.change_versioning_hook(
-          :authors,
+        conn.change_versioning_hook :authors,
           :authors_history,
           add_columns: [:age]
-        )
       end
 
       it "adds columns to hook" do
@@ -247,7 +263,23 @@ RSpec.describe SystemVersioning::SchemaStatements do
         versioning_hook = conn.versioning_hook(:authors)
 
         expect(versioning_hook.columns)
-          .to contain_exactly("first_name", "last_name", "age")
+          .to contain_exactly("id", "first_name", "last_name", "age")
+      end
+
+      it "preserves the hooks primary key" do
+        conn.add_column(:books, :pages, :integer)
+        conn.add_column(:books_history, :pages, :integer)
+
+        conn.change_versioning_hook :books,
+          :books_history,
+          add_columns: [:pages]
+
+        versioning_hook = conn.versioning_hook(:books)
+
+        expect(versioning_hook).to have_attributes(
+          columns: contain_exactly("id", "name", "pages"),
+          primary_key: ["id", "version"]
+        )
       end
 
       it "raises an error if source table does not have added column" do
@@ -258,7 +290,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
+        expect(versioning_hook.columns).to contain_exactly("id", "first_name", "last_name")
       end
 
       it "raises an error if history table does not have added column" do
@@ -269,7 +301,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
+        expect(versioning_hook.columns).to contain_exactly("id", "first_name", "last_name")
       end
 
       it "raises an error if column types do not match" do
@@ -281,7 +313,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
+        expect(versioning_hook.columns).to contain_exactly("id", "first_name", "last_name")
       end
 
       it "raises an error if either table does not exist" do
@@ -303,7 +335,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
+        expect(versioning_hook.columns).to contain_exactly("id", "first_name", "last_name")
       end
     end
 
@@ -317,7 +349,29 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to eq(["last_name"])
+        expect(versioning_hook.columns).to contain_exactly("id", "last_name")
+      end
+
+      # TODO: Handle the case where the last columns are removed
+      # it "removes all columns" do
+      #   conn.change_versioning_hook :books,
+      #     :books_history,
+      #     remove_columns: [:id, :name]
+
+      #   # ???
+      # end
+
+      it "preserves the hooks primary key" do
+        conn.change_versioning_hook :books,
+          :books_history,
+          remove_columns: [:name]
+
+        versioning_hook = conn.versioning_hook(:books)
+
+        expect(versioning_hook).to have_attributes(
+          columns: eq(["id"]),
+          primary_key: ["id", "version"]
+        )
       end
 
       it "raises an error if hook does not have those columns" do
@@ -349,7 +403,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
         versioning_hook = conn.versioning_hook(:authors)
 
-        expect(versioning_hook.columns).to contain_exactly("first_name", "last_name")
+        expect(versioning_hook.columns).to contain_exactly("id", "first_name", "last_name")
       end
     end
 
@@ -366,7 +420,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
       versioning_hook = conn.versioning_hook(:authors)
 
-      expect(versioning_hook.columns).to contain_exactly("last_name", "age")
+      expect(versioning_hook.columns).to contain_exactly("id", "last_name", "age")
     end
   end
 end

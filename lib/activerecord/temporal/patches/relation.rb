@@ -4,12 +4,16 @@ module ActiveRecord::Temporal
       private
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")
-        def build_arel(connection)
-          AsOfQuery::ScopeRegistry.with_query_scope(time_scope_values) { super }
+        def build_arel(aliases)
+          AsOfQuery::ScopeRegistry.for_associations(time_scope_values) do
+            super
+          end
         end
       else
-        def build_arel(connection, aliases = nil)
-          AsOfQuery::ScopeRegistry.with_query_scope(time_scope_values) { super }
+        def build_arel(aliases, connection = nil)
+          AsOfQuery::ScopeRegistry.for_associations(time_scope_values) do
+            super
+          end
         end
       end
 

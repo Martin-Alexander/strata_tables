@@ -23,6 +23,10 @@ module ActiveRecord::Temporal
 
       delegate :resolve_time_scopes, to: :class
 
+      default_scope do
+        existed_at(AsOfQuery::ScopeRegistry.ambient_time_constraints)
+      end
+
       scope :as_of, ->(time) do
         time_scopes = resolve_time_scopes(time)
 
@@ -37,7 +41,7 @@ module ActiveRecord::Temporal
         time_scopes.each do |time_dimension, time|
           next unless time_dimension_column?(time_dimension)
 
-          rel = rel.where(time_dimension => contains(time))
+          rel = rel.rewhere_contains(time_dimension => contains(time))
         end
 
         rel

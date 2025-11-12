@@ -1,0 +1,117 @@
+# rubocop:disable Layout/SpaceAroundOperators
+
+require "spec_helper"
+
+RSpec.describe AsOfQuery, "default scope" do
+  before do
+    table :authors, primary_key: [:id, :version] do |t|
+      t.bigint :id, null: false
+      t.bigserial :version, null: false
+      t.tstzrange :period
+      t.string :name
+    end
+    table :books, primary_key: [:id, :version] do |t|
+      t.bigint :id, null: false
+      t.bigserial :version, null: false
+      t.tstzrange :period
+      t.string :name
+      t.references :author
+    end
+
+    model "Author", as_of: true do
+      has_many :books, temporal: true
+    end
+    model "Book", as_of: true
+  end
+
+  after { drop_all_tables }
+
+  t = Time.utc(2000)
+
+  build_records do
+    {
+      "Author" => {
+        author_bob_v1: {id: 1, name: "Bob", period: t+1...t+3},
+        author_bob_v2: {id: 1, name: "Bob", period: t+3...t+5},
+        author_bob_v3: {id: 1, name: "Bob", period: t+5...nil},
+        author_sam_v1: {id: 2, name: "Sam", period: t+2...t+4},
+        author_sam_v2: {id: 2, name: "Sam", period: t+4...t+6},
+        author_sam_v3: {id: 2, name: "Sam", period: t+6...nil}
+      },
+      "Book" => {
+        foo_v1: {id: 1, name: "Foo old", author_id: 1, period: t+2...t+4},
+        foo_v2: {id: 1, name: "Foo new", author_id: 1, period: t+4...t+7},
+        foo_v3: {id: 1, name: "Foo new", author_id: 2, period: t+7...nil}
+      }
+    }
+  end
+
+  it "all queries to a default time scope" do
+    authors = AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      Author.all
+    end
+
+    expect(authors).to contain_exactly(author_bob_v1, author_sam_v1)
+
+    expect(Author.all.size).to eq(6)
+  end
+
+  it "is over written by as_of" do
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      expect(Author.all).to contain_exactly(author_bob_v1, author_sam_v1)
+      expect(Author.as_of(t+3)).to contain_exactly(author_bob_v2, author_sam_v1)
+    end
+  end
+
+  it "is over written by existed_at" do
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      expect(Author.existed_at(t+3)).to contain_exactly(author_bob_v2, author_sam_v1)
+    end
+  end
+
+  it "does not set time scope on relation or records" do
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      authors = Author.all
+
+      expect(authors.time_scope_values).to eq({})
+      expect(authors.first.time_scope).to be_nil
+    end
+  end
+
+  it "does not interfere with setting time scops" do
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      authors = Author.as_of(t+3)
+
+      expect(authors.time_scope_values).to eq({period: t+3})
+      expect(authors.first.time_scope).to eq(t+3)
+    end
+  end
+
+  it "applies a scope the persists outside the block" do
+    authors = nil
+
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      authors = Author.all
+    end
+
+    expect(authors).to contain_exactly(author_bob_v1, author_sam_v1)
+  end
+
+  it "does not overwrite time scopes from outside the block" do
+    authors = Author.as_of(t+3)
+
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      expect(authors).to contain_exactly(author_bob_v2, author_sam_v1)
+      expect(authors.time_scope_values).to eq({period: t+3})
+      expect(authors.first.time_scope).to eq(t+3)
+    end
+  end
+
+  it "applies its scope to assocations" do
+    AsOfQuery::ScopeRegistry.at({period: t+2}) do
+      expect(Author.first.books).to contain_exactly(foo_v1)
+    end
+  end
+end
+
+# rubocop:enable Layout/SpaceAroundOperators

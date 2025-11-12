@@ -21,11 +21,9 @@ module ActiveRecord::Temporal::AsOfQuery
         private
 
         def register_predicate_builder_handlers(base_predicate_builder)
-          @register_predicate_builder_handlers ||= begin
-            base_predicate_builder
-              .register_handler Contains,
-                PredicateBuilder::ContainsHandler.new(base_predicate_builder)
-          end
+          @register_predicate_builder_handlers ||= base_predicate_builder
+            .register_handler Contains,
+              PredicateBuilder::ContainsHandler.new(base_predicate_builder)
         end
       end
     end

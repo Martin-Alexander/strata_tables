@@ -1,6 +1,10 @@
 module ActiveRecord::Temporal
   module AsOfQuery
     module QueryMethods
+      require "activerecord/temporal/as_of_query/where_clause_refinement"
+
+      using AsOfQuery::WhereClauseRefinement
+
       def time_scope(scope)
         spawn.time_scope!(scope)
       end
@@ -18,6 +22,15 @@ module ActiveRecord::Temporal
         assert_modifiable! # TODO: write test
 
         @values[:time_scope] = scope
+      end
+
+      def rewhere_contains(conditions)
+        scope = spawn
+
+        scope.where_clause = where_clause.execept_contains(conditions.keys)
+        scope.where_clause += build_where_clause(conditions)
+
+        scope
       end
     end
   end

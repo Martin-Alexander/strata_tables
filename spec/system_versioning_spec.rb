@@ -58,6 +58,24 @@ RSpec.describe "system versioning" do
     end
   end
 
+  context "source table has no history table" do
+    before do
+      conn.create_table :authors do |t|
+        t.string :name
+      end
+
+      model "Author", ApplicationRecord
+    end
+
+    it "sets table_name to source table" do
+      expect(Version::Author.table_name).to eq("authors")
+    end
+
+    it "sets primary_key to source table primary key" do
+      expect(Version::Author.primary_key).to eq("id")
+    end
+  end
+
   context "source table primary key is 'id'" do
     before do
       conn.create_table :authors do |t|
@@ -68,7 +86,6 @@ RSpec.describe "system versioning" do
         t.bigint :id, null: false
         t.string :name
         t.tstzrange :system_period, null: false
-        t.exclusion_constraint "id WITH =, system_period WITH &&", using: :gist
       end
 
       conn.create_versioning_hook(
@@ -81,6 +98,14 @@ RSpec.describe "system versioning" do
     end
 
     include_examples "versions records"
+
+    it "sets table_name to history table" do
+      expect(Version::Author.table_name).to eq("authors_history")
+    end
+
+    it "sets primary_key to source table primary key" do
+      expect(Version::Author.primary_key).to eq(%w[id system_period])
+    end
   end
 
   context "source table primary key is (id, author_number)" do
@@ -96,7 +121,6 @@ RSpec.describe "system versioning" do
         t.bigint :author_number, null: false
         t.string :name
         t.tstzrange :system_period, null: false
-        t.exclusion_constraint "id WITH =, system_period WITH &&", using: :gist
       end
 
       conn.create_versioning_hook(
@@ -109,7 +133,7 @@ RSpec.describe "system versioning" do
       model "Author", ApplicationRecord
     end
 
-    it "version model has correct primary key" do
+    it "sets primary_key to source table primary key" do
       expect(Version::Author.primary_key).to eq(%w[id author_number system_period])
     end
 

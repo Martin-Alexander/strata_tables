@@ -6,12 +6,22 @@ module ActiveRecord::Temporal
       included do
         include AsOfQuery
 
-        set_time_dimensions :system_period
+        set_time_dimensions time_dimensions + [:system_period]
+
+        if history_table
+          self.table_name = history_table
+          self.primary_key = Array(primary_key) + [:system_period]
+        end
 
         reflect_on_all_associations.each do |reflection|
-          scope = temporal_association_scope(&reflection.scope)
+          next if reflection.scope&.as_of_scope?
 
-          send(reflection.macro, reflection.name, scope, **reflection.options)
+          send(
+            reflection.macro,
+            reflection.name,
+            reflection.scope,
+            **reflection.options.merge(temporal: true)
+          )
         end
       end
 

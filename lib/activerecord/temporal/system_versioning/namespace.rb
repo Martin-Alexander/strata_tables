@@ -13,17 +13,8 @@ module ActiveRecord::Temporal
             raise NameError, "#{model} is not a descendent of ActiveRecord::Base"
           end
 
-          version_model = if (history_table = model.history_table)
-            Class.new(model) do
-              self.table_name = history_table
-              self.primary_key = model.primary_key_from_db + [:system_period]
-
-              include Model
-            end
-          else
-            Class.new(model) do
-              include Model
-            end
+          version_model = Class.new(model) do
+            include Model
           end
 
           const_set(name, version_model)

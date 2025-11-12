@@ -5,17 +5,6 @@ module ActiveRecord::Temporal
     extend ActiveSupport::Concern
 
     class_methods do
-      def existed_at_constraint(arel_table, time, time_dimension)
-        time_as_tstz = Arel::Nodes::As.new(
-          Arel::Nodes::Quoted.new(time),
-          Arel::Nodes::SqlLiteral.new("timestamptz")
-        )
-
-        cast_value = Arel::Nodes::NamedFunction.new("CAST", [time_as_tstz])
-
-        arel_table[time_dimension].contains(cast_value)
-      end
-
       def temporal_association_scope(&block)
         AssociationScope.build(block)
       end
@@ -30,6 +19,7 @@ module ActiveRecord::Temporal
     included do
       include AssociationMacros
       include TimeDimensions
+      include PredicateBuilder::Handlers
 
       delegate :resolve_time_scopes, to: :class
 
@@ -47,7 +37,7 @@ module ActiveRecord::Temporal
         time_scopes.each do |time_dimension, time|
           next unless time_dimension_column?(time_dimension)
 
-          rel = rel.where(existed_at_constraint(table, time, time_dimension))
+          rel = rel.where(time_dimension => contains(time))
         end
 
         rel

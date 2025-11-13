@@ -5,7 +5,7 @@ module ActiveRecord::Temporal
         def build(block)
           scope = build_scope(block)
 
-          def scope.as_of_scope? = true
+          def scope.temporal_scope? = true
 
           scope
         end
@@ -36,17 +36,17 @@ module ActiveRecord::Temporal
 
         def build_temporal_scope
           ->(owner, base) do
-            time_constraints = ScopeRegistry
+            registry_time_constraints = ScopeRegistry
               .association_time_constraints(time_dimensions)
 
-            time_scopes = ScopeRegistry
-              .association_time_scopes(time_dimensions)
+            registry_time_tags = ScopeRegistry
+              .association_time_tags(time_dimensions)
 
-            owner_time_scopes = owner&.time_scopes_for(time_dimensions) || {}
+            owner_time_tags = owner&.time_tags_for(time_dimensions) || {}
 
             base
-              .existed_at(time_constraints.merge(owner_time_scopes))
-              .time_scope(owner_time_scopes.merge(time_scopes))
+              .at_time(registry_time_constraints.merge(owner_time_tags))
+              .time_tags(owner_time_tags.merge(registry_time_tags))
           end
         end
       end

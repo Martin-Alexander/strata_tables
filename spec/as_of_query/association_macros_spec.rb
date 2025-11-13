@@ -84,7 +84,7 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationMacros do
     expect(Foo.as_of(t+2).first.bars.count).to eq(2)
     expect(Foo.as_of(t+4).first.bars.count).to eq(1)
 
-    expect(Bar.as_of(t+1).first.foo.time_scope).to eq(t+1)
+    expect(Bar.as_of(t+1).first.foo.time_tag).to eq(t+1)
   end
 end
 

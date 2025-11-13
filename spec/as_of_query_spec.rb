@@ -45,20 +45,20 @@ RSpec.describe AsOfQuery do
     expect(Author.count).to eq(6)
   end
 
-  describe "::existed_at" do
+  describe "::at_time" do
     it "scopes to records existing as of given time" do
-      expect(Author.existed_at(t+3))
+      expect(Author.at_time(t+3))
         .to contain_exactly(author_bob_v2, author_sam_v1)
-      expect(Author.existed_at(t+5))
+      expect(Author.at_time(t+5))
         .to contain_exactly(author_bob_v3, author_sam_v2)
-      expect(Author.existed_at(t+99))
+      expect(Author.at_time(t+99))
         .to contain_exactly(author_bob_v3, author_sam_v3)
     end
 
     context "when column does not exist" do
       it "does not scope" do
-        expect(Library.existed_at(t+3)).to eq(Library.all)
-        expect(Library.existed_at(t+99)).to eq(Library.all)
+        expect(Library.at_time(t+3)).to eq(Library.all)
+        expect(Library.at_time(t+99)).to eq(Library.all)
       end
     end
   end
@@ -71,7 +71,7 @@ RSpec.describe AsOfQuery do
       expect(relation)
         .to contain_exactly(author_bob_v2, author_sam_v1)
       expect(relation)
-        .to all(have_attributes(time_scope: t+3))
+        .to all(have_attributes(time_tag: t+3))
     end
 
     context "when column does not exist" do
@@ -80,7 +80,7 @@ RSpec.describe AsOfQuery do
         relation = Library.as_of(time)
 
         expect(Library.as_of(time)).to eq(Library.all)
-        expect(relation).to all(have_attributes(time_scope: time))
+        expect(relation).to all(have_attributes(time_tag: time))
       end
     end
   end
@@ -92,10 +92,10 @@ RSpec.describe AsOfQuery do
       library_foo.as_of!(t-99)
       library_bar.as_of!(t+99)
 
-      expect(author_bob_v1.time_scope).to eq(t+2)
-      expect(author_sam_v3.time_scope).to eq(t+9)
-      expect(library_foo.time_scope).to eq(t-99)
-      expect(library_bar.time_scope).to eq(t+99)
+      expect(author_bob_v1.time_tag).to eq(t+2)
+      expect(author_sam_v3.time_tag).to eq(t+9)
+      expect(library_foo.time_tag).to eq(t-99)
+      expect(library_bar.time_tag).to eq(t+99)
     end
 
     it "reloads the record" do
@@ -126,10 +126,10 @@ RSpec.describe AsOfQuery do
       library_foo_tagged = library_foo.as_of(t-99)
       library_bar_tagged = library_bar.as_of(t+99)
 
-      expect(author_bob_v1_tagged.time_scope).to eq(t+2)
-      expect(author_sam_v3_tagged.time_scope).to eq(t+9)
-      expect(library_foo_tagged.time_scope).to eq(t-99)
-      expect(library_bar_tagged.time_scope).to eq(t+99)
+      expect(author_bob_v1_tagged.time_tag).to eq(t+2)
+      expect(author_sam_v3_tagged.time_tag).to eq(t+9)
+      expect(library_foo_tagged.time_tag).to eq(t-99)
+      expect(library_bar_tagged.time_tag).to eq(t+99)
     end
 
     it "returns nil if the time is outside the record's as-of range" do

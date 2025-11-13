@@ -14,7 +14,7 @@ module ActiveRecord::Temporal
         end
 
         reflect_on_all_associations.each do |reflection|
-          next if reflection.scope&.as_of_scope?
+          next if reflection.scope&.temporal_scope?
 
           send(
             reflection.macro,

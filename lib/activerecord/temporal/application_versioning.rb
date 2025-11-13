@@ -19,7 +19,7 @@ module ActiveRecord::Temporal
         new_revision = record.dup
         new_revision.assign_attributes(attributes)
         new_revision.set_time_dimension_start(time)
-        new_revision.time_scopes = record.time_scopes
+        new_revision.time_tags = record.time_tags
         record.set_time_dimension_end(time)
 
         new_revision.after_initialize_revision(record)

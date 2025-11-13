@@ -5,23 +5,23 @@ module ActiveRecord::Temporal
 
       using AsOfQuery::WhereClauseRefinement
 
-      def time_scope(scope)
-        spawn.time_scope!(scope)
+      def time_tags(scope)
+        spawn.time_tags!(scope)
       end
 
-      def time_scope!(scope)
-        self.time_scope_values = time_scope_values.merge(scope)
+      def time_tags!(scope)
+        self.time_tag_values = time_tag_values.merge(scope)
         self
       end
 
-      def time_scope_values
-        @values.fetch(:time_scope, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
+      def time_tag_values
+        @values.fetch(:time_tags, ActiveRecord::QueryMethods::FROZEN_EMPTY_HASH)
       end
 
-      def time_scope_values=(scope)
+      def time_tag_values=(scope)
         assert_modifiable! # TODO: write test
 
-        @values[:time_scope] = scope
+        @values[:time_tags] = scope
       end
 
       def rewhere_contains(conditions)

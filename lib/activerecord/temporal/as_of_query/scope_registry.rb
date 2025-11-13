@@ -4,10 +4,9 @@ module ActiveRecord::Temporal
       class << self
         delegate :ambient_time_constraints,
           :association_time_constraints,
-          :association_time_scopes,
-          :with_ambient_time_constraints,
-          :for_associations,
-          :at,
+          :association_time_tags,
+          :at_time,
+          :as_of,
           to: :instance
 
         def instance
@@ -18,7 +17,7 @@ module ActiveRecord::Temporal
       def initialize
         @ambient_time_constraints = {}
         @association_time_constraints = {}
-        @association_time_scopes = {}
+        @association_time_tags = {}
       end
 
       def ambient_time_constraints(dimensions = nil)
@@ -33,34 +32,30 @@ module ActiveRecord::Temporal
           .merge(@association_time_constraints.slice(*dimensions))
       end
 
-      def association_time_scopes(dimensions)
-        @association_time_scopes.slice(*dimensions)
+      def association_time_tags(dimensions)
+        @association_time_tags.slice(*dimensions)
       end
 
-      def with_ambient_time_constraints(time_constraints, &block)
+      def at_time(time_coords, &block)
         original = @ambient_time_constraints.dup
 
-        @ambient_time_constraints = time_constraints
+        @ambient_time_constraints = @ambient_time_constraints.merge(time_coords)
 
         block.call
       ensure
         @ambient_time_constraints = original
       end
 
-      def at(time_constraints, &block)
-        with_ambient_time_constraints(time_constraints, &block)
-      end
-
-      def for_associations(time_scopes, &block)
-        original_time_scopes = @association_time_scopes.dup
+      def as_of(time_coords, &block)
+        original_time_tags = @association_time_tags.dup
         original_time_constraints = @association_time_constraints.dup
 
-        @association_time_scopes = @association_time_scopes.merge(time_scopes)
-        @association_time_constraints = @association_time_constraints.merge(time_scopes)
+        @association_time_tags = @association_time_tags.merge(time_coords)
+        @association_time_constraints = @association_time_constraints.merge(time_coords)
 
         block.call
       ensure
-        @association_time_scopes = original_time_scopes
+        @association_time_tags = original_time_tags
         @association_time_constraints = original_time_constraints
       end
 

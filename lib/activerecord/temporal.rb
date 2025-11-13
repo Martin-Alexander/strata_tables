@@ -35,12 +35,12 @@ ActiveSupport.on_load(:active_record) do
   # This is what allows temporal association scopes to be aware of the time-scope
   # value of the relation that included them.
   #
-  # Patches the `instantiate_records` method to call `initialize_time_scope_from_relation`
+  # Patches the `instantiate_records` method to call `initialize_time_tags_from_relation`
   # on each loaded record.
   ActiveRecord::Relation.prepend(ActiveRecord::Temporal::Patches::Relation)
 
   # Patches the `merge` method (called by `Relation#merge`) to handle the new
-  # query method `time_scope` that this gem adds.
+  # query method `time_tags` that this gem adds.
   ActiveRecord::Relation::Merger.prepend(ActiveRecord::Temporal::Patches::Merger)
 
   # Patches the preloader's `through_scope` method to pass along the relation's

@@ -51,7 +51,7 @@ module ActiveRecordTemporalTests
               relation = instance_exec(&block)
 
               matcher = build_matcher(records) do |record|
-                have_attributes(time_scope: time) if record
+                have_attributes(time_tag: time) if record
               end
 
               if time
@@ -96,7 +96,7 @@ module ActiveRecordTemporalTests
 
               records.each do |record, expected|
                 matcher = build_matcher(expected) do |record|
-                  have_attributes(time_scope: time) if record
+                  have_attributes(time_tag: time) if record
                 end
 
                 if time

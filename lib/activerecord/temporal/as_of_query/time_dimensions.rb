@@ -19,7 +19,15 @@ module ActiveRecord::Temporal
         def default_time_dimension = nil
 
         def time_dimension_column?(time_dimension)
-          connection.column_exists?(table_name, time_dimension)
+          @time_dimension_column_cache ||= {}
+
+          @time_dimension_column_cache[time_dimension] ||= connection.column_exists?(table_name, time_dimension)
+        end
+
+        def time_dimension_columns
+          time_dimensions.select do |dimension|
+            time_dimension_column?(dimension)
+          end
         end
       end
 

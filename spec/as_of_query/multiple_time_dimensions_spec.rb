@@ -66,7 +66,7 @@ RSpec.describe "multiple columns spec" do
   end
 
   it "tags are applied" do
-    expected_tags = {time_scopes: {validity: t+1, sys_period: t+1}}
+    expected_tags = {time_tags: {validity: t+1, sys_period: t+1}}
 
     expect(Employee.as_of(validity: t+1, sys_period: t+1))
       .to all(have_attributes(expected_tags))
@@ -78,7 +78,7 @@ RSpec.describe "multiple columns spec" do
   end
 
   it "tags are applied through associations" do
-    expected_tags = {time_scopes: {validity: t+1, sys_period: t+1}}
+    expected_tags = {time_tags: {validity: t+1, sys_period: t+1}}
 
     org = Org.as_of(validity: t+1, sys_period: t+1).sole
 
@@ -97,7 +97,7 @@ RSpec.describe "multiple columns spec" do
       employees = org_as_of_t1.employees
 
       expect(employees).to contain_exactly(emp_2_av1_sv1)
-      expect(employees.sole.time_scopes).to eq(validity: t+0)
+      expect(employees.sole.time_tags).to eq(validity: t+0)
     end
   end
 

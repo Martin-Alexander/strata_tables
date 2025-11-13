@@ -9,10 +9,10 @@ module ActiveRecord::Temporal
         AssociationScope.build(block)
       end
 
-      def resolve_time_scopes(time_or_time_scopes)
-        return time_or_time_scopes if time_or_time_scopes.is_a?(Hash)
+      def resolve_time_coords(time_or_time_coords)
+        return time_or_time_coords if time_or_time_coords.is_a?(Hash)
 
-        {default_time_dimension.to_sym => time_or_time_scopes}
+        {default_time_dimension.to_sym => time_or_time_coords}
       end
     end
 
@@ -21,79 +21,75 @@ module ActiveRecord::Temporal
       include TimeDimensions
       include PredicateBuilder::Handlers
 
-      delegate :resolve_time_scopes, to: :class
+      delegate :resolve_time_coords, to: :class
 
       default_scope do
-        existed_at(AsOfQuery::ScopeRegistry.ambient_time_constraints)
+        at_time(AsOfQuery::ScopeRegistry.ambient_time_constraints)
       end
 
       scope :as_of, ->(time) do
-        time_scopes = resolve_time_scopes(time)
+        time_coords = resolve_time_coords(time)
 
-        existed_at(time_scopes).time_scope(time_scopes)
+        at_time(time_coords).time_tags(time_coords)
       end
 
-      scope :existed_at, ->(time) do
-        time_scopes = resolve_time_scopes(time)
+      scope :at_time, ->(time) do
+        time_coords = resolve_time_coords(time)
 
-        rel = all
+        time_constraints = time_coords.slice(*time_dimension_columns)
 
-        time_scopes.each do |time_dimension, time|
-          next unless time_dimension_column?(time_dimension)
+        return if time_constraints.empty?
 
-          rel = rel.rewhere_contains(time_dimension => contains(time))
-        end
-
-        rel
+        rewhere_contains(time_constraints.transform_values { |v| contains(v) })
       end
     end
 
-    def time_scopes
-      @time_scopes || {}
+    def time_tags
+      @time_tags || {}
     end
 
-    def time_scopes=(value)
-      @time_scopes = value&.slice(*time_dimensions)
+    def time_tags=(value)
+      @time_tags = value&.slice(*time_dimensions)
     end
 
-    def time_scope
-      time_scopes[default_time_dimension]
+    def time_tag
+      time_tags[default_time_dimension]
     end
 
-    def time_scopes_for(time_dimensions)
-      time_scopes.slice(*time_dimensions)
+    def time_tags_for(time_dimensions)
+      time_tags.slice(*time_dimensions)
     end
 
     def as_of!(time)
-      time_scopes = resolve_time_scopes(time)
+      time_coords = resolve_time_coords(time)
 
-      ensure_time_scopes_in_bounds!(time_scopes)
+      ensure_time_tags_in_bounds!(time_coords)
 
       reload
 
-      self.time_scopes = time_scopes
+      self.time_tags = time_coords
     end
 
     def as_of(time)
-      time_scopes = resolve_time_scopes(time)
+      time_coords = resolve_time_coords(time)
 
-      self.class.as_of(time_scopes).find_by(self.class.primary_key => [id])
+      self.class.as_of(time_coords).find_by(self.class.primary_key => [id])
     end
 
-    def initialize_time_scope_from_relation(relation)
+    def initialize_time_tags_from_relation(relation)
       associations = relation.includes_values | relation.eager_load_values
 
-      self.time_scopes = relation.time_scope_values
+      self.time_tags = relation.time_tag_values
 
       AssociationWalker.each_target(self, associations) do |target|
-        target.time_scopes = relation.time_scope_values
+        target.time_tags = relation.time_tag_values
       end
     end
 
     private
 
-    def ensure_time_scopes_in_bounds!(time_scopes)
-      time_scopes.each do |dimension, time|
+    def ensure_time_tags_in_bounds!(time_tags)
+      time_tags.each do |dimension, time|
         if time_dimension_column?(dimension) && !time_dimension(dimension).cover?(time)
           raise RangeError, "#{time} is outside of '#{dimension}' range"
         end

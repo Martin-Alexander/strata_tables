@@ -3,7 +3,7 @@ module ActiveRecord::Temporal
     module ThroughAssociation
       def through_scope
         super.tap do |scope|
-          scope.time_scope_values = reflection_scope.time_scope_values
+          scope.time_tag_values = reflection_scope.time_tag_values
         end
       end
     end

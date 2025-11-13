@@ -3,7 +3,7 @@ module ActiveRecord::Temporal
     module Merger
       def merge
         super.tap do |relation|
-          relation.time_scope!(values[:time_scope] || {})
+          relation.time_tags!(values[:time_tags] || {})
         end
       end
     end

@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
     "source_code_uri" => "https://github.com/Martin-Alexander/activerecord-temporal"
   }
 
-  s.add_dependency "activerecord", ">= 7.2", "< 9.0"
-  s.add_dependency "activesupport", ">= 7.2", "< 9.0"
+  s.add_dependency "activerecord", ">= 8", "< 9.0"
+  s.add_dependency "activesupport", ">= 8", "< 9.0"
   s.add_dependency "pg", ">= 1.0"
 end

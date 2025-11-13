@@ -10,39 +10,82 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: ${{ matrix.appraisal }}
+    name: ruby_${{ matrix.ruby }}-${{ matrix.appraisal }}-pg_${{ matrix.postgres }}
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: activerecord_temporal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     strategy:
       matrix:
         ruby:
-          - '3.4.5'
+          - '3.4.7'
+        postgres:
+          - 18
         appraisal:
-          - 'ar_8_0_3'
-          - 'ar_8_0_2_1'
-          - 'ar_8_0_2'
-          - 'ar_8_0_1'
-          - 'ar_8_0_0_1'
-          - 'ar_8_0_0'
-          - 'ar_7_2_2_2'
-          - 'ar_7_2_2_1'
-          - 'ar_7_2_2'
-          - 'ar_7_2_1_2'
-          - 'ar_7_2_1_1'
-          - 'ar_7_2_1'
-          - 'ar_7_2_0'
-          - 'ar_edge'
+          - 'activerecord_8.0.3'
+          - 'activerecord_8.0.2.1'
+          - 'activerecord_8.0.2'
+          - 'activerecord_8.0.1'
+          - 'activerecord_8.0.0.1'
+          - 'activerecord_8.0.0'
+          - 'activerecord_edge'
+        include:
+          - ruby: '3.3.10'
+            postgres: 13
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.2.9'
+            postgres: 13
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.4.7'
+            postgres: 16
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.3.10'
+            postgres: 16
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.2.9'
+            postgres: 16
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.4.7'
+            postgres: 17
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.3.10'
+            postgres: 17
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.2.9'
+            postgres: 17
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.4.7'
+            postgres: 18
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.3.10'
+            postgres: 18
+            appraisal: 'activerecord_8.0.3'
+          - ruby: '3.2.9'
+            postgres: 18
+            appraisal: 'activerecord_8.0.3'
 
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.appraisal }}.gemfile
       DATABASE_CONFIG: spec/support/database.github.yml
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
 
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: ankane/setup-postgres@v1
-        with:
-          postgres-version: 16
-          database: activerecord_temporal_test
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

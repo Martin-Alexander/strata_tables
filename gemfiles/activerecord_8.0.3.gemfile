@@ -2,12 +2,13 @@
 
 source "https://rubygems.org"
 
+gem "rails"
 gem "debug"
 gem "rake"
 gem "rspec"
 gem "standard"
 gem "appraisal"
 gem "niceql"
-gem "activerecord", "7.2.1"
+gem "activerecord", "8.0.3"
 
 gemspec path: "../"

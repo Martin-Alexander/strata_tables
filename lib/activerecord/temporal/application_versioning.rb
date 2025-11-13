@@ -44,7 +44,9 @@ module ActiveRecord::Temporal
     end
 
     def revise
-      revise_at(Time.current)
+      time_coord = AsOfQuery::ScopeRegistry.ambient_time_constraints
+
+      revise_at(time_coord[default_time_dimension] || Time.current)
     end
 
     def revise_at(time)
@@ -54,7 +56,9 @@ module ActiveRecord::Temporal
     end
 
     def revision
-      revision_at(Time.current)
+      time_coord = AsOfQuery::ScopeRegistry.ambient_time_constraints
+
+      revision_at(time_coord[default_time_dimension] || Time.current)
     end
 
     def revision_at(time)
@@ -64,7 +68,9 @@ module ActiveRecord::Temporal
     end
 
     def inactivate
-      inactivate_at(Time.current)
+      time_coord = AsOfQuery::ScopeRegistry.ambient_time_constraints
+
+      inactivate_at(time_coord[default_time_dimension] || Time.current)
     end
 
     def inactivate_at(time)

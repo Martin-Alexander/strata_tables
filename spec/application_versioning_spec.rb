@@ -89,9 +89,20 @@ RSpec.describe ApplicationVersioning do
         validity: Time.current...nil
       )
     end
+
+    it "it creates a revision at the ambient time if set" do
+      new_user, old_user = nil
+
+      AsOfQuery::ScopeRegistry.at_time({validity: t+1}) do
+        new_user, old_user = user.revise.with(name: "Sam")
+      end
+
+      expect(old_user).to have_attributes(validity: t-1...t+1)
+      expect(new_user).to have_attributes(validity: t+1...nil)
+    end
   end
 
-  describe "#revision" do
+  describe "#revision_at" do
     it "initializes a revision at the given time" do
       new_user, old_user = user.revision_at(t+1).with(name: "Sam")
 
@@ -106,7 +117,7 @@ RSpec.describe ApplicationVersioning do
     end
   end
 
-  describe "#revision_at" do
+  describe "#revision" do
     it "initializes a revision at the current time" do
       new_user, old_user = user.revision.with(name: "Sam")
 
@@ -119,6 +130,17 @@ RSpec.describe ApplicationVersioning do
         validity: Time.current...nil
       )
     end
+
+    it "it initializes a revision at the ambient time if set" do
+      new_user, old_user = nil
+
+      AsOfQuery::ScopeRegistry.at_time({validity: t+1}) do
+        new_user, old_user = user.revision.with(name: "Sam")
+      end
+
+      expect(old_user).to have_attributes(validity: t-1...t+1)
+      expect(new_user).to have_attributes(validity: t+1...nil)
+    end
   end
 
   describe "#inactivate_at" do
@@ -130,8 +152,17 @@ RSpec.describe ApplicationVersioning do
 
   describe "#inactivate" do
     it "inactivates a record at a current time" do
-      expect { user.inactivate }
-        .to(change { user.reload.validity }.from(t-1...nil).to(t-1...t))
+      user.inactivate
+
+      expect(user.reload.validity).to eq(t-1...t)
+    end
+
+    it "inactivates a record at the ambient time if set" do
+      AsOfQuery::ScopeRegistry.at_time({validity: t+1}) do
+        user.inactivate
+
+        expect(user.reload.validity).to eq(t-1...t+1)
+      end
     end
   end
 end

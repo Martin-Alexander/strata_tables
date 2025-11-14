@@ -8,7 +8,6 @@ As applications mature, changing business requirements become increasingly compl
 
 - Update subscriptions plans, but retain existing subscribers' original payment schedules
 - Allow users to see information as it was before their view permission was revoked
-- Have a one week grace period for items in a user's cart that have had their price increased
 - Understand why generated financial reports have changed recently
 - Restore erroneously updated data
 
@@ -25,19 +24,13 @@ This can be a versioning strategy that operates automatically at the database le
 
 ## Overview
 
-This gem provides both system versioning and application versioning. They can be used alone, in parallel, or in conjunction (e.g., for bitemporal data modelling).
-
-The time-travel query interface works for both and can be used without any versioning at all, provided your table is using one of PostgreSQL time range types (e.g., `tstzrange`).
-
-Read more details below this section.
+This gem provides both system versioning and application versioning. They can be used alone, in parallel, or in conjunction (e.g., for bitemporal data modelling), and use the same Active Record interface for time-travel queries.
 
 ### System Versioning Overview
 
 - Maintained by the database using PostgreSQL triggers and operates out of sight of Active Record
 - History tables can be easily added to existing tables to provide temporal features where needed
-- Optionally creates a parallel hierarchy of your models that default to using history tables
 - Version a subset of a table's columns if storage space is a concern
-- Disable and reenable system versioning for a given table at any time
 
 Read more details [here](#system-versioning).
 

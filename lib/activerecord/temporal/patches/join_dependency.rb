@@ -1,5 +1,8 @@
 module ActiveRecord::Temporal
   module Patches
+    # This is a copy of a fix from https://github.com/rails/rails/pull/56088 that
+    # impacts this gem. I has been backported to supported stable versions of
+    # Active Record, but until those patches are released it's included here.
     module JoinDependency
       def instantiate(result_set, strict_loading_value, &block)
         primary_key = Array(join_root.primary_key).map { |column| aliases.column_alias(join_root, column) }

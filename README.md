@@ -293,7 +293,7 @@ For both options, versioning can be applied to only a subset of tables.
 
 ## System Versioning
 
-The temporal model of this gem is based on the SQL specification. It's also roughly the same model used by RDMSs like MarianaDB and Microsoft SQL Server, and by the PostgreSQL extension [Temporal Tables Extension](https://github.com/arkhipov/temporal_tables) and its PL/pgSQL version [Temporal Tables](https://github.com/nearform/temporal_tables).
+The temporal model of this gem is based on the SQL specification. It's also roughly the same model used by RDMSs like [MarianaDB](https://mariadb.com/docs/server/reference/sql-structure/temporal-tables/system-versioned-tables) and [Microsoft SQL Server](https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables?view=sql-server-ver17), and by the PostgreSQL extension [Temporal Tables Extension](https://github.com/arkhipov/temporal_tables) and its PL/pgSQL version [Temporal Tables](https://github.com/nearform/temporal_tables).
 
 Rows in the history table (or partition, view, etc.) represent rows that existed in the source table over a particular period of time. For PostgreSQL implementations this period of time is typically stored in a `tstzrange` colunmn that this gem calls `system_period`.
 
@@ -409,6 +409,8 @@ SELECT * FROM (VALUES
   (1, 'Glow & Go Set', 14900, tsrange('2000-01-02', 'infinity')),
 ) AS products(id, name, price, system_period);
 -->
+
+### Table Requirements
 
 Given an existing source table, the requirements for a history table are:
 1. A composite primary key made up of a column matching a unique column (or set of columns) in the source table (usually just `id`) and `system_period` of the type `tstzrange`

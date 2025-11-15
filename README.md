@@ -259,7 +259,7 @@ end
 
 A block can be passed to `Temporal::ScopedQueries.at` to apply a default temporal scope to all queries made inside. It works similarly to Active Record's [`scoping`](https://api.rubyonrails.org/classes/ActiveRecord/Relation.html#method-i-scoping) class method.
 
-#### Global Default Time
+### Global Default Time
 
 ```ruby
 class ApplicationController < ActionController::Base

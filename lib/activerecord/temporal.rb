@@ -26,18 +26,21 @@ require_relative "temporal/system_versioning/schema_statements"
 require_relative "temporal/system_versioning/system_versioned"
 
 module ActiveRecord::Temporal
-  Migration = ActiveRecord::Temporal::SystemVersioning::Migration
-  SystemVersioned = ActiveRecord::Temporal::SystemVersioning::SystemVersioned
   Scoping = ActiveRecord::Temporal::Querying::Scoping
+  ScopeRegistry = ActiveRecord::Temporal::Querying::ScopeRegistry
+  SystemVersioned = ActiveRecord::Temporal::SystemVersioning::SystemVersioned
+  Migration = ActiveRecord::Temporal::SystemVersioning::Migration
 end
 
 unless defined? Temporal
   module Temporal
     Querying = ActiveRecord::Temporal::Querying
     Scoping = ActiveRecord::Temporal::Scoping
-    ApplicationVersioned = ActiveRecord::Temporal::ApplicationVersioned
+    ScopeRegistry = ActiveRecord::Temporal::ScopeRegistry
     SystemVersioned = ActiveRecord::Temporal::SystemVersioned
+    SystemVersioning = ActiveRecord::Temporal::SystemVersioning
     Migration = ActiveRecord::Temporal::Migration
+    ApplicationVersioned = ActiveRecord::Temporal::ApplicationVersioned
   end
 end
 

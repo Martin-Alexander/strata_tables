@@ -229,7 +229,7 @@ Including `Temporal::Querying` adds a `temporal: true` option to association mac
 
 Models without the underlying time range column can still include `Temporal::Querying` and add `temporal: true` to their associations. Such "pseudo-temporal" associations will propagate temporal scopes, but will be unaffected by them (as if all their records have double unbounded time ranges equivalent to `nil...nil`).
 
-#### Compatibility with Existing Scopes
+### Compatibility with Existing Scopes
 
 ```ruby
 class Product < ActiveRecord::Base
@@ -243,7 +243,7 @@ end
 
 Temporal associations are implemented as association scopes and will be merged with the association's non-temporal scope.
 
-#### Block-scoped Default Time
+### Block-scoped Default Time
 
 ```ruby
 Temporal::ScopedQueries.at Time.parse("2011-04-30") do

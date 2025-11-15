@@ -90,51 +90,6 @@ module ActiveRecord::Temporal
         self.association_tags = association_tags
           .merge(time_coords)
       end
-
-      # def global_constraints(dimensions = nil)
-      #   return @global_constraints unless dimensions
-
-      #   @global_constraints.slice(*dimensions)
-      # end
-
-      # def association_constraints(dimensions)
-      #   default_association_constraints(dimensions)
-      #     .merge(@global_constraints.slice(*dimensions))
-      #     .merge(@association_constraints.slice(*dimensions))
-      # end
-
-      # def association_tags(dimensions)
-      #   @association_tags.slice(*dimensions)
-      # end
-
-      def at_time(time_coords, &block)
-        original = @global_constraints.dup
-
-        @global_constraints = @global_constraints.merge(time_coords)
-
-        block.call
-      ensure
-        @global_constraints = original
-      end
-
-      def as_of(time_coords, &block)
-        original_time_tags = @association_tags.dup
-        original_constraints = @association_constraints.dup
-
-        @association_tags = @association_tags.merge(time_coords)
-        @association_constraints = @association_constraints.merge(time_coords)
-
-        block.call
-      ensure
-        @association_tags = original_time_tags
-        @association_constraints = original_constraints
-      end
-
-      private
-
-      def default_association_constraints(dimensions)
-        dimensions.map { |dimension| [dimension, Time.current] }.to_h
-      end
     end
   end
 end

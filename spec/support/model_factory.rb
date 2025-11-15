@@ -6,7 +6,7 @@ module ActiveRecordTemporalTests
       stub_const(name, klass)
 
       if as_of
-        klass.include Querying
+        klass.include ActiveRecord::Temporal::Querying
         klass.time_dimensions = :period
       end
 

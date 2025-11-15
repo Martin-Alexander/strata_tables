@@ -1,6 +1,6 @@
 require "active_support"
 
-require_relative "temporal/application_versioning"
+require_relative "temporal/application_versioned"
 require_relative "temporal/querying"
 require_relative "temporal/querying/association_macros"
 require_relative "temporal/querying/association_scope"
@@ -20,10 +20,26 @@ require_relative "temporal/system_versioning"
 require_relative "temporal/system_versioning/command_recorder"
 require_relative "temporal/system_versioning/migration"
 require_relative "temporal/system_versioning/namespace"
-require_relative "temporal/system_versioning/model"
 require_relative "temporal/system_versioning/schema_creation"
 require_relative "temporal/system_versioning/schema_definitions"
 require_relative "temporal/system_versioning/schema_statements"
+require_relative "temporal/system_versioning/system_versioned"
+
+module ActiveRecord::Temporal
+  Migration = ActiveRecord::Temporal::SystemVersioning::Migration
+  SystemVersioned = ActiveRecord::Temporal::SystemVersioning::SystemVersioned
+  Scoping = ActiveRecord::Temporal::Querying::Scoping
+end
+
+unless defined? Temporal
+  module Temporal
+    Querying = ActiveRecord::Temporal::Querying
+    Scoping = ActiveRecord::Temporal::Scoping
+    ApplicationVersioned = ActiveRecord::Temporal::ApplicationVersioned
+    SystemVersioned = ActiveRecord::Temporal::SystemVersioned
+    Migration = ActiveRecord::Temporal::Migration
+  end
+end
 
 ActiveSupport.on_load(:active_record) do
   require "active_record/connection_adapters/postgresql_adapter" # TODO: add test

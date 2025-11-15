@@ -30,8 +30,8 @@ RSpec.describe "bitemporal" do
     model "ApplicationRecord" do
       self.abstract_class = true
 
-      include SystemVersioning
-      include ApplicationVersioning
+      include ActiveRecord::Temporal::SystemVersioning
+      include ActiveRecord::Temporal::ApplicationVersioned
 
       system_versioning
 

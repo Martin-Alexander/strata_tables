@@ -14,7 +14,7 @@ module ActiveRecord::Temporal
           end
 
           version_model = Class.new(model) do
-            include Model
+            include SystemVersioned
           end
 
           const_set(name, version_model)

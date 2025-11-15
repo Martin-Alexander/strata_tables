@@ -1,9 +1,9 @@
 module ActiveRecord::Temporal
-  module ApplicationVersioning
+  module ApplicationVersioned
     extend ActiveSupport::Concern
 
     included do
-      include Querying
+      include ActiveRecord::Temporal::Querying
     end
 
     class Revision
@@ -44,7 +44,7 @@ module ActiveRecord::Temporal
     end
 
     def revise
-      time_coord = Querying::ScopeRegistry.global_constraints
+      time_coord = ActiveRecord::Temporal::Querying::ScopeRegistry.global_constraints
 
       revise_at(time_coord[default_time_dimension] || Time.current)
     end
@@ -56,7 +56,7 @@ module ActiveRecord::Temporal
     end
 
     def revision
-      time_coord = Querying::ScopeRegistry.global_constraints
+      time_coord = ActiveRecord::Temporal::Querying::ScopeRegistry.global_constraints
 
       revision_at(time_coord[default_time_dimension] || Time.current)
     end
@@ -68,7 +68,7 @@ module ActiveRecord::Temporal
     end
 
     def inactivate
-      time_coord = Querying::ScopeRegistry.global_constraints
+      time_coord = ActiveRecord::Temporal::Querying::ScopeRegistry.global_constraints
 
       inactivate_at(time_coord[default_time_dimension] || Time.current)
     end

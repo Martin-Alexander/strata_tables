@@ -1,10 +1,10 @@
 module ActiveRecord::Temporal
   module SystemVersioning
-    module Model
+    module SystemVersioned
       extend ActiveSupport::Concern
 
       included do
-        include Querying
+        include ActiveRecord::Temporal::Querying
 
         self.time_dimensions = time_dimensions + [:system_period]
 

@@ -35,10 +35,14 @@ This gem provides both system versioning and application versioning. They can be
 Read more details [here](#system-versioning).
 
 ```ruby
-using Temporal::SchemaStatements
+class CreateEmployees < ActiveRecord::Migration[8.1]
+  using Temporal::SchemaStatements
 
-create_table :employees, system_versioning: true do |t|
-  t.integer :salary
+  def change
+    create_table :employees, system_versioning: true do |t|
+      t.integer :salary
+    end
+  end
 end
 
 module History
@@ -70,10 +74,14 @@ History::Employee.all
 Read more details [here](#application-versioning).
 
 ```ruby
-using Temporal::SchemaStatements
+class CreateEmployees < ActiveRecord::Migration[8.1]
+  def change
+    using Temporal::SchemaStatements
 
-create_table :employees, application_versioning: :validity do |t|
-  t.integer :salary
+    create_table :employees, application_versioning: :validity do |t|
+      t.integer :salary
+    end
+  end
 end
 
 class Employee < ActiveRecord::Base
@@ -403,36 +411,53 @@ SELECT * FROM (VALUES
 ) AS products(id, name, price, system_period);
 -->
 
-### Table Requirements
-
-Given an existing source table, the requirements for a history table are:
-1. A composite primary key made up of a column matching a unique column (or set of columns) in the source table (usually just `id`) and `system_period` of the type `tstzrange`
-2. No columns that share a name with columns in the source table but have a different type (e.g., `id INTEGER` and `id BIGINT`)
-
-There are other restrictions on history tables that fall into the category of things that are conceptually incompatible with history tables. This would be things like unique constraints on columns used to track changes or triggers that update other versioned tables. Most of these should be pretty obvious and are not part of Active Record's DDL DSL anyways.
-
-Foreign key constraints to other history tables (e.g., between `history_products` and `history_prices`) can only be used with the `WITHOUT OVERLAPS`/`PERIOD` feature added in PostgreSQL 18. Otherwise custom triggers are needed to achieve the same effect.
-
-Foreign key constraints are discussed further below.
-
 ### Create a History Table
 
+Using `Temporal::SchemaStatements` adds the `system_versioning` option to `create_table`. This will automatically setup a matching history table.
+
 ```ruby
-create_table :products do |t|
-  t.string :sku, null: false
-  t.string :name, null: false
-  t.references :price, null: false, foreign_key: true
-end
+class CreateProducts < ActiveRecord::Base
+  using Temporal::SchemaStatements
 
-create_table :products_history, primary_key: [:id, :system_period] do |t|
-  t.bigint :id, null: false
-  t.string :sku, null: false
-  t.string :name, null: false
-  t.references :price, null: false
-  t.tstzrange :system_period, null: false
+  def change
+    create_table :products, system_versioning: true do |t|
+      t.string :sku, null: false
+      t.string :name, null: false
+      t.references :price, null: false, foreign_key: true
+    end
+  end
 end
+```
 
-create_versioning_hook :products, :products_history
+The `system_versioning: true` option will create a history table that:
+- Has `tstzrange` columns called `system_period`
+- Has a composite primary key composed of the source table's primary key and `system_period`
+- Includes all columns names and types from the source table
+- Excludes `all foreign key and uniqueness constraints
+- Calls `create_versioning_hook`
+
+The code above is equivalent to:
+
+```ruby
+class CreateProducts < ActiveRecord::Base
+  def change
+    create_table :products do |t|
+      t.string :sku, null: false
+      t.string :name, null: false
+      t.references :price, null: false, foreign_key: true
+    end
+
+    create_table :products_history, primary_key: [:id, :system_period] do |t|
+      t.bigint :id, null: false
+      t.string :sku, null: false
+      t.string :name, null: false
+      t.references :price, null: false
+      t.tstzrange :system_period, null: false
+    end
+
+    create_versioning_hook :products, :products_history
+  end
+end
 ```
 
 The key to system versioning is the `create_versioning_hook` method. It creates three sets of PostgreSQL triggers and PL/pgSQL functions that watch for `INSERT`, `UPDATE`, and `DELETE` actions on the source table and update the history table accordingly. PostgreSQL triggers share the same transaction as the statement that triggered them and are thus atomic.
@@ -454,6 +479,18 @@ FOR EACH ROW EXECUTE FUNCTION public.sys_ver_fn_7722e802d8();
 ```
 
 Note that `NOW()` gets the time from the start of the current transaction. So all changes to the source table made in one transaction will use the same timestamp.
+
+### Table Requirements
+
+Given an existing source table, the requirements for a history table are:
+1. A composite primary key made up of a column matching a unique column (or set of columns) in the source table (usually just `id`) and `system_period` of the type `tstzrange`
+2. No columns that share a name with columns in the source table but have a different type (e.g., `id INTEGER` and `id BIGINT`)
+
+There are other restrictions on history tables that fall into the category of things that are conceptually incompatible with history tables. This would be things like unique constraints on columns used to track changes or triggers that update other versioned tables. Most of these should be pretty obvious and are not part of Active Record's DDL DSL anyways.
+
+Foreign key constraints to other history tables (e.g., between `history_products` and `history_prices`) can only be used with the `WITHOUT OVERLAPS`/`PERIOD` feature added in PostgreSQL 18. Otherwise custom triggers are needed to achieve the same effect.
+
+Foreign key constraints are discussed further below.
 
 ### Active Record Models
 

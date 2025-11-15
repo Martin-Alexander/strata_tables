@@ -8,6 +8,7 @@ require "activerecord/temporal"
 
 require "support/associations"
 require "support/db_config"
+require "support/have_column"
 require "support/have_versioning_hook"
 require "support/model_factory"
 require "support/record_factory"
@@ -44,7 +45,7 @@ RSpec.configure do |config|
   end
 
   def drop_all_versioning_hooks
-    functions = spec_conn.plpgsql_functions
+    functions = test_conn.plpgsql_functions
 
     return if functions.empty?
 
@@ -57,10 +58,10 @@ RSpec.configure do |config|
     ActiveRecord::Base.connection
   end
 
-  def spec_conn
+  def test_conn
     db_config = DbConfig.get
 
-    @spec_conn ||= TestConnectionAdapter.new(db_config)
+    @test_conn ||= TestConnectionAdapter.new(db_config)
   end
 
   def p_sql(relation)

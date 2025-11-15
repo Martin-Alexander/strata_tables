@@ -43,7 +43,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         columns: [:id, :first_name, :last_name]
       )
 
-      function_names = spec_conn.plpgsql_functions.map(&:name)
+      function_names = test_conn.plpgsql_functions.map(&:name)
 
       insert_id = Digest::SHA256.hexdigest("authors_insert").first(10)
       update_id = Digest::SHA256.hexdigest("authors_update").first(10)
@@ -55,7 +55,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         "sys_ver_func_#{delete_id}"
       )
 
-      expect(spec_conn.triggers(:authors)).to contain_exactly(
+      expect(test_conn.triggers(:authors)).to contain_exactly(
         "versioning_insert_trigger",
         "versioning_update_trigger",
         "versioning_delete_trigger"
@@ -82,6 +82,21 @@ RSpec.describe SystemVersioning::SchemaStatements do
         history_table: "authors_history",
         columns: %w[id first_name last_name],
         primary_key: %w[id first_name last_name]
+      )
+    end
+
+    it "columns: all adds all columns from the source table" do
+      conn.create_versioning_hook(
+        :authors,
+        :authors_history,
+        columns: :all
+      )
+
+      expect(conn.versioning_hook(:authors)).to have_attributes(
+        source_table: "authors",
+        history_table: "authors_history",
+        columns: %w[id first_name last_name],
+        primary_key: %w[id]
       )
     end
 
@@ -189,8 +204,8 @@ RSpec.describe SystemVersioning::SchemaStatements do
         columns: [:id, :first_name, :last_name]
       )
 
-      expect(spec_conn.plpgsql_functions.length).to eq(0)
-      expect(spec_conn.triggers(:authors).length).to eq(0)
+      expect(test_conn.plpgsql_functions.length).to eq(0)
+      expect(test_conn.triggers(:authors).length).to eq(0)
     end
 
     it "raises an error if the hook doesn't exist" do
@@ -421,6 +436,120 @@ RSpec.describe SystemVersioning::SchemaStatements do
       versioning_hook = conn.versioning_hook(:authors)
 
       expect(versioning_hook.columns).to contain_exactly("id", "last_name", "age")
+    end
+  end
+
+  describe "#create_table_with_system_versioning" do
+    it "creates a source table and history table" do
+      conn.create_table :teams
+
+      conn.create_table_with_system_versioning :employees do |t|
+        t.string :adp_id, null: false, limit: 100
+        t.decimal :salary, precision: 10, scale: 2
+        t.string :full_name, collation: "en_US"
+        t.integer :level, comment: "this is a comment"
+        t.date :started_at, default: "2025-01-01"
+        t.references :team, foreign_key: true, index: true
+        t.index :full_name, name: "index_employees_on_full_name"
+        t.unique_constraint :adp_id, name: "unique_adp_id"
+      end
+
+      source_table = test_conn.table(:employees)
+      history_table = test_conn.table(:employees_history)
+
+      expect(source_table.primary_key).to eq("id")
+      expect(source_table.indexes.length).to eq(3)
+      expect(source_table.foreign_keys.length).to eq(1)
+      expect(source_table).to have_column(:full_name)
+
+      expect(history_table.primary_key).to eq(["id", "system_period"])
+      expect(history_table.indexes).to be_empty
+      expect(history_table.foreign_keys).to be_empty
+      expect(history_table).to have_column(
+        :id, :integer, sql_type: "bigint"
+      )
+      expect(history_table).to have_column(
+        :system_period, :tstzrange, sql_type: "tstzrange", null: false
+      )
+      expect(history_table).to have_column(
+        :adp_id, :string, sql_type: "character varying(100)", null: false
+      )
+      expect(history_table).to have_column(
+        :salary, :decimal, sql_type: "numeric(10,2)"
+      )
+      expect(history_table).to have_column(
+        :full_name, :string, sql_type: "character varying", collation: "en_US"
+      )
+      expect(history_table).to have_column(
+        :level, :integer, sql_type: "integer"
+      )
+      expect(history_table).to have_column(
+        :started_at, :date, sql_type: "date", default: nil # Don't use defaults
+      )
+      expect(history_table).to have_column(
+        :team_id, :integer, sql_type: "bigint"
+      )
+    end
+
+    it "creates a history hook between the source and history table" do
+      conn.create_table_with_system_versioning :employees do |t|
+        t.string :full_name
+      end
+
+      versioning_hook = conn.versioning_hook(:employees)
+
+      expect(versioning_hook).to have_attributes(
+        source_table: "employees",
+        history_table: "employees_history",
+        columns: ["id", "full_name"],
+        primary_key: ["id"]
+      )
+    end
+
+    it "creates tables and hooks when with a non-default primary key" do
+      conn.create_table_with_system_versioning :employees, primary_key: :entity_id do |t|
+        t.string :full_name
+      end
+
+      source_table = test_conn.table(:employees)
+      history_table = test_conn.table(:employees_history)
+      versioning_hook = conn.versioning_hook(:employees)
+
+      expect(source_table.primary_key).to eq("entity_id")
+      expect(history_table.primary_key).to eq(["entity_id", "system_period"])
+      expect(versioning_hook.primary_key).to eq(["entity_id"])
+    end
+
+    it "creates tables and hooks when with a composite primary key" do
+      conn.create_table_with_system_versioning :employees, primary_key: [:entity_id, :version] do |t|
+        t.bigserial :entity_id, null: false
+        t.integer :version, null: false, default: 1
+        t.string :full_name
+      end
+
+      source_table = test_conn.table(:employees)
+      history_table = test_conn.table(:employees_history)
+      versioning_hook = conn.versioning_hook(:employees)
+
+      expect(source_table.primary_key)  
+        .to eq(["entity_id", "version"])
+      expect(history_table.primary_key)
+        .to eq(["entity_id", "version", "system_period"])
+      expect(versioning_hook.primary_key)
+        .to eq(["entity_id", "version"])
+
+      expect(history_table).to have_column(
+        :entity_id, :integer, sql_type: "bigint", null: false
+      )
+      expect(history_table).to have_column(
+        :version, :integer, sql_type: "bigint", null: false, default: nil
+      )
+      expect(history_table).to have_column(
+        :full_name, :string
+      )
+      expect(history_table).to have_column(
+        :system_period, :tstzrange, sql_type: "tstzrange", null: false
+      )
     end
   end
 end

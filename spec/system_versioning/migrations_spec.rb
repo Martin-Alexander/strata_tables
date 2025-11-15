@@ -34,6 +34,7 @@ RSpec.describe "migrations" do
 
   let(:migration) do
     migration_klass = Class.new(ActiveRecord::Migration[migration_version])
+    migration_klass.include ActiveRecord::Temporal::SystemVersioning::Migration
 
     migration_klass.define_method(:change, &migration_change)
 
@@ -104,6 +105,189 @@ RSpec.describe "migrations" do
 
       expect { migration.migrate(:down) }
         .to raise_error(ActiveRecord::IrreversibleMigration)
+    end
+  end
+
+  describe "#create_table" do
+    let(:migration_change) do
+      -> do
+        create_table :authors do |t|
+          t.string :full_name
+          t.references :book, foreign_key: true
+        end
+      end
+    end
+
+    it "is reversible" do
+      migration.migrate(:up)
+
+      expect(conn.table_exists?(:authors)).to eq(true)
+      expect(conn.table_exists?(:authors_history)).to eq(false)
+      expect(conn.versioning_hook(:authors)).to be_nil
+
+      migration.migrate(:down)
+
+      expect(conn.table_exists?(:authors)).to eq(false)
+      expect(conn.table_exists?(:authors_history)).to eq(false)
+      expect(conn.versioning_hook(:authors)).to be_nil
+    end
+
+    context "with system_versioning: true" do
+      let(:migration_change) do
+        -> do
+          create_table :authors, system_versioning: true do |t|
+            t.string :full_name
+            t.references :book, foreign_key: true
+          end
+        end
+      end
+
+      it "is reversible" do
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(true)
+        expect(conn.table_exists?(:authors_history)).to eq(true)
+        expect(:authors)
+          .to have_versioning_hook(:authors_history, [:id, :full_name, :book_id])
+
+        migration.migrate(:down)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+      end
+    end
+
+    context "with system_versioning: false" do
+      let(:migration_change) do
+        -> do
+          create_table :authors, system_versioning: false do |t|
+            t.string :full_name
+            t.references :book, foreign_key: true
+          end
+        end
+      end
+
+      it "is reversible" do
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(true)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+
+        migration.migrate(:down)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+      end
+    end
+  end
+
+  describe "#drop_table" do
+    context "without system versioning and without block" do
+      let(:migration_change) do
+        -> { drop_table :authors }
+      end
+
+      it "is not reversible" do
+        conn.create_table :authors
+
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+
+        expect { migration.migrate(:down) }
+          .to raise_error(ActiveRecord::IrreversibleMigration)
+      end
+    end
+
+    context "without system versioning and with block" do
+      let(:migration_change) do
+        -> do
+          drop_table :authors do |t|
+            t.string :name
+          end
+        end
+      end
+
+      it "is reversible" do
+        conn.create_table :authors do |t|
+          t.string :name
+        end
+
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+
+        migration.migrate(:down)
+
+        expect(test_conn.table(:authors)).to have_column(:name)
+      end
+    end
+
+    context "with system versioning and without block" do
+      let(:migration_change) do
+        -> { drop_table :authors, system_versioning: true }
+      end
+
+      it "is not reversible" do
+        test_conn.create_table :authors, system_versioning: true
+
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+
+        expect { migration.migrate(:down) }
+          .to raise_error(ActiveRecord::IrreversibleMigration)
+      end
+    end
+
+    context "with system versioning and with block" do
+      let(:migration_change) do
+        -> do
+          drop_table :authors, system_versioning: true do |t|
+            t.string :name
+          end
+        end
+      end
+
+      it "is not reversible" do
+        test_conn.create_table :authors, system_versioning: true do |t|
+          t.string :name
+        end
+
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+
+        expect { migration.migrate(:down) }
+          .to raise_error(ActiveRecord::IrreversibleMigration)
+      end
+
+      it "is reversible" do
+        skip "TODO: support reversing drop_table with system versioning"
+
+        test_conn.create_table :authors, system_versioning: true do |t|
+          t.string :name
+        end
+
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+
+        migration.migrate(:down)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(true)
+        expect(conn.versioning_hook(:authors)).to be_present
+      end
     end
   end
 

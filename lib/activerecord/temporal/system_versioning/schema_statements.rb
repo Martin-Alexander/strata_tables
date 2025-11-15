@@ -1,6 +1,32 @@
 module ActiveRecord::Temporal
   module SystemVersioning
     module SchemaStatements
+      module CreateTableStatement
+        def create_table(table_name, id: :primary_key, primary_key: nil, force: nil, **options, &block)
+          system_versioning = options.delete(:system_versioning)
+
+          if system_versioning
+            create_table_with_system_versioning(
+              table_name, id:, primary_key:, force:, **options, &block
+            )
+          else
+            super
+          end
+        end
+      end
+
+      module DropTableStatement
+        def drop_table(*table_names, **options)
+          system_versioning = options.delete(:system_versioning)
+
+          if system_versioning
+            drop_table_with_system_versioning(*table_names, **options)
+          else
+            super
+          end
+        end
+      end
+
       def create_table_with_system_versioning(table_name, **options, &block)
         create_table(table_name, **options, &block)
 
@@ -49,6 +75,12 @@ module ActiveRecord::Temporal
         end
 
         primary_key = options.fetch(:primary_key, :id)
+
+        primary_key = if primary_key.is_a?(Array) && primary_key.length == 1
+          primary_key.first
+        else
+          primary_key
+        end
 
         ensure_table_exists!(source_table)
         ensure_table_exists!(history_table)

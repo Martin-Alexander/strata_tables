@@ -1,6 +1,20 @@
 module ActiveRecord::Temporal
   module SystemVersioning
     module CommandRecorder
+      module ArrayExtractOptions
+        refine Array do
+          def extract_options
+            if last.is_a?(Hash) && last.extractable_options?
+              last
+            else
+              {}
+            end
+          end
+        end
+      end
+
+      using ArrayExtractOptions
+
       [
         :create_versioning_hook,
         :drop_versioning_hook,

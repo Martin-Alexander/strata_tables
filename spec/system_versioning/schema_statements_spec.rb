@@ -35,6 +35,12 @@ RSpec.describe SystemVersioning::SchemaStatements do
     drop_all_versioning_hooks
   end
 
+  let(:conn) do
+    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.new(DbConfig.get)
+      .extend ActiveRecord::Temporal::SystemVersioning::SchemaStatements::CreateTableStatement
+      .extend ActiveRecord::Temporal::SystemVersioning::SchemaStatements::DropTableStatement
+  end
+
   describe "#create_versioning_hook" do
     it "creates hook" do
       conn.create_versioning_hook(
@@ -503,7 +509,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         source_table: "employees",
         history_table: "employees_history",
         columns: ["id", "full_name"],
-        primary_key: ["id"]
+        primary_key: "id"
       )
     end
 
@@ -518,7 +524,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
 
       expect(source_table.primary_key).to eq("entity_id")
       expect(history_table.primary_key).to eq(["entity_id", "system_period"])
-      expect(versioning_hook.primary_key).to eq(["entity_id"])
+      expect(versioning_hook.primary_key).to eq("entity_id")
     end
 
     it "creates tables and hooks when with a composite primary key" do
@@ -588,6 +594,83 @@ RSpec.describe SystemVersioning::SchemaStatements do
         expect(conn.table_exists?("#{table}_history")).to eq(false)
         expect(conn.versioning_hook(table)).to be_nil
       end
+    end
+  end
+
+  describe "#create_table with :system_versioning" do
+    it "calls #create_table_with_system_versioning" do
+      conn.create_table :employees, system_versioning: true, primary_key: :entity_id do |t|
+        t.string :full_name
+      end
+
+      source_table = test_conn.table(:employees)
+      history_table = test_conn.table(:employees_history)
+      versioning_hook = conn.versioning_hook(:employees)
+
+      expect(source_table.primary_key).to eq("entity_id")
+      expect(source_table).to have_column(:full_name)
+
+      expect(history_table.primary_key).to eq(["entity_id", "system_period"])
+      expect(source_table).to have_column(:full_name)
+
+      expect(versioning_hook).to have_attributes(
+        source_table: "employees",
+        history_table: "employees_history",
+        columns: ["entity_id", "full_name"],
+        primary_key: "entity_id"
+      )
+    end
+
+    it "falls back on super when system_versioning is false" do
+      conn.create_table :employees, system_versioning: false do |t|
+        t.string :full_name
+      end
+
+      expect(conn.table_exists?(:employees)).to eq(true)
+      expect(conn.table_exists?(:employees_history)).to eq(false)
+      expect(conn.versioning_hook(:employees)).to be_nil
+    end
+
+    it "falls back on super when system_versioning not set" do
+      conn.create_table :employees do |t|
+        t.string :full_name
+      end
+
+      expect(conn.table_exists?(:employees)).to eq(true)
+      expect(conn.table_exists?(:employees_history)).to eq(false)
+      expect(conn.versioning_hook(:employees)).to be_nil
+    end
+  end
+
+  describe "#drop_table with :system_versioning" do
+    before do
+      conn.create_table_with_system_versioning :employees, primary_key: :entity_id do |t|
+        t.string :full_name
+      end
+    end
+
+    it "calls #create_table_with_system_versioning" do
+      test_conn.drop_table :employees, system_versioning: true
+
+      expect(conn.table_exists?(:employees)).to eq(false)
+      expect(conn.table_exists?(:employees_history)).to eq(false)
+      expect(conn.versioning_hook(:employees)).to be_nil
+    end
+
+    it "falls back on super when system_versioning is false" do
+      test_conn.drop_table :employees, system_versioning: false
+
+      expect(conn.table_exists?(:employees)).to eq(false)
+      expect(conn.table_exists?(:employees_history)).to eq(true)
+      expect(conn.versioning_hook(:employees)).to be_present
+    end
+
+    it "falls back on super when system_versioning not set" do
+      conn.drop_table :employees
+
+      expect(conn.table_exists?(:employees)).to eq(false)
+      expect(conn.table_exists?(:employees_history)).to eq(true)
+      expect(conn.versioning_hook(:employees)).to be_present
     end
   end
 end

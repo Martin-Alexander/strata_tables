@@ -433,7 +433,7 @@ The `system_versioning: true` option will create a history table that:
 - Has `tstzrange` columns called `system_period`
 - Has a composite primary key composed of the source table's primary key and `system_period`
 - Includes all columns names and types from the source table
-- Excludes `all foreign key and uniqueness constraints
+- Excludes all foreign key and uniqueness constraints
 - Calls `create_versioning_hook`
 
 The code above is equivalent to:

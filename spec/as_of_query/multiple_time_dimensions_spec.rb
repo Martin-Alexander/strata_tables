@@ -22,7 +22,7 @@ RSpec.describe "multiple columns spec" do
     model "Employee" do
       include AsOfQuery
 
-      set_time_dimensions :validity, :sys_period
+      self.time_dimensions = :validity, :sys_period
 
       belongs_to :org, temporal: true
     end
@@ -30,7 +30,7 @@ RSpec.describe "multiple columns spec" do
     model "Org" do
       include AsOfQuery
 
-      set_time_dimensions :validity, :sys_period
+      self.time_dimensions = :validity, :sys_period
 
       has_many :employees, temporal: true
     end

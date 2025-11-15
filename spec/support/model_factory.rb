@@ -7,7 +7,7 @@ module ActiveRecordTemporalTests
 
       if as_of
         klass.include AsOfQuery
-        klass.set_time_dimensions :period
+        klass.time_dimensions = :period
       end
 
       klass.class_eval(&block) if block

@@ -8,7 +8,7 @@ module ActiveRecord::Temporal
       end
 
       class_methods do
-        def set_time_dimensions(*dimensions)
+        def time_dimensions=(*dimensions)
           dimensions = dimensions.flatten
 
           define_singleton_method(:time_dimensions) { dimensions }

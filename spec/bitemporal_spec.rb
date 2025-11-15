@@ -35,7 +35,7 @@ RSpec.describe "bitemporal" do
 
       system_versioning
 
-      set_time_dimensions :validity
+      self.time_dimensions = :validity
     end
 
     model "Author", ApplicationRecord

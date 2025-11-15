@@ -132,7 +132,7 @@ RSpec.describe AsOfQuery, "default scope" do
   it "each level mergers with outer level" do
     conn.add_column(:authors, :system_period, :tstzrange, null: false, default: t...)
 
-    Author.set_time_dimensions :period, :system_period
+    Author.time_dimensions = :period, :system_period
     Author.reset_column_information
 
     author_bob_v1.reload.update!(system_period: t+3...)

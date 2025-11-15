@@ -6,7 +6,7 @@ module ActiveRecord::Temporal
       included do
         include AsOfQuery
 
-        set_time_dimensions time_dimensions + [:system_period]
+        self.time_dimensions = time_dimensions + [:system_period]
 
         if history_table
           self.table_name = history_table

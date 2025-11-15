@@ -29,7 +29,7 @@ RSpec.describe ApplicationVersioning do
 
       include ApplicationVersioning
 
-      set_time_dimensions :validity
+      self.time_dimensions = :validity
     end
 
     model "User", ApplicationRecord do

@@ -12,7 +12,7 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::TimeDimensions do
     end
 
     model "Cat", as_of: true do
-      set_time_dimensions :period_2, :period_1, :period_3
+      self.time_dimensions = :period_2, :period_1, :period_3
     end
   end
 
@@ -32,7 +32,7 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::TimeDimensions do
 
     it "time dimensions can be overwritten" do
       model "Tabby", Cat do
-        set_time_dimensions :period_1, :period_3
+        self.time_dimensions = :period_1, :period_3
       end
 
       expect(Tabby.time_dimensions).to eq([:period_1, :period_3])

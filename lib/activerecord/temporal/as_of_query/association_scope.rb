@@ -36,16 +36,16 @@ module ActiveRecord::Temporal
 
         def build_temporal_scope
           ->(owner, base) do
-            registry_time_constraints = ScopeRegistry
-              .association_time_constraints(time_dimensions)
+            registry_constraints = ScopeRegistry
+              .association_constraints_for(time_dimensions)
 
             registry_time_tags = ScopeRegistry
-              .association_time_tags(time_dimensions)
+              .association_tags_for(time_dimensions)
 
             owner_time_tags = owner&.time_tags_for(time_dimensions) || {}
 
             base
-              .at_time(registry_time_constraints.merge(owner_time_tags))
+              .at_time(registry_constraints.merge(owner_time_tags))
               .time_tags(owner_time_tags.merge(registry_time_tags))
           end
         end

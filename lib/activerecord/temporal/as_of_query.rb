@@ -24,7 +24,7 @@ module ActiveRecord::Temporal
       delegate :resolve_time_coords, to: :class
 
       default_scope do
-        at_time(AsOfQuery::ScopeRegistry.ambient_time_constraints)
+        at_time(AsOfQuery::ScopeRegistry.global_constraints)
       end
 
       scope :as_of, ->(time) do
@@ -36,11 +36,11 @@ module ActiveRecord::Temporal
       scope :at_time, ->(time) do
         time_coords = resolve_time_coords(time)
 
-        time_constraints = time_coords.slice(*time_dimension_columns)
+        constraints = time_coords.slice(*time_dimension_columns)
 
-        return if time_constraints.empty?
+        return if constraints.empty?
 
-        rewhere_contains(time_constraints.transform_values { |v| contains(v) })
+        rewhere_contains(constraints.transform_values { |v| contains(v) })
       end
     end
 

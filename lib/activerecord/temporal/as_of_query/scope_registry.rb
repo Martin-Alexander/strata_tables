@@ -2,11 +2,23 @@ module ActiveRecord::Temporal
   module AsOfQuery
     class ScopeRegistry
       class << self
-        delegate :ambient_time_constraints,
-          :association_time_constraints,
-          :association_time_tags,
-          :at_time,
-          :as_of,
+        delegate :global_constraints,
+          :association_constraints,
+          :association_tags,
+          :universal_global_constraint_time,
+          :global_constraints=,
+          :association_constraints=,
+          :association_tags=,
+          :universal_global_constraint_time=,
+          :global_constraint_for,
+          :association_constraint_for,
+          :association_tag_for,
+          :global_constraints_for,
+          :association_constraints_for,
+          :association_tags_for,
+          :set_global_constraints,
+          :set_association_constraints,
+          :set_association_tags,
           to: :instance
 
         def instance
@@ -14,54 +26,113 @@ module ActiveRecord::Temporal
         end
       end
 
-      def initialize
-        @ambient_time_constraints = {}
-        @association_time_constraints = {}
-        @association_time_tags = {}
+      attr_accessor :global_constraints,
+        :association_constraints,
+        :association_tags,
+        :universal_global_constraint_time
+
+      def initialize(
+        global_constraints: nil,
+        association_constraints: nil,
+        association_tags: nil,
+        default_association_constraint_time: nil,
+        universal_global_constraint_time: nil
+      )
+        @global_constraints = global_constraints || {}
+        @association_constraints = association_constraints || {}
+        @association_tags = association_tags || {}
+        @default_association_constraint_time = default_association_constraint_time ||
+          -> { Time.current }
+        @universal_global_constraint_time = universal_global_constraint_time
       end
 
-      def ambient_time_constraints(dimensions = nil)
-        return @ambient_time_constraints unless dimensions
-
-        @ambient_time_constraints.slice(*dimensions)
+      def global_constraint_for(dimension)
+        global_constraints[dimension] || universal_global_constraint_time
       end
 
-      def association_time_constraints(dimensions)
-        default_association_time_constraints(dimensions)
-          .merge(@ambient_time_constraints.slice(*dimensions))
-          .merge(@association_time_constraints.slice(*dimensions))
+      def association_constraint_for(dimension)
+        association_constraints[dimension] ||
+          global_constraint_for(dimension) ||
+          @default_association_constraint_time.call
       end
 
-      def association_time_tags(dimensions)
-        @association_time_tags.slice(*dimensions)
+      def association_tag_for(dimension)
+        association_tags[dimension]
       end
+
+      def global_constraints_for(*dimensions)
+        dimensions.flatten.index_with do |dimension|
+          global_constraint_for(dimension)
+        end.compact
+      end
+
+      def association_constraints_for(*dimensions)
+        dimensions.flatten.index_with do |dimension|
+          association_constraint_for(dimension)
+        end
+      end
+
+      def association_tags_for(*dimensions)
+        association_tags.slice(*dimensions.flatten)
+      end
+
+      def set_global_constraints(time_coords)
+        self.global_constraints = global_constraints
+          .merge(time_coords)
+      end
+
+      def set_association_constraints(time_coords)
+        self.association_constraints = association_constraints
+          .merge(time_coords)
+      end
+
+      def set_association_tags(time_coords)
+        self.association_tags = association_tags
+          .merge(time_coords)
+      end
+
+      # def global_constraints(dimensions = nil)
+      #   return @global_constraints unless dimensions
+
+      #   @global_constraints.slice(*dimensions)
+      # end
+
+      # def association_constraints(dimensions)
+      #   default_association_constraints(dimensions)
+      #     .merge(@global_constraints.slice(*dimensions))
+      #     .merge(@association_constraints.slice(*dimensions))
+      # end
+
+      # def association_tags(dimensions)
+      #   @association_tags.slice(*dimensions)
+      # end
 
       def at_time(time_coords, &block)
-        original = @ambient_time_constraints.dup
+        original = @global_constraints.dup
 
-        @ambient_time_constraints = @ambient_time_constraints.merge(time_coords)
+        @global_constraints = @global_constraints.merge(time_coords)
 
         block.call
       ensure
-        @ambient_time_constraints = original
+        @global_constraints = original
       end
 
       def as_of(time_coords, &block)
-        original_time_tags = @association_time_tags.dup
-        original_time_constraints = @association_time_constraints.dup
+        original_time_tags = @association_tags.dup
+        original_constraints = @association_constraints.dup
 
-        @association_time_tags = @association_time_tags.merge(time_coords)
-        @association_time_constraints = @association_time_constraints.merge(time_coords)
+        @association_tags = @association_tags.merge(time_coords)
+        @association_constraints = @association_constraints.merge(time_coords)
 
         block.call
       ensure
-        @association_time_tags = original_time_tags
-        @association_time_constraints = original_time_constraints
+        @association_tags = original_time_tags
+        @association_constraints = original_constraints
       end
 
       private
 
-      def default_association_time_constraints(dimensions)
+      def default_association_constraints(dimensions)
         dimensions.map { |dimension| [dimension, Time.current] }.to_h
       end
     end

@@ -5,13 +5,13 @@ module ActiveRecord::Temporal
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")
         def build_arel(aliases)
-          AsOfQuery::ScopeRegistry.as_of(time_tag_values) do
+          AsOfQuery::Scoping.as_of(time_tag_values) do
             super
           end
         end
       else
         def build_arel(aliases, connection = nil)
-          AsOfQuery::ScopeRegistry.as_of(time_tag_values) do
+          AsOfQuery::Scoping.as_of(time_tag_values) do
             super
           end
         end

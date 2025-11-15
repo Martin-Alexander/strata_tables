@@ -31,6 +31,16 @@ module ActiveRecord::Temporal
           primary_key: source_pk
       end
 
+      def drop_table_with_system_versioning(*table_names, **options)
+        table_names.each do |table_name|
+          history_table_name = "#{table_name}_history"
+
+          drop_table(table_name, **options)
+          drop_table(history_table_name, **options)
+          drop_versioning_hook(table_name, history_table_name, **options)
+        end
+      end
+
       def create_versioning_hook(source_table, history_table, **options)
         column_names = if (columns = options.fetch(:columns)) == :all
           columns(source_table).map(&:name)
@@ -57,11 +67,15 @@ module ActiveRecord::Temporal
         execute schema_creation.accept(hook_definition)
       end
 
-      def drop_versioning_hook(source_table, history_table, columns: nil)
+      def drop_versioning_hook(source_table, history_table, **options)
         %i[insert update delete].each do |verb|
           function_name = versioning_function_name(source_table, verb)
 
-          execute "DROP FUNCTION #{function_name}() CASCADE"
+          sql = "DROP FUNCTION"
+          sql << " IF EXISTS" if options[:if_exists]
+          sql << " #{function_name}() CASCADE"
+
+          execute sql
         end
       end
 

@@ -4,7 +4,9 @@ module ActiveRecord::Temporal
       [
         :create_versioning_hook,
         :drop_versioning_hook,
-        :change_versioning_hook
+        :change_versioning_hook,
+        :create_table_with_system_versioning,
+        :drop_table_with_system_versioning
       ].each do |method|
         class_eval <<-EOV, __FILE__, __LINE__ + 1
           def #{method}(*args)
@@ -41,6 +43,16 @@ module ActiveRecord::Temporal
             remove_columns: options[:add_columns]
           ]
         ]
+      end
+
+      def invert_create_table_with_system_versioning(args)
+        [:drop_table_with_system_versioning, args]
+      end
+
+      def invert_drop_table_with_system_versioning(args)
+        # TODO make this reversible
+
+        raise ActiveRecord::IrreversibleMigration, "drop_table_with_system_versioning is not reversible"
       end
     end
   end

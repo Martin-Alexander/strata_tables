@@ -14,7 +14,11 @@ RSpec::Matchers.define :have_versioning_hook do |history_table, columns|
       "sys_ver_func_#{delete_id}"
     )
 
-    expect(test_conn.triggers(source_table)).to contain_exactly(
+    versioning_triggers = test_conn.triggers(source_table).filter do |trigger|
+      trigger.start_with?("versioning_")
+    end
+
+    expect(versioning_triggers).to contain_exactly(
       "versioning_insert_trigger",
       "versioning_update_trigger",
       "versioning_delete_trigger"

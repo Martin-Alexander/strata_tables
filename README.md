@@ -626,7 +626,7 @@ drop_versioning_hook :products,             # Keep the table, but disable system
   :products_history
 
 drop_versioning_hook :products,             # Or specify the state of the hook when dropping
-  :products_history,                        # it in order to make the migration reversable
+  :products_history,                        # it in order to make the migration reversible
   columns: [:entity_id, :sku],
   primary_key: [:entity_id]
 

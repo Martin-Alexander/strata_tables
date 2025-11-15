@@ -553,4 +553,41 @@ RSpec.describe SystemVersioning::SchemaStatements do
       )
     end
   end
+
+  describe "#drop_table_with_system_versioning" do
+    it "drops the tables and versioning hook" do
+      conn.create_table_with_system_versioning :employees do |t|
+        t.string :full_name
+      end
+
+      conn.drop_table_with_system_versioning(:employees)
+
+      expect(conn.table_exists?(:employees)).to eq(false)
+      expect(conn.table_exists?(:employees_history)).to eq(false)
+      expect(conn.versioning_hook(:employees)).to be_nil
+    end
+
+    it "drops tables and versioning hook with options" do
+      expect do
+        conn.drop_table_with_system_versioning(:employees, if_exists: true)
+      end.not_to raise_error
+    end
+
+    it "drops multiple tables" do
+      conn.create_table_with_system_versioning :cakes do |t|
+        t.string :name
+      end
+      conn.create_table_with_system_versioning :pies do |t|
+        t.string :name
+      end
+
+      conn.drop_table_with_system_versioning(:cakes, :pies)
+
+      %w[cakes pies].each do |table|
+        expect(conn.table_exists?(table)).to eq(false)
+        expect(conn.table_exists?("#{table}_history")).to eq(false)
+        expect(conn.versioning_hook(table)).to be_nil
+      end
+    end
+  end
 end

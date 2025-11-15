@@ -40,6 +40,73 @@ RSpec.describe "migrations" do
     migration_klass.new
   end
 
+  describe "#create_table_with_system_versioning" do
+    let(:migration_change) do
+      -> do
+        create_table_with_system_versioning :authors do |t|
+          t.string :full_name
+          t.references :book, foreign_key: true
+        end
+      end
+    end
+
+    it "is reversible" do
+      migration.migrate(:up)
+
+      expect(conn.table_exists?(:authors)).to eq(true)
+      expect(conn.table_exists?(:authors_history)).to eq(true)
+      expect(:authors)
+        .to have_versioning_hook(:authors_history, [:id, :full_name, :book_id])
+
+      migration.migrate(:down)
+
+      expect(conn.table_exists?(:authors)).to eq(false)
+      expect(conn.table_exists?(:authors_history)).to eq(false)
+      expect(conn.versioning_hook(:authors)).to be_nil
+    end
+
+    context "with options" do
+      let(:migration_change) do
+        -> do
+          create_table_with_system_versioning :authors, primary_key: :entity_id do |t|
+            t.string :full_name
+            t.references :book, foreign_key: true
+          end
+        end
+      end
+
+      it "is reversible with options" do
+        migration.migrate(:up)
+
+        expect(conn.table_exists?(:authors)).to eq(true)
+        expect(conn.table_exists?(:authors_history)).to eq(true)
+        expect(:authors)
+          .to have_versioning_hook(:authors_history, [:entity_id, :full_name, :book_id])
+
+        migration.migrate(:down)
+
+        expect(conn.table_exists?(:authors)).to eq(false)
+        expect(conn.table_exists?(:authors_history)).to eq(false)
+        expect(conn.versioning_hook(:authors)).to be_nil
+      end
+    end
+  end
+
+  describe "#drop_table_with_system_versioning" do
+    let(:migration_change) do
+      -> { drop_table_with_system_versioning :authors }
+    end
+
+    it "is not reversible" do
+      conn.create_table_with_system_versioning :authors
+
+      migration.migrate(:up)
+
+      expect { migration.migrate(:down) }
+        .to raise_error(ActiveRecord::IrreversibleMigration)
+    end
+  end
+
   describe "#create_versioning_hook" do
     let(:migration_change) do
       -> do
@@ -51,7 +118,7 @@ RSpec.describe "migrations" do
       end
     end
 
-    it "is reversable" do
+    it "is reversible" do
       migration.migrate(:up)
 
       expect(:books)
@@ -82,7 +149,7 @@ RSpec.describe "migrations" do
       end
     end
 
-    it "is reversable" do
+    it "is reversible" do
       migration.migrate(:up)
 
       expect(conn.versioning_hook(:books)).to be_nil
@@ -98,7 +165,7 @@ RSpec.describe "migrations" do
         -> { drop_versioning_hook(:books, :books_history) }
       end
 
-      it "is not reversable" do
+      it "is not reversible" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books)).to be_nil
@@ -123,7 +190,7 @@ RSpec.describe "migrations" do
         -> { change_versioning_hook(:books, :books_history, add_columns: [:pages]) }
       end
 
-      it "is reversable" do
+      it "is reversible" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)
@@ -141,7 +208,7 @@ RSpec.describe "migrations" do
         -> { change_versioning_hook(:books, :books_history, remove_columns: [:title]) }
       end
 
-      it "is reversable" do
+      it "is reversible" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)
@@ -166,7 +233,7 @@ RSpec.describe "migrations" do
         end
       end
 
-      it "is reversable" do
+      it "is reversible" do
         migration.migrate(:up)
 
         expect(conn.versioning_hook(:books).columns)

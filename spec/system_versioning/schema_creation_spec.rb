@@ -43,7 +43,7 @@ RSpec.describe SystemVersioning::SchemaCreation do
       :books,
       :books_history,
       [:id, :title, :pages],
-      [:id]
+      :id
     )
 
     sql = subject.accept(object)
@@ -55,7 +55,7 @@ RSpec.describe SystemVersioning::SchemaCreation do
       source_table: :books,
       history_table: :books_history,
       columns: [:id, :title, :pages],
-      primary_key: [:id]
+      primary_key: :id
     )
 
     expect(sql.squish).to eq(<<~SQL.squish)
@@ -107,7 +107,7 @@ RSpec.describe SystemVersioning::SchemaCreation do
     object = SystemVersioning::DeleteHookDefinition.new(
       :books,
       :books_history,
-      [:id]
+      :id
     )
 
     function_id = Digest::SHA256.hexdigest("books_delete").first(10)
@@ -116,7 +116,7 @@ RSpec.describe SystemVersioning::SchemaCreation do
       verb: :delete,
       source_table: :books,
       history_table: :books_history,
-      primary_key: [:id]
+      primary_key: :id
     )
 
     sql = subject.accept(object)
@@ -162,7 +162,7 @@ RSpec.describe SystemVersioning::SchemaCreation do
 
   it "VersioningHookDefinition returns the correct SQL" do
     columns = [:id, :title, :pages, :published_at]
-    source_pk = [:id]
+    source_pk = :id
 
     object = ActiveRecord::Temporal::SystemVersioning::VersioningHookDefinition.new(
       :books,

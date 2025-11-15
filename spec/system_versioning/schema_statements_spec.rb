@@ -65,7 +65,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         source_table: "authors",
         history_table: "authors_history",
         columns: %w[id first_name last_name],
-        primary_key: %w[id]
+        primary_key: "id"
       )
     end
 
@@ -96,7 +96,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         source_table: "authors",
         history_table: "authors_history",
         columns: %w[id first_name last_name],
-        primary_key: %w[id]
+        primary_key: "id"
       )
     end
 
@@ -165,7 +165,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         source_table: "bob's authors",
         history_table: "authors_history",
         columns: %w[id first_name last_name],
-        primary_key: %w[id]
+        primary_key: "id"
       )
     end
 
@@ -183,7 +183,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
         source_table: "authors",
         history_table: "authors_history",
         columns: ["id", "Author's First Name", "last_name"],
-        primary_key: ["id"]
+        primary_key: "id"
       )
     end
   end
@@ -237,7 +237,8 @@ RSpec.describe SystemVersioning::SchemaStatements do
       expect(conn.versioning_hook(:authors)).to have_attributes(
         source_table: "authors",
         history_table: "authors_history",
-        columns: contain_exactly("id", "first_name", "last_name")
+        columns: contain_exactly("id", "first_name", "last_name"),
+        primary_key: "id"
       )
     end
 
@@ -531,7 +532,7 @@ RSpec.describe SystemVersioning::SchemaStatements do
       history_table = test_conn.table(:employees_history)
       versioning_hook = conn.versioning_hook(:employees)
 
-      expect(source_table.primary_key)  
+      expect(source_table.primary_key)
         .to eq(["entity_id", "version"])
       expect(history_table.primary_key)
         .to eq(["entity_id", "version", "system_period"])

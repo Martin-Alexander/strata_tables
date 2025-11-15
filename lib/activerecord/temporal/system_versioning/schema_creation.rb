@@ -52,7 +52,7 @@ module ActiveRecord::Temporal
 
       def visit_UpdateHookDefinition(o)
         column_names = o.columns.map { |c| quote_column_name(c) }
-        primary_key_quoted = o.primary_key.map { |c| quote_column_name(c) }
+        primary_key_quoted = Array(o.primary_key).map { |c| quote_column_name(c) }
         fields = column_names.join(", ")
         values = column_names.map { |c| "NEW.#{c}" }.join(", ")
         update_pk_predicates = primary_key_quoted.map { |c| "#{c} = OLD.#{c}" }.join(" AND ")
@@ -94,7 +94,7 @@ module ActiveRecord::Temporal
       end
 
       def visit_DeleteHookDefinition(o)
-        primary_key_quoted = o.primary_key.map { |c| quote_column_name(c) }
+        primary_key_quoted = Array(o.primary_key).map { |c| quote_column_name(c) }
         function_name = versioning_function_name(o.source_table, :delete)
         pk_predicates = primary_key_quoted.map { |c| "#{c} = OLD.#{c}" }.join(" AND ")
         metadata = {

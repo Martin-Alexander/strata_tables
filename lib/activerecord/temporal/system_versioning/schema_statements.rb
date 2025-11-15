@@ -38,12 +38,12 @@ module ActiveRecord::Temporal
           Array(columns).map(&:to_s)
         end
 
-        primary_key = Array(options.fetch(:primary_key, :id))
+        primary_key = options.fetch(:primary_key, :id)
 
         ensure_table_exists!(source_table)
         ensure_table_exists!(history_table)
         ensure_columns_match!(source_table, history_table, column_names)
-        ensure_columns_exists!(source_table, primary_key)
+        ensure_columns_exists!(source_table, Array(primary_key))
 
         schema_creation = SchemaCreation.new(self)
 
@@ -128,7 +128,6 @@ module ActiveRecord::Temporal
       private
 
       def validate_create_versioning_hook_options!(options)
-
       end
 
       def ensure_table_exists!(table_name)

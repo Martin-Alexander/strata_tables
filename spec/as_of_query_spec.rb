@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe AsOfQuery do
+RSpec.describe Querying do
   before do
     table :authors, primary_key: [:id, :version] do |t|
       t.bigint :id
@@ -108,12 +108,12 @@ RSpec.describe AsOfQuery do
 
     it "raises an error if the time is outside the record's as-of range" do
       expect { author_bob_v1.as_of!(t+3) }.to raise_error(
-        AsOfQuery::RangeError,
+        Querying::RangeError,
         "#{t+3} is outside of 'period' range"
       )
 
       expect { author_sam_v3.as_of!(t+5) }.to raise_error(
-        AsOfQuery::RangeError,
+        Querying::RangeError,
         "#{t+5} is outside of 'period' range"
       )
     end

@@ -1,15 +1,15 @@
 require "active_support"
 
 require_relative "temporal/application_versioning"
-require_relative "temporal/as_of_query"
-require_relative "temporal/as_of_query/association_macros"
-require_relative "temporal/as_of_query/association_scope"
-require_relative "temporal/as_of_query/association_walker"
-require_relative "temporal/as_of_query/predicate_builder/handlers"
-require_relative "temporal/as_of_query/query_methods"
-require_relative "temporal/as_of_query/scope_registry"
-require_relative "temporal/as_of_query/scoping"
-require_relative "temporal/as_of_query/time_dimensions"
+require_relative "temporal/querying"
+require_relative "temporal/querying/association_macros"
+require_relative "temporal/querying/association_scope"
+require_relative "temporal/querying/association_walker"
+require_relative "temporal/querying/predicate_builder/handlers"
+require_relative "temporal/querying/query_methods"
+require_relative "temporal/querying/scope_registry"
+require_relative "temporal/querying/scoping"
+require_relative "temporal/querying/time_dimensions"
 require_relative "temporal/patches/association_reflection"
 require_relative "temporal/patches/command_recorder"
 require_relative "temporal/patches/join_dependency"
@@ -35,7 +35,7 @@ ActiveSupport.on_load(:active_record) do
     .include ActiveRecord::Temporal::SystemVersioning::CommandRecorder
 
   ActiveRecord::Relation
-    .include ActiveRecord::Temporal::AsOfQuery::QueryMethods
+    .include ActiveRecord::Temporal::Querying::QueryMethods
 
   # Patches
 

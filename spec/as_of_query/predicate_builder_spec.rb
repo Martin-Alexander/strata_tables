@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe AsOfQuery, "predicate builder" do
+RSpec.describe Querying, "predicate builder" do
   before do
     table :authors, primary_key: [:id, :version] do |t|
       t.bigint :id

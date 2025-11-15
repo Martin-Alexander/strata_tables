@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     class ScopeRegistry
       class << self
         delegate :global_constraints,
@@ -22,7 +22,7 @@ module ActiveRecord::Temporal
           to: :instance
 
         def instance
-          ActiveSupport::IsolatedExecutionState[:temporal_as_of_query_registry] ||= new
+          ActiveSupport::IsolatedExecutionState[:temporal_querying_registry] ||= new
         end
       end
 

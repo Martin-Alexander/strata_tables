@@ -1,9 +1,9 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     module QueryMethods
-      require "activerecord/temporal/as_of_query/where_clause_refinement"
+      require "activerecord/temporal/querying/where_clause_refinement"
 
-      using AsOfQuery::WhereClauseRefinement
+      using Querying::WhereClauseRefinement
 
       def time_tags(scope)
         spawn.time_tags!(scope)

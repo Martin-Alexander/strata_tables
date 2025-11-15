@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationMacros do
+RSpec.describe ActiveRecord::Temporal::Querying::AssociationMacros do
   after { drop_all_tables }
 
   shared_examples "accepts temporal option" do

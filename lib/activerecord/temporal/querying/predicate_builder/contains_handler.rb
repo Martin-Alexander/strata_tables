@@ -1,4 +1,4 @@
-module ActiveRecord::Temporal::AsOfQuery
+module ActiveRecord::Temporal::Querying
   class PredicateBuilder
     class ContainsHandler
       def initialize(predicate_builder)

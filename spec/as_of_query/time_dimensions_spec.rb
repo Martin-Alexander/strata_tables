@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ActiveRecord::Temporal::AsOfQuery::TimeDimensions do
+RSpec.describe ActiveRecord::Temporal::Querying::TimeDimensions do
   before do
     table :cats, primary_key: [:id, :version] do |t|
       t.bigserial :id

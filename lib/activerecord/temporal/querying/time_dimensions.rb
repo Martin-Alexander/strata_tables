@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     module TimeDimensions
       extend ActiveSupport::Concern
 

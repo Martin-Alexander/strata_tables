@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ActiveRecord::Temporal::AsOfQuery::Scoping do
+RSpec.describe ActiveRecord::Temporal::Querying::Scoping do
   t = Time.utc(2000)
 
   around do |example|
@@ -12,11 +12,11 @@ RSpec.describe ActiveRecord::Temporal::AsOfQuery::Scoping do
   let(:current_time) { t+1601 }
 
   before do
-    ActiveSupport::IsolatedExecutionState[:temporal_as_of_query_registry] = nil
+    ActiveSupport::IsolatedExecutionState[:temporal_querying_registry] = nil
   end
 
   let(:scope_registry) do
-    ActiveRecord::Temporal::AsOfQuery::ScopeRegistry
+    ActiveRecord::Temporal::Querying::ScopeRegistry
   end
 
   describe "::at" do

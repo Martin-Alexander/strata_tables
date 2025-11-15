@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     class Scoping
       class << self
         def at(time_coords, &block)

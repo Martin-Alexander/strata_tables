@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ActiveRecord::Temporal::AsOfQuery::AssociationScope do
+RSpec.describe ActiveRecord::Temporal::Querying::AssociationScope do
   before do
     table :authors, primary_key: [:id, :version] do |t|
       t.bigint :id, null: false

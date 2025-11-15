@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     class AssociationScope
       class << self
         def build(block)

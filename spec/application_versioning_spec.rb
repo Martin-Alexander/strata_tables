@@ -93,7 +93,7 @@ RSpec.describe ApplicationVersioning do
     it "it creates a revision at the ambient time if set" do
       new_user, old_user = nil
 
-      AsOfQuery::Scoping.at({validity: t+1}) do
+      Querying::Scoping.at({validity: t+1}) do
         new_user, old_user = user.revise.with(name: "Sam")
       end
 
@@ -134,7 +134,7 @@ RSpec.describe ApplicationVersioning do
     it "it initializes a revision at the ambient time if set" do
       new_user, old_user = nil
 
-      AsOfQuery::Scoping.at({validity: t+1}) do
+      Querying::Scoping.at({validity: t+1}) do
         new_user, old_user = user.revision.with(name: "Sam")
       end
 
@@ -158,7 +158,7 @@ RSpec.describe ApplicationVersioning do
     end
 
     it "inactivates a record at the ambient time if set" do
-      AsOfQuery::Scoping.at({validity: t+1}) do
+      Querying::Scoping.at({validity: t+1}) do
         user.inactivate
 
         expect(user.reload.validity).to eq(t-1...t+1)

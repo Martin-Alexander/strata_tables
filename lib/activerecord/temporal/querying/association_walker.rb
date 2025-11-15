@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     class AssociationWalker
       class << self
         def each_target(parent_record, associations, &block)

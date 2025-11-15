@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     class RangeError < StandardError; end
 
     extend ActiveSupport::Concern
@@ -24,7 +24,7 @@ module ActiveRecord::Temporal
       delegate :resolve_time_coords, to: :class
 
       default_scope do
-        at_time(AsOfQuery::ScopeRegistry.global_constraints)
+        at_time(Querying::ScopeRegistry.global_constraints)
       end
 
       scope :as_of, ->(time) do

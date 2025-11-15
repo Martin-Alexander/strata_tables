@@ -1,5 +1,5 @@
 module ActiveRecord::Temporal
-  module AsOfQuery
+  module Querying
     module WhereClauseRefinement
       refine ActiveRecord::Relation::WhereClause do
         def except_contains(columns)

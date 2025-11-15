@@ -5,13 +5,13 @@ module ActiveRecord::Temporal
 
       if ActiveRecord.version > Gem::Version.new("8.0.4")
         def build_arel(aliases)
-          AsOfQuery::Scoping.as_of(time_tag_values) do
+          Querying::Scoping.as_of(time_tag_values) do
             super
           end
         end
       else
         def build_arel(aliases, connection = nil)
-          AsOfQuery::Scoping.as_of(time_tag_values) do
+          Querying::Scoping.as_of(time_tag_values) do
             super
           end
         end
@@ -23,7 +23,7 @@ module ActiveRecord::Temporal
         records = super
 
         records.each do |record|
-          record.initialize_time_tags_from_relation(self) if record.is_a?(AsOfQuery)
+          record.initialize_time_tags_from_relation(self) if record.is_a?(Querying)
         end
 
         records

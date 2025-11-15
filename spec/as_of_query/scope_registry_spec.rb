@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ActiveRecord::Temporal::AsOfQuery::ScopeRegistry do
+RSpec.describe ActiveRecord::Temporal::Querying::ScopeRegistry do
   subject { described_class }
 
   t = Time.utc(2000)

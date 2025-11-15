@@ -4,7 +4,7 @@ module ActiveRecord::Temporal
       extend ActiveSupport::Concern
 
       included do
-        include AsOfQuery
+        include Querying
 
         self.time_dimensions = time_dimensions + [:system_period]
 

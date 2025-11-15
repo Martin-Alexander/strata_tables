@@ -1,4 +1,4 @@
-module ActiveRecord::Temporal::AsOfQuery
+module ActiveRecord::Temporal::Querying
   class PredicateBuilder
     require_relative "contains_handler"
 

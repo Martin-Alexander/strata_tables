@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe AsOfQuery, "default scope" do
+RSpec.describe Querying, "default scope" do
   before do
     table :authors, primary_key: [:id, :version] do |t|
       t.bigint :id, null: false
@@ -47,7 +47,7 @@ RSpec.describe AsOfQuery, "default scope" do
   end
 
   it "all queries to a default time scope" do
-    authors = AsOfQuery::Scoping.at({period: t+2}) do
+    authors = Querying::Scoping.at({period: t+2}) do
       Author.all
     end
 
@@ -57,20 +57,20 @@ RSpec.describe AsOfQuery, "default scope" do
   end
 
   it "is over written by as_of" do
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(Author.all).to contain_exactly(author_bob_v1, author_sam_v1)
       expect(Author.as_of(t+3)).to contain_exactly(author_bob_v2, author_sam_v1)
     end
   end
 
   it "is over written by at_time" do
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(Author.at_time(t+3)).to contain_exactly(author_bob_v2, author_sam_v1)
     end
   end
 
   it "does not set time scope on relation or records" do
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       authors = Author.all
 
       expect(authors.time_tag_values).to eq({})
@@ -79,7 +79,7 @@ RSpec.describe AsOfQuery, "default scope" do
   end
 
   it "does not interfere with setting time scops" do
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       authors = Author.as_of(t+3)
 
       expect(authors.time_tag_values).to eq({period: t+3})
@@ -90,7 +90,7 @@ RSpec.describe AsOfQuery, "default scope" do
   it "applies a scope the persists outside the block" do
     authors = nil
 
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       authors = Author.all
     end
 
@@ -100,7 +100,7 @@ RSpec.describe AsOfQuery, "default scope" do
   it "does not overwrite time scopes from outside the block" do
     authors = Author.as_of(t+3)
 
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(authors).to contain_exactly(author_bob_v2, author_sam_v1)
       expect(authors.time_tag_values).to eq({period: t+3})
       expect(authors.first.time_tag).to eq(t+3)
@@ -108,7 +108,7 @@ RSpec.describe AsOfQuery, "default scope" do
   end
 
   it "applies its scope to associations" do
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(Author.first.books).to contain_exactly(foo_v1)
     end
   end
@@ -116,10 +116,10 @@ RSpec.describe AsOfQuery, "default scope" do
   it "is nestable" do
     expect(Author.count).to eq(6)
 
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(Author.all).to contain_exactly(author_bob_v1, author_sam_v1)
 
-      AsOfQuery::Scoping.at({period: t+3}) do
+      Querying::Scoping.at({period: t+3}) do
         expect(Author.all).to contain_exactly(author_bob_v2, author_sam_v1)
       end
 
@@ -137,10 +137,10 @@ RSpec.describe AsOfQuery, "default scope" do
 
     author_bob_v1.reload.update!(system_period: t+3...)
 
-    AsOfQuery::Scoping.at({period: t+2}) do
+    Querying::Scoping.at({period: t+2}) do
       expect(Author.all).to contain_exactly(author_bob_v1, author_sam_v1)
 
-      AsOfQuery::Scoping.at({system_period: t+2}) do
+      Querying::Scoping.at({system_period: t+2}) do
         expect(Author.all).to contain_exactly(author_sam_v1)
       end
 

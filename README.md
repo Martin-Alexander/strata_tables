@@ -281,22 +281,11 @@ Although temporal associations are scoped to the current time by default, non-as
 
 So far, everything shown works with or without versioning.
 
-## Versioning
-
-This gem provides two options for versioning: application versioning and system versioning. They can be used alone, in parallel, or in conjunction to form full bitemporal data model.
-
-**System versioning** uses PostgreSQL triggers on a source table and automatically maintains a separate history table that tracks the history of every record as they're created, updated, and deleted. Since versioning is done at the database level, it can operate completely out of sight of Active Record.
-
-**Application versioning** gives the application full control of the versioning process. While system versioning is limited to using transaction time, application versioning can be based on any number of business-relevant time dimensions like validity time, assertion time, or specific sub-domains of your business.
-
-For both options, versioning can be applied to only a subset of tables.
-
-
 ## System Versioning
 
 The temporal model of this gem is based on the SQL specification. It's also roughly the same model used by RDMSs like [MarianaDB](https://mariadb.com/docs/server/reference/sql-structure/temporal-tables/system-versioned-tables) and [Microsoft SQL Server](https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables?view=sql-server-ver17), and by the PostgreSQL extension [Temporal Tables Extension](https://github.com/arkhipov/temporal_tables) and its PL/pgSQL version [Temporal Tables](https://github.com/nearform/temporal_tables).
 
-Rows in the history table (or partition, view, etc.) represent rows that existed in the source table over a particular period of time. For PostgreSQL implementations this period of time is typically stored in a `tstzrange` colunmn that this gem calls `system_period`.
+Rows in the history table (or partition, view, etc.) represent rows that existed in the source table over a particular period of time. For PostgreSQL implementations this period of time is typically stored in a `tstzrange` column that this gem calls `system_period`.
 
 ### Inserts
 
@@ -413,7 +402,7 @@ SELECT * FROM (VALUES
 
 ### Create a History Table
 
-Using `Temporal::SchemaStatements` adds the `system_versioning` option to `create_table`. This will automatically setup a matching history table.
+Using `Temporal::SchemaStatements` adds the `system_versioning` option to `create_table`. This will automatically create a matching history table and the PostgreSQL triggers.
 
 ```ruby
 class CreateProducts < ActiveRecord::Base
@@ -434,7 +423,7 @@ The `system_versioning: true` option will create a history table that:
 - Has a composite primary key composed of the source table's primary key and `system_period`
 - Includes all columns names and types from the source table
 - Excludes all foreign key and uniqueness constraints
-- Calls `create_versioning_hook`
+- Calls `create_versioning_hook` to connect the source and history table
 
 The code above is equivalent to:
 
@@ -480,7 +469,7 @@ FOR EACH ROW EXECUTE FUNCTION public.sys_ver_fn_7722e802d8();
 
 Note that `NOW()` gets the time from the start of the current transaction. So all changes to the source table made in one transaction will use the same timestamp.
 
-### Table Requirements
+### Foreign Key Constraints
 
 Given an existing source table, the requirements for a history table are:
 1. A composite primary key made up of a column matching a unique column (or set of columns) in the source table (usually just `id`) and `system_period` of the type `tstzrange`
@@ -509,7 +498,7 @@ HistoryProduct.table_name             # => "products_history", detected from SQL
 time = Time.parse("2027-12-23")
 
 products = HistoryProduct.as_of(time) # => Products as of 2027-12-23
-products.first.price                  # => Inheritted associations are temporal by default
+products.first.price                  # => Inherited associations are temporal by default
 
 HistoryProduct.sti_name               # => "Product", compatible with single-table inheritance
 HistoryProduct.time_dimension         # => ["system_period"]

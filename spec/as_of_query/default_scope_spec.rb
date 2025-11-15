@@ -46,8 +46,14 @@ RSpec.describe Querying, "default scope" do
     }
   end
 
-  it "all queries to a default time scope" do
+  it "adds default scope to models" do
     authors = Querying::Scoping.at({period: t+2}) do
+      Author.all
+    end
+
+    expect(authors).to contain_exactly(author_bob_v1, author_sam_v1)
+
+    authors = Querying::Scoping.at(t+2) do
       Author.all
     end
 

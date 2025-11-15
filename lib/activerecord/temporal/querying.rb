@@ -24,7 +24,7 @@ module ActiveRecord::Temporal
       delegate :resolve_time_coords, to: :class
 
       default_scope do
-        at_time(Querying::ScopeRegistry.global_constraints)
+        at_time(Querying::ScopeRegistry.global_constraints_for(time_dimensions))
       end
 
       scope :as_of, ->(time) do

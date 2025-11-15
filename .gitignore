@@ -9,6 +9,7 @@
 Gemfile.lock
 gemfiles/*.lock
 .byebug_history
+.vscode/settings.json
 
 # rspec failure tracking
 .rspec_status

@@ -422,7 +422,7 @@ class CreateProducts < ActiveRecord::Base
   def change
     create_table :products, system_versioning: true do |t|
       t.string :sku, null: false
-      t.string :name, null: false
+      t.string :name
       t.references :price, null: false, foreign_key: true
     end
   end
@@ -443,14 +443,14 @@ class CreateProducts < ActiveRecord::Base
   def change
     create_table :products do |t|
       t.string :sku, null: false
-      t.string :name, null: false
+      t.string :name
       t.references :price, null: false, foreign_key: true
     end
 
     create_table :products_history, primary_key: [:id, :system_period] do |t|
       t.bigint :id, null: false
       t.string :sku, null: false
-      t.string :name, null: false
+      t.string :name
       t.references :price, null: false
       t.tstzrange :system_period, null: false
     end

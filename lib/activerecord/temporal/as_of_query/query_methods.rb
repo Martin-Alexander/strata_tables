@@ -27,7 +27,7 @@ module ActiveRecord::Temporal
       def rewhere_contains(conditions)
         scope = spawn
 
-        scope.where_clause = where_clause.execept_contains(conditions.keys)
+        scope.where_clause = where_clause.except_contains(conditions.keys)
         scope.where_clause += build_where_clause(conditions)
 
         scope

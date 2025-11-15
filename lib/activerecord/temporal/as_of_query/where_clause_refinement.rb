@@ -2,7 +2,7 @@ module ActiveRecord::Temporal
   module AsOfQuery
     module WhereClauseRefinement
       refine ActiveRecord::Relation::WhereClause do
-        def execept_contains(columns)
+        def except_contains(columns)
           columns = columns.map(&:to_s)
 
           remaining_predications = predicates.reject do |node|
